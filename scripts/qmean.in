@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Wrapper script that dispatches the actions to the actual Python script. It 
+# autodetects the most important directories and sets LD_LIBRARY_PATH and 
+# friends.
+
+SCRIPT_NAME=$0
+BIN_DIR=$( cd `dirname "$SCRIPT_NAME"`; pwd)
+export QMEAN_ROOT="$BIN_DIR/.."
+QMEAN_EXEC_PATH="$QMEAN_ROOT/libexec/qmean"
+export PYTHONPATH="${QMEAN_ROOT}/@LIBDIR@/qmean:${PYTHONPATH}"
+export PATH="$PATH:$BIN_DIR"
+export LD_LIBRARY_PATH="${QMEAN_ROOT}/@LIBDIR@:$LD_LIBRARY_PATH"
+
+# retrieve absolute path to ost and dng executables
+export OST_BIN="@OST_ROOT@/bin/ost"
+export DNG_BIN="@OST_ROOT@/bin/dng"
+
+$OST_BIN $QMEAN_EXEC_PATH/qmean_script.py $@
+exit $RC
