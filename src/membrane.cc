@@ -261,55 +261,6 @@ void SolvationGrid::Flood(){
 }
 
 
-
-void SolvationGrid::FloodLevel8Neighbours(int level, std::pair<int,int> start_coordinates, int orig_value, int dest_value){
- 
-  if(orig_value!=grid_[start_coordinates.first][start_coordinates.second][level]){
-    return;
-  }
-
-  std::vector<std::pair<int,int> > queue;
-
-  queue.push_back(std::make_pair(start_coordinates.first,start_coordinates.second));
-
-  std::pair<int,int> actual_position;
-
-  while(!queue.empty()){
-    actual_position = queue.back();
-    queue.pop_back();
-    //check xrange
-    if(actual_position.first<0 || actual_position.first>=xbins_){
-      continue;
-    }
-    //check yrange
-    if(actual_position.second<0 || actual_position.second>=ybins_){
-      continue;
-    }
-    //check whether there is an atom
-    if(grid_[actual_position.first][actual_position.second][level]!=orig_value){
-      continue;
-    }
-    //check whether we already set the value
-    if(grid_[actual_position.first][actual_position.second][level]==dest_value){
-      continue;
-    }
-
-    //set value
-    grid_[actual_position.first][actual_position.second][level]=dest_value;
-    
-
-    queue.push_back(std::make_pair(actual_position.first,actual_position.second+1));
-    queue.push_back(std::make_pair(actual_position.first,actual_position.second-1));
-    queue.push_back(std::make_pair(actual_position.first+1,actual_position.second));
-    queue.push_back(std::make_pair(actual_position.first-1,actual_position.second));
-    queue.push_back(std::make_pair(actual_position.first-1,actual_position.second-1));
-    queue.push_back(std::make_pair(actual_position.first+1,actual_position.second+1));
-    queue.push_back(std::make_pair(actual_position.first+1,actual_position.second-1));
-    queue.push_back(std::make_pair(actual_position.first-1,actual_position.second+1));
-  }
-}
-
-
 void SolvationGrid::FloodLevel(int level, std::pair<int, int> start_coordinates, int orig_value, int dest_value){
   //http://lodev.org/cgtutor/floodfill.html
 
@@ -658,4 +609,212 @@ ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, co
   
   return return_handle;
 }
+
+geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle){
+
+  Real aa,ab,ac,ba,bb,bc,ca,cb,cc,one_m_cos,cos_ang,sin_ang;
+  geom::Mat3 rot;
+  geom::Vec3 result;
+
+  cos_ang = std::cos(angle);
+  sin_ang = std::sin(angle);
+  one_m_cos = 1-cos_ang;
+
+  aa = cos_ang+axis[0]*axis[0]*one_m_cos;
+  ab = axis[0]*axis[1]*one_m_cos-axis[2]*sin_ang;
+  ac = axis[0]*axis[2]*one_m_cos+axis[1]*sin_ang;
+
+  ba = axis[1]*axis[0]*one_m_cos+axis[2]*sin_ang;
+  bb = cos_ang+axis[1]*axis[1]*one_m_cos;
+  bc = axis[1]*axis[2]*one_m_cos-axis[0]*sin_ang;
+
+  ca = axis[2]*axis[0]*one_m_cos-axis[1]*sin_ang;
+  cb = axis[2]*axis[1]*one_m_cos+axis[0]*sin_ang;
+  cc = cos_ang+axis[2]*axis[2]*one_m_cos;
+
+  rot = geom::Mat3(aa,ab,ac,ba,bb,bc,ca,cb,cc);
+
+  result = rot*point;
+
+  return result;
+
+}
+
+void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3 axis){
+
+
+  geom::Vec3 normalized_axis = geom::Normalize(axis);
+
+  //create an orthogonal base with the normalized axis as first base vector
+
+  geom::Vec3 base_one;
+  geom::Vec3 base_two;
+  geom::Vec3 base_three;
+
+  //if 2nd element of axis would be +-1, a zero division would occur in the following 
+  //steps. In this case we can just take the base vectors...
+  if(1-abs(normalized_axis[1])<0.0001){
+    base_one = geom::Vec3(0.0,1.0,0.0);
+    base_two = geom::Vec3(1.0,0.0,0.0);
+    base_three = geom::Vec3(0.0,0.0,1.0);
+  }
+  else{
+    Real c = std::asin(normalized_axis[1]);
+    Real b = std::acos(normalized_axis[0]/std::cos(std::asin(normalized_axis[1])));
+
+    geom::Mat3 rot_one(std::cos(b),0.0,std::sin(b),
+                       0.0,1.0,0.0,
+                       -std::sin(b),0.0,std::cos(b));
+
+    geom::Mat3 rot_two(std::cos(c),-std::sin(c),0.0,
+                       std::sin(c),std::cos(c),0.0,
+                       0.0,0.0,1.0);
+
+    //following matrix can be used to rotate the x-basis ((1,0,0)) to the normalized axis
+    //(combination of a rotation around (0,1,0) and (0,0,1))
+    //we rotate the y and z basis vectors with the same matrix to get our desired
+    //orthogonal base.
+
+    geom::Mat3 rot = rot_one*rot_two;
+
+    base_one = normalized_axis;
+    base_two = rot*geom::Vec3(0.0,1.0,0.0);
+    base_three = rot*geom::Vec3(0.0,0.0,1.0);
+  }
+
+
+  //perform initial grid search without using sigmoid function
+
+  //top five of the grid search solutions will be saved in here
+  std::vector<std::pair<FindMemParam,Real> > initial_solutions;
+  std::pair<std::pair<int,int>, Real> actual_solution;
+
+
+  geom::Vec3 tilted_axis;
+  geom::Vec3 scan_axis;
+  Real tilt_rad,angle_rad;
+
+  FindMemParam parameters;
+
+  for(int tilt_deg = 0; tilt_deg<=45; tilt_deg+=5){
+
+    //the tilt is a rotation around base_two
+
+    if(tilt_deg == 0){
+      tilted_axis = base_one;
+    }
+    else{
+      tilt_rad = Real(tilt_deg)/360*2*3.141592654;
+      tilted_axis = RotateAroundAxis(normalized_axis,base_two,tilt_rad);
+    }
+
+    for(int angle_deg = 0; angle_deg<360; angle_deg+=30){
+      //we now rotate around base_one
+
+      if(tilt_deg==0){
+        scan_axis = tilted_axis;
+      }
+      else{
+        angle_rad = Real(angle_deg)/360*2*3.141592654;
+        scan_axis = RotateAroundAxis(tilted_axis,base_one,angle_rad);
+      }
+
+      actual_solution = ScanAxis(atom_positions,transfer_energies,scan_axis);
+
+      if(initial_solutions.size()==0){
+        parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.second,actual_solution.first.first,scan_axis);
+        initial_solutions.push_back(std::make_pair(parameters,actual_solution.second));
+      }
+
+      else if(initial_solutions.size()<5){
+        parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.second,actual_solution.first.first,scan_axis);
+        for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
+            i!=initial_solutions.end();++i){
+          if(i->second > actual_solution.second){
+            initial_solutions.insert(i,std::make_pair(parameters,actual_solution.second));
+            break;
+            
+          }
+        }
+      }
+
+      else{
+        if(actual_solution.second < initial_solutions.back().second){
+          parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.second,actual_solution.first.first,scan_axis);
+          for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
+              i!=initial_solutions.end();++i){
+            if(i->second > actual_solution.second){
+              initial_solutions.insert(i,std::make_pair(parameters,actual_solution.second));
+              initial_solutions.pop_back();
+              break;
+            }
+          }
+        }
+      }
+
+      if(tilt_deg==0){
+        break;
+      }
+    }
+  }
+}
+
+std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis){
+  
+  geom::Vec3 normalized_axis = geom::Normalize(axis);
+  std::vector<Real> pos_on_axis;
+
+  for(std::vector<geom::Vec3>::iterator i = atom_positions.begin();
+      i != atom_positions.end(); ++i){
+    pos_on_axis.push_back(geom::Dot(*i,normalized_axis));
+  }
+
+  Real min_pos = pos_on_axis[0];
+  Real max_pos = min_pos;
+
+  for(std::vector<Real>::iterator i = pos_on_axis.begin(); 
+      i != pos_on_axis.end(); ++i){
+    if(min_pos>(*i)) min_pos = (*i);
+    if(max_pos<(*i)) max_pos = (*i);
+  }
+
+  int width = ceil(max_pos)-floor(min_pos);
+
+  //energies represents the energy profile along the axis
+  Real energies[width];
+
+  std::vector<Real>::iterator i,j;
+
+  for(i = pos_on_axis.begin(),j = transfer_energies.begin();
+      i != pos_on_axis.end() and j != transfer_energies.end(); ++i, ++j){
+    energies[int(floor((*i)-min_pos))] += (*j);
+  }
+
+  // int pair: position and width, real value: energy
+  std::pair<std::pair<int,int>, Real> solution = std::make_pair(std::make_pair(0,0),std::numeric_limits<Real>::max());
+  Real energy;
+
+  for(int window_width = 2; window_width<=20; window_width+=2){
+
+    //check whether we're already too big
+    if(window_width>width) break;
+
+    //evaluate initial window at positions 0
+    energy = 0.0;
+    for(int i=0; i<window_width; ++i){
+      energy += energies[i];
+    }
+    if(energy<solution.second) solution = std::make_pair(std::make_pair(0,window_width),energy);
+
+    for(int pos = 1; pos<width-window_width;++pos){
+      energy-=energies[pos-1];
+      energy+=energies[pos+window_width];
+      if(energy<solution.second) solution = std::make_pair(std::make_pair(pos,window_width),energy);
+    }
+  }
+
+  return solution;
+
+}
+
 

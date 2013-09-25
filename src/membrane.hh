@@ -2,6 +2,8 @@
 
 #include <ost/geom/geom.hh>
 #include <vector>
+#include <numeric>
+#include <limits>
 #include <qmean/module_config.hh>
 #include <ost/mol/surface_handle.hh>
 #include <ost/img/image_handle.hh>
@@ -14,6 +16,17 @@
 
 class SolvationGrid;
 typedef boost::shared_ptr<SolvationGrid> SolvationGridPtr;
+
+struct FindMemParam{
+  FindMemParam() { }
+  FindMemParam(Real t, Real a, Real w, Real p, geom::Vec3 ax):
+              tilt(t), angle(a), width(w), pos(p),axis(ax) { }
+  Real tilt;
+  Real angle;
+  Real width;
+  Real pos;
+  geom::Vec3 axis;
+};
 
 class DLLEXPORT_QMEAN SolvationGrid {
 public:
@@ -64,7 +77,18 @@ private:
   int zbins_;
 };
 
+//struct EnergyEvaluator {
+//  float operator()(Eigen::Mat3& x) {
+//
+//  }
+//};
 
 ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, const ost::mol::SurfaceHandle& surf, Real solvation_grid_bin_size, Real density);
+
+void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energy);
+
+geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle);
+
+std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis);
 
 
