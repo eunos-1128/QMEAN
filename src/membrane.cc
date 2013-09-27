@@ -757,6 +757,16 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
       }
     }
   }
+
+  
+  for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
+                i!=initial_solutions.end();++i){
+    std::cerr<<i->first.tilt<<" "<<i->first.angle<<" "<<i->first.width<<" "<<i->first.pos<<std::endl;
+
+  }
+
+
+
 }
 
 std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis){
@@ -814,6 +824,90 @@ std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_posit
   }
 
   return solution;
+
+}
+
+
+void FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa){
+
+  std::vector<geom::Vec3> search_axis;
+  std::vector<geom::Vec3> atom_positions;
+  std::vector<Real> transfer_energies;
+  ost::mol::AtomHandleList a_list = ent.GetAtomList();
+  ost::mol::EntityView ent_view = ent.CreateFullView();
+
+
+  Real max_x = std::numeric_limits<Real>::max();
+  Real min_x = std::numeric_limits<Real>::min();
+  Real max_y = std::numeric_limits<Real>::max();
+  Real min_y = std::numeric_limits<Real>::min();
+  Real max_z = std::numeric_limits<Real>::max();
+  Real min_z = std::numeric_limits<Real>::min();
+  geom::Vec3 pos;
+
+  for(ost::mol::AtomHandleList::iterator i = a_list.begin(); i!=a_list.end();++i){
+    pos = i->GetPos();
+    if(pos[0]<min_x) min_x=pos[0];
+    if(pos[0]>max_x) max_x=pos[0];
+    if(pos[1]<min_y) min_y=pos[1];
+    if(pos[1]>max_y) max_y=pos[1];
+    if(pos[2]<min_z) min_z=pos[2];
+    if(pos[2]>max_z) max_z=pos[2];
+  }
+
+  max_x += 3;
+  min_x -= 3;
+  max_y += 3;
+  min_y -= 3;
+  max_z += 3;
+  min_z -= 3;
+
+  geom::Vec3 min_vec(min_x,min_y,min_z);
+  geom::Vec3 max_vec(max_x,max_y,max_z);
+
+  geom::AlignedCuboid cuboid(min_vec,max_vec);
+
+  SolvationGrid grid(cuboid, 0.5);
+
+  //grid.AddView(return_view);
+  grid.AddSurface(surf);
+  grid.AddView(ent_view);
+  grid.Flood(); 
+
+  ost::mol::EntityView solvated_view = grid.GetSolvatedView();
+  String element;
+  unsigned char bond_order;
+  ost::mol::BondHandleList bond_list;
+  bool assigned_energy=false;
+
+  ost::mol::AtomHandleList::iterator i;
+  std::vector<Real>::iterator j;
+
+  for(i=a_list.begin(), j=asa.begin();i!=a_list.end(),j!=asa.end();++i,++j){
+    atom_positions.push_back(i->GetPos());
+    element = i->GetElement();
+    if(element=="S") transfer_energies.push_back((*j)*(-10));
+    else if(element=="N") transfer_energies.push_back((*j)*(-53));
+    else if(element=="O") transfer_energies.push_back((*j)*(-57));
+    else if(element=="C"){
+      assigned_energy=false;
+      bond_list = i->GetBondList();
+      for(ost::mol::BondHandleList::iterator k=bond_list.begin();k!=bond_list.end();++k){
+        bond_order = k->GetBondOrder();
+        if(bond_order>'1'){
+          transfer_energies.push_back((*j)*22.6);
+          assigned_energy=true;
+          break;;
+        }
+      }
+      if(!assigned_energy) transfer_energies.push_back((*j)*19);
+    }
+    else if(element=="H") continue;
+    else throw("fuuuuuuck");
+  }
+
+
+  MinimizeAlongAxis(atom_positions,transfer_energies,geom::Vec3(0,0,1));
 
 }
 
