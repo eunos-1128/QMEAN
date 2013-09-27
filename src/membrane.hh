@@ -14,6 +14,11 @@
 #include <ost/mol/atom_handle.hh>
 
 
+#include <Eigen/Core>
+#include <Eigen/Array>
+#include <Eigen/SVD>
+#include <Eigen/LU>
+
 
 class SolvationGrid;
 typedef boost::shared_ptr<SolvationGrid> SolvationGridPtr;
@@ -78,13 +83,35 @@ private:
   int zbins_;
 };
 
-//struct EnergyEvaluator {
-//  float operator()(Eigen::Mat3& x) {
-//
-//  }
-//};
+struct EnergyF {
+  EnergyF(geom::Vec3& a, std::vector<geom::Vec3>& p, std::vector<Real>& t_e):
+          axis(a),positions(p),transfer_energies(t_e) { }
+
+  typedef Eigen::Matrix<Real, 4, 1> XMatrixType;
+  typedef Eigen::Matrix<Real, 1, 1> FMatrixType;
+
+  FMatrixType operator(XMatrixType& x)(Eigen::Matrix<Real, 4, 1>& x);
+
+  Real sigmoid(Real d);
+
+  geom::Vec3 axis;
+  Real lambda;
+  std::vector<geom::Vec3> positions;
+  std::vector<Real> transfer_energies;
+};
+
+struct EnergyDF {
+
+   EnergyDF(Real d): diff_dist(d) { }
+
+   Eigen::Matrix<Real,1,4> operator(EnergyF::XMatrixType& x)(Eigen::Matrix<Real, 4, 1>& x);
+
+   Real diff_dist;
+};
 
 ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, const ost::mol::SurfaceHandle& surf, Real solvation_grid_bin_size, Real density);
+
+std::vector<geom::Vec3> BuildNewBase(geom::Vec3& axis);
 
 void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis);
 

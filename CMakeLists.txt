@@ -56,6 +56,8 @@ find_package(Python 2.4.0 REQUIRED)
 find_package(OPENSTRUCTURE 1.0 REQUIRED 
              COMPONENTS mol seq seq_alg mol_alg conop)
 
+find_package(Eigen 2.0.0 REQUIRED)
+
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 set(_BOOST_MIN_VERSION 1.37)
