@@ -13,6 +13,8 @@
 #include <ost/img/size.hh>
 #include <ost/mol/atom_handle.hh>
 
+#include <ost/img/alg/levenberg_marquardt.h>
+
 
 #include <Eigen/Core>
 #include <Eigen/Array>
@@ -83,35 +85,43 @@ private:
   int zbins_;
 };
 
+
+std::vector<geom::Vec3> BuildNewBase(geom::Vec3& axis);
+
 struct EnergyF {
-  EnergyF(geom::Vec3& a, std::vector<geom::Vec3>& p, std::vector<Real>& t_e):
-          axis(a),positions(p),transfer_energies(t_e) { }
+  EnergyF(geom::Vec3& a, std::vector<geom::Vec3>& p, std::vector<Real>& t_e, Real l):
+          axis(a),positions(p),transfer_energies(t_e),
+          base(BuildNewBase(a)),lambda(l) { }
 
   typedef Eigen::Matrix<Real, 4, 1> XMatrixType;
   typedef Eigen::Matrix<Real, 1, 1> FMatrixType;
 
-  FMatrixType operator(XMatrixType& x)(Eigen::Matrix<Real, 4, 1>& x);
-
-  Real sigmoid(Real d);
+  Eigen::Matrix<Real,1,1> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 
   geom::Vec3 axis;
   Real lambda;
   std::vector<geom::Vec3> positions;
+  std::vector<geom::Vec3> base;
   std::vector<Real> transfer_energies;
 };
 
 struct EnergyDF {
 
-   EnergyDF(Real d): diff_dist(d) { }
+   EnergyDF(const EnergyF& f): function(f),d_tilt(0.01),d_angle(0.01),
+                         d_width(0.01),d_pos(0.01) { }
 
-   Eigen::Matrix<Real,1,4> operator(EnergyF::XMatrixType& x)(Eigen::Matrix<Real, 4, 1>& x);
+   Eigen::Matrix<Real,1,4> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 
-   Real diff_dist;
+   EnergyF function;
+   Real d_tilt;
+   Real d_angle;
+   Real d_width;
+   Real d_pos;
 };
 
 ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, const ost::mol::SurfaceHandle& surf, Real solvation_grid_bin_size, Real density);
 
-std::vector<geom::Vec3> BuildNewBase(geom::Vec3& axis);
+
 
 void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis);
 

@@ -610,6 +610,7 @@ ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, co
   return return_handle;
 }
 
+
 geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle){
 
   Real aa,ab,ac,ba,bb,bc,ca,cb,cc,one_m_cos,cos_ang,sin_ang;
@@ -644,25 +645,29 @@ std::vector<geom::Vec3> BuildNewBase(geom::Vec3& base_one){
   
   //Let's build a new Base by figuring out the transformation from the x-base 
   //vector to base_one and apply it to y-base and z-base.
+  //It's not guaranteed, that you get a right handed system! If the input vector
+  //points into direction of the y-axis, you either get a right handed or left
+  //handed system.
 
+  std::vector<geom::Vec3> base;  
 
-  std::vector<geom::Vec3> base;
-  base.push_back(base_one);
-  
-
+  base_one = geom::Normalize(base_one);
   geom::Vec3 base_two;
   geom::Vec3 base_three;
 
   //if 2nd element of axis would be +-1, a zero division would occur in the following 
   //steps. In this case we can just take the base vectors...
-  if(1-abs(normalized_axis[1])<0.0001){
+  if(1-abs(base_one[1])<0.0001){
     base_one = geom::Vec3(0.0,1.0,0.0);
     base_two = geom::Vec3(1.0,0.0,0.0);
     base_three = geom::Vec3(0.0,0.0,1.0);
+    base.push_back(base_one);
+    base.push_back(base_two);
+    base.push_back(base_three);
   }
   else{
-    Real c = std::asin(normalized_axis[1]);
-    Real b = std::acos(normalized_axis[0]/std::cos(std::asin(normalized_axis[1])));
+    Real c = std::asin(base_one[1]);
+    Real b = std::acos(base_one[0]/std::cos(std::asin(base_one[1])));
 
     geom::Mat3 rot_one(std::cos(b),0.0,std::sin(b),
                        0.0,1.0,0.0,
@@ -679,13 +684,13 @@ std::vector<geom::Vec3> BuildNewBase(geom::Vec3& base_one){
 
     geom::Mat3 rot = rot_one*rot_two;
 
-    base_one = normalized_axis;
     base_two = rot*geom::Vec3(0.0,1.0,0.0);
     base_three = rot*geom::Vec3(0.0,0.0,1.0);
-  }  
-
-
-
+    base.push_back(base_one);
+    base.push_back(base_two);
+    base.push_back(base_three);
+  } 
+  return base; 
 }
 
 void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3 axis){
@@ -695,41 +700,7 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
 
   //create an orthogonal base with the normalized axis as first base vector
 
-  geom::Vec3 base_one;
-  geom::Vec3 base_two;
-  geom::Vec3 base_three;
-
-  //if 2nd element of axis would be +-1, a zero division would occur in the following 
-  //steps. In this case we can just take the base vectors...
-  if(1-abs(normalized_axis[1])<0.0001){
-    base_one = geom::Vec3(0.0,1.0,0.0);
-    base_two = geom::Vec3(1.0,0.0,0.0);
-    base_three = geom::Vec3(0.0,0.0,1.0);
-  }
-  else{
-    Real c = std::asin(normalized_axis[1]);
-    Real b = std::acos(normalized_axis[0]/std::cos(std::asin(normalized_axis[1])));
-
-    geom::Mat3 rot_one(std::cos(b),0.0,std::sin(b),
-                       0.0,1.0,0.0,
-                       -std::sin(b),0.0,std::cos(b));
-
-    geom::Mat3 rot_two(std::cos(c),-std::sin(c),0.0,
-                       std::sin(c),std::cos(c),0.0,
-                       0.0,0.0,1.0);
-
-    //following matrix can be used to rotate the x-basis ((1,0,0)) to the normalized axis
-    //(combination of a rotation around (0,1,0) and (0,0,1))
-    //we rotate the y and z basis vectors with the same matrix to get our desired
-    //orthogonal base.
-
-    geom::Mat3 rot = rot_one*rot_two;
-
-    base_one = normalized_axis;
-    base_two = rot*geom::Vec3(0.0,1.0,0.0);
-    base_three = rot*geom::Vec3(0.0,0.0,1.0);
-  }
-
+  std::vector<geom::Vec3> base = BuildNewBase(normalized_axis);
 
   //perform initial grid search without using sigmoid function
 
@@ -749,11 +720,11 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
     //the tilt is a rotation around base_two
 
     if(tilt_deg == 0){
-      tilted_axis = base_one;
+      tilted_axis = base[0];
     }
     else{
       tilt_rad = Real(tilt_deg)/360*2*3.141592654;
-      tilted_axis = RotateAroundAxis(normalized_axis,base_two,tilt_rad);
+      tilted_axis = RotateAroundAxis(normalized_axis,base[1],tilt_rad);
     }
 
     for(int angle_deg = 0; angle_deg<360; angle_deg+=30){
@@ -764,7 +735,7 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
       }
       else{
         angle_rad = Real(angle_deg)/360*2*3.141592654;
-        scan_axis = RotateAroundAxis(tilted_axis,base_one,angle_rad);
+        scan_axis = RotateAroundAxis(tilted_axis,base[0],angle_rad);
       }
 
       std::cerr<<"scan axis: "<<scan_axis<<std::endl;
@@ -813,6 +784,34 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
   for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
                 i!=initial_solutions.end();++i){
     std::cerr<<i->first.tilt<<" "<<i->first.angle<<" "<<i->first.width<<" "<<i->first.pos<<"    "<<i->second<<std::endl;
+
+  }
+
+  EnergyF en_f(axis,atom_positions, transfer_energies,0.9);
+
+  Eigen::Matrix<Real, 4, 1> lm_parameters;
+  std::pair<FindMemParam,Real> temp;
+
+  for(int i=0;i<5;++i){
+
+    temp = initial_solutions[i*2];
+
+    lm_parameters(0,0) = temp.first.tilt;
+    lm_parameters(1,0) = temp.first.angle;
+    lm_parameters(2,0) = temp.first.width;
+    lm_parameters(3,0) = temp.first.pos;
+
+    std::cout<<"initial solution: "<<std::endl;
+    std::cout<<"tilt: "<<lm_parameters(0,0)<<" angle: "<<lm_parameters(1,0)<<" width: ";
+    std::cout<<lm_parameters(2,0)<<" pos: "<<lm_parameters(3,0)<<std::endl;
+
+    ost::img::alg::LevenbergMarquardt<EnergyF,EnergyDF> lm(en_f);
+    lm.minimize(&lm_parameters);
+
+    std::cout<<"minimized solution: "<<std::endl;
+    std::cout<<"tilt: "<<lm_parameters(0,0)<<" angle: "<<lm_parameters(1,0)<<" width: ";
+    std::cout<<lm_parameters(2,0)<<" pos: "<<lm_parameters(3,0)<<std::endl;
+
 
   }
 
@@ -870,12 +869,17 @@ std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_posit
     for(int i=0; i<window_width; ++i){
       energy += energies[i];
     }
-    if(energy<solution.second) solution = std::make_pair(std::make_pair(0,window_width),energy);
-
+    if(energy<solution.second){ 
+      Real center = min_pos+Real(window_width)/2.0; 
+      solution = std::make_pair(std::make_pair(center,window_width),energy);
+    }
     for(int pos = 1; pos<=width-window_width;++pos){
       energy-=energies[pos-1];
       energy+=energies[pos+window_width-1];
-      if(energy<solution.second) solution = std::make_pair(std::make_pair(pos,window_width),energy);
+      if(energy<solution.second){
+        Real center = min_pos+pos+Real(window_width)/2;
+        solution = std::make_pair(std::make_pair(center,window_width),energy);
+      }
     }
   }
 
@@ -995,18 +999,57 @@ void FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, st
 
 }
 
+EnergyF::FMatrixType EnergyF::operator()(const Eigen::Matrix<Real, 4, 1>& x) const{
 
-
-
-EnergyF::FMatrixType EnergyF::operator(XMatrixType& x)(Eigen::Matrix<Real, 4, 1>& x){
-  
   FMatrixType result;
+  geom::Vec3 tilted_axis = axis;
 
-
+  tilted_axis = RotateAroundAxis(tilted_axis, base[1], x(0,0));
+  tilted_axis = RotateAroundAxis(tilted_axis, base[0], x(1,0));
   
+  std::vector<Real>::const_iterator e_it = transfer_energies.begin();
+  std::vector<geom::Vec3>::const_iterator pos_it = positions.begin();
 
+  Real distance_to_center;
+  Real pos_on_axis;
+  Real half_width = x(2,0)/2.0;
 
+  for(;pos_it!=positions.end() && e_it!=transfer_energies.end();++pos_it,++e_it){
+    pos_on_axis = geom::Dot(tilted_axis,*pos_it);
+    distance_to_center = std::abs(x[3]-pos_on_axis);
+    result(0,0)+=(1.0/(1.0+std::exp((distance_to_center-half_width)/lambda))*(*e_it));
+  }
 
+  return result;
 }
 
+Eigen::Matrix<Real,1,4> EnergyDF::operator()(const Eigen::Matrix<Real, 4, 1>& x) const{
 
+  Eigen::Matrix<Real,1,4> result;
+  Eigen::Matrix<Real, 4, 1> parameter1 = x;
+  Eigen::Matrix<Real, 4, 1> parameter2 = x;
+
+  parameter1(0,0)+=d_tilt;
+  parameter2(0,0)-=d_tilt;
+  result(0,0) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_tilt);
+
+  parameter1=x;
+  parameter2=x;
+  parameter1(1,0)+=d_angle;
+  parameter2(1,0)-=d_angle;
+  result(0,1) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_angle);
+
+  parameter1=x;
+  parameter2=x;
+  parameter1(2,0)+=d_width;
+  parameter2(2,0)-=d_width;
+  result(0,2) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_width);
+
+  parameter1=x;
+  parameter2=x;
+  parameter1(2,0)+=d_pos;
+  parameter2(2,0)-=d_pos;
+  result(0,3) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_pos);
+  
+  return result;
+}
