@@ -342,6 +342,13 @@ void SolvationGrid::CalculateSolvatedSurface(){
 
   int level,x,y;
 
+
+  std::clock_t start;
+  double duration;
+
+  start = std::clock();
+
+
   for(level=0;level<zbins_;++level){
     for(x=0;x<xbins_;++x){
       for(y=0;y<ybins_;++y){
@@ -372,6 +379,12 @@ void SolvationGrid::CalculateSolvatedSurface(){
       }
     }
   }
+
+  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+
+  std::cout<<"flooding the stuff needed "<<duration<<" whatever"<<std::endl;
+
+  start = std::clock();
 
 
   ost::mol::SurfaceTriIDList tri_id = surf_.GetTriIDList();
@@ -474,6 +487,14 @@ void SolvationGrid::CalculateSolvatedSurface(){
       }
     }
   }
+
+  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+
+  std::cout<<"doing awesom stuff took "<<duration<<" whatever"<<std::endl;
+
+
+
+
 }
 
 ost::mol::SurfaceHandle SolvationGrid::GetSolvatedSurface(){
@@ -641,29 +662,38 @@ geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle){
 
 }
 
-std::vector<geom::Vec3> BuildNewBase(geom::Vec3& base_one){
+std::vector<geom::Vec3> BuildNewBase(geom::Vec3& x){
   
-  //Let's build a new Base by figuring out the transformation from the x-base 
+  //Let's build a new right handed Base by figuring out the 
+  //transformation from the x-base 
   //vector to base_one and apply it to y-base and z-base.
-  //It's not guaranteed, that you get a right handed system! If the input vector
-  //points into direction of the y-axis, you either get a right handed or left
-  //handed system.
+  
 
   std::vector<geom::Vec3> base;  
 
-  base_one = geom::Normalize(base_one);
+  geom::Vec3 base_one = geom::Normalize(x);
   geom::Vec3 base_two;
   geom::Vec3 base_three;
 
   //if 2nd element of axis would be +-1, a zero division would occur in the following 
   //steps. In this case we can just take the base vectors...
   if(1-abs(base_one[1])<0.0001){
-    base_one = geom::Vec3(0.0,1.0,0.0);
-    base_two = geom::Vec3(1.0,0.0,0.0);
-    base_three = geom::Vec3(0.0,0.0,1.0);
-    base.push_back(base_one);
-    base.push_back(base_two);
-    base.push_back(base_three);
+    if(base_one[1]>0){
+      base_one = geom::Vec3(0.0,1.0,0.0);
+      base_two = geom::Vec3(1.0,0.0,0.0);
+      base_three = geom::Vec3(0.0,0.0,1.0);
+      base.push_back(base_one);
+      base.push_back(base_two);
+      base.push_back(base_three);
+    }
+    else{
+      base_one = geom::Vec3(0.0,-1.0,0.0);
+      base_two = geom::Vec3(-1.0,0.0,0.0);
+      base_three = geom::Vec3(0.0,0.0,-1.0);
+      base.push_back(base_one);
+      base.push_back(base_two);
+      base.push_back(base_three);
+    }
   }
   else{
     Real c = std::asin(base_one[1]);
@@ -693,7 +723,7 @@ std::vector<geom::Vec3> BuildNewBase(geom::Vec3& base_one){
   return base; 
 }
 
-void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3 axis){
+void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis){
 
 
   geom::Vec3 normalized_axis = geom::Normalize(axis);
@@ -715,41 +745,50 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
 
   FindMemParam parameters;
 
-  for(int tilt_deg = 0; tilt_deg<=45; tilt_deg+=5){
+  for(int tilt_deg = 0; tilt_deg<=30; tilt_deg+=5){
 
     //the tilt is a rotation around base_two
 
     if(tilt_deg == 0){
       tilted_axis = base[0];
+      tilt_rad = 0.0;
     }
     else{
       tilt_rad = Real(tilt_deg)/360*2*3.141592654;
       tilted_axis = RotateAroundAxis(normalized_axis,base[1],tilt_rad);
     }
 
-    for(int angle_deg = 0; angle_deg<360; angle_deg+=30){
-      //we now rotate around base_one
+    //if we would choos equidistant angles, rotations from higher tilts would be sampled more sparse.
+    //We tilt until 30 degrees. If we fully rotate with a tilted axis in a sphere of radius 1, we would
+    //get a circle with circumference of pi. Let's say we want to sample this region widh d_angle of
+    //10 degrees, we need 36 different angles and the points are on average 
+    //0.0872664625997 (arclength) apart. We can now calculate the circumference for every circle at
+    //a specific tilt and then have a look how many angles we need to get a similar d_arclength...
 
+    Real circumference = 2*3.141592654*std::sin(tilt_rad);
+    int num_angles = ceil(std::max(5,int(ceil(circumference/0.0872664625997))));
+
+    for(int angle_deg = 0; angle_deg<360; angle_deg+=20){
+      //we now rotate around base_one
+      
       if(tilt_deg==0){
         scan_axis = tilted_axis;
+        angle_rad = 0.0;
       }
       else{
         angle_rad = Real(angle_deg)/360*2*3.141592654;
         scan_axis = RotateAroundAxis(tilted_axis,base[0],angle_rad);
       }
 
-      std::cerr<<"scan axis: "<<scan_axis<<std::endl;
-      std::cerr<<"length: "<<geom::Length(scan_axis)<<std::endl;
-
       actual_solution = ScanAxis(atom_positions,transfer_energies,scan_axis);
 
       if(initial_solutions.size()==0){
-        parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.second,actual_solution.first.first,scan_axis);
+        parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.first,actual_solution.first.second,scan_axis);
         initial_solutions.push_back(std::make_pair(parameters,actual_solution.second));
       }
 
-      else if(initial_solutions.size()<10){
-        parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.second,actual_solution.first.first,scan_axis);
+      else if(initial_solutions.size()<20){
+        parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.first,actual_solution.first.second,scan_axis);
         for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
             i!=initial_solutions.end();++i){
           if(i->second > actual_solution.second){
@@ -762,7 +801,7 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
 
       else{
         if(actual_solution.second < initial_solutions.back().second){
-          parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.second,actual_solution.first.first,scan_axis);
+          parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.first,actual_solution.first.second,scan_axis);
           for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
               i!=initial_solutions.end();++i){
             if(i->second > actual_solution.second){
@@ -787,14 +826,16 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
 
   }
 
-  EnergyF en_f(axis,atom_positions, transfer_energies,0.9);
+  EnergyF en_f(normalized_axis, atom_positions, transfer_energies, 0.9);
+
 
   Eigen::Matrix<Real, 4, 1> lm_parameters;
   std::pair<FindMemParam,Real> temp;
+  ost::img::alg::LevenbergMarquardt<EnergyF,EnergyDF>::Results lm_result; 
 
-  for(int i=0;i<5;++i){
+  for(int i=0;i<20;++i){
 
-    temp = initial_solutions[i*2];
+    temp = initial_solutions[i];
 
     lm_parameters(0,0) = temp.first.tilt;
     lm_parameters(1,0) = temp.first.angle;
@@ -802,15 +843,21 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
     lm_parameters(3,0) = temp.first.pos;
 
     std::cout<<"initial solution: "<<std::endl;
+    std::cout<<axis<<std::endl;
     std::cout<<"tilt: "<<lm_parameters(0,0)<<" angle: "<<lm_parameters(1,0)<<" width: ";
     std::cout<<lm_parameters(2,0)<<" pos: "<<lm_parameters(3,0)<<std::endl;
+    std::cout<<"energy: "<<en_f(lm_parameters)(0,0)-80000<<std::endl;
 
     ost::img::alg::LevenbergMarquardt<EnergyF,EnergyDF> lm(en_f);
-    lm.minimize(&lm_parameters);
+    lm_result = lm.minimize(&lm_parameters);
 
     std::cout<<"minimized solution: "<<std::endl;
     std::cout<<"tilt: "<<lm_parameters(0,0)<<" angle: "<<lm_parameters(1,0)<<" width: ";
     std::cout<<lm_parameters(2,0)<<" pos: "<<lm_parameters(3,0)<<std::endl;
+    std::cout<<"energy: "<<en_f(lm_parameters)(0,0)-80000<<std::endl;
+    std::cout<<"lm iterations: "<<lm_result.iterations<<"  status: "<<lm_result.status<<std::endl;
+    std::cout<<"gradient magnitude: "<<lm_result.gradient_magnitude<<std::endl;
+    std::cout<<std::endl;
 
 
   }
@@ -839,7 +886,7 @@ std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_posit
   }
 
   int width = ceil(max_pos)-floor(min_pos);
-  std::cerr<<"total width: "<<width<<std::endl;
+
 
   //energies represents the energy profile along the axis
   Real energies[width];
@@ -871,14 +918,14 @@ std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_posit
     }
     if(energy<solution.second){ 
       Real center = min_pos+Real(window_width)/2.0; 
-      solution = std::make_pair(std::make_pair(center,window_width),energy);
+      solution = std::make_pair(std::make_pair(window_width,center),energy);
     }
     for(int pos = 1; pos<=width-window_width;++pos){
       energy-=energies[pos-1];
       energy+=energies[pos+window_width-1];
       if(energy<solution.second){
         Real center = min_pos+pos+Real(window_width)/2;
-        solution = std::make_pair(std::make_pair(center,window_width),energy);
+        solution = std::make_pair(std::make_pair(window_width,center),energy);
       }
     }
   }
@@ -892,133 +939,169 @@ void FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, st
 
   std::vector<geom::Vec3> search_axis;
   std::vector<geom::Vec3> atom_positions;
+  std::vector<geom::Vec3> base;
   std::vector<Real> transfer_energies;
   ost::mol::AtomHandleList a_list = ent.GetAtomList();
   ost::mol::EntityView ent_view = ent.CreateFullView();
 
 
-  std::cerr<<"look at size of that thing"<<std::endl;
-
-  Real max_x = std::numeric_limits<Real>::min();
-  Real min_x = std::numeric_limits<Real>::max();
-  Real max_y = std::numeric_limits<Real>::min();
-  Real min_y = std::numeric_limits<Real>::max();
-  Real max_z = std::numeric_limits<Real>::min();
-  Real min_z = std::numeric_limits<Real>::max();
-  geom::Vec3 pos;
-
-  for(ost::mol::AtomHandleList::iterator i = a_list.begin(); i!=a_list.end();++i){
-    pos = i->GetPos();
-    if(pos[0]<min_x) min_x=pos[0];
-    if(pos[0]>max_x) max_x=pos[0];
-    if(pos[1]<min_y) min_y=pos[1];
-    if(pos[1]>max_y) max_y=pos[1];
-    if(pos[2]<min_z) min_z=pos[2];
-    if(pos[2]>max_z) max_z=pos[2];
-  }
-
-  max_x += 3;
-  min_x -= 3;
-  max_y += 3;
-  min_y -= 3;
-  max_z += 3;
-  min_z -= 3;
-
-  geom::Vec3 min_vec(min_x,min_y,min_z);
-  geom::Vec3 max_vec(max_x,max_y,max_z);
-
-  std::cerr<<"min vec: "<<min_vec<<std::endl;
-  std::cerr<<"max vec: "<<max_vec<<std::endl;
+  //construct main search axis right now, we're simply taking the edge connecting
+  //vectors of a cube => there is an angle of around 48 degrees between the axis and
+  //we have to indroduce a tilt of 24 degees in the worst case...
 
 
-  geom::AlignedCuboid cuboid(min_vec,max_vec);
+  search_axis.push_back(geom::Vec3(1,1,1));
+  search_axis.push_back(geom::Vec3(1,-1,1));
+  search_axis.push_back(geom::Vec3(-1,-1,1));
+  search_axis.push_back(geom::Vec3(-1,1,1));
 
 
-  std::cerr<<"do grid stuff"<<std::endl;
-  SolvationGrid grid(cuboid, 0.5);
+  for(std::vector<geom::Vec3>::iterator ax_it = search_axis.begin(); ax_it!=search_axis.end(); ++ax_it){
 
-  //grid.AddView(return_view);
-  std::cerr<<"Add surface"<<std::endl;
-  grid.AddSurface(surf);
-  std::cerr<<"Add view"<<std::endl;
-  grid.AddView(ent_view);
-  std::cerr<<"floood"<<std::endl;
-  grid.Flood(); 
 
-  std::cerr<<"get the solvated view"<<std::endl;
-  ost::mol::EntityView solvated_view = grid.GetSolvatedView();
+    base = BuildNewBase(*ax_it);
 
-  //iterate through view and mark surface atoms with generic prop
+    std::cerr<<"look at size of that thing"<<std::endl;
 
-  ost::mol::AtomViewList a_view_list = solvated_view.GetAtomList();
+    Real max_one = std::numeric_limits<Real>::min();
+    Real min_one = std::numeric_limits<Real>::max();
+    Real max_two = std::numeric_limits<Real>::min();
+    Real min_two = std::numeric_limits<Real>::max();
+    Real max_three = std::numeric_limits<Real>::min();
+    Real min_three = std::numeric_limits<Real>::max();
+    Real extent_one;
+    Real extent_two;
+    Real extent_three;
+    geom::Vec3 pos;
 
-  for(ost::mol::AtomViewList::iterator i = a_view_list.begin(); i!=a_view_list.end();++i){
-    i->SetBoolProp("surface",true);
-  }
+    for(ost::mol::AtomHandleList::iterator i = a_list.begin(); i!=a_list.end();++i){
+     
+      pos = i->GetPos();
+      extent_one = geom::Dot(base[0],pos);
+      extent_two = geom::Dot(base[1],pos);
+      extent_three = geom::Dot(base[2],pos);
 
-  String element;
-  unsigned char bond_order;
-  ost::mol::BondHandleList bond_list;
-  bool assigned_energy=false;
-
-  ost::mol::AtomHandleList::iterator i;
-  std::vector<Real>::iterator j;
-
-  std::cerr<<"extract energies and atom positions"<<std::endl;
-
-  for(i=a_list.begin(), j=asa.begin();i!=a_list.end(),j!=asa.end();++i,++j){
-    //we don't even have to check for true, since prop is only set for surface atoms
-    if(!i->HasProp("surface")){
-      continue;
+      if(extent_one < min_one) min_one=extent_one;
+      if(extent_one > max_one) max_one=extent_one;
+      if(extent_two < min_two) min_two=extent_two;
+      if(extent_two > max_two) max_two=extent_two;
+      if(extent_three < min_three) min_three=extent_three;
+      if(extent_three > max_three) max_three=extent_three;
     }
-    atom_positions.push_back(i->GetPos());
-    element = i->GetElement();
-    if(element=="S") transfer_energies.push_back((*j)*(10));
-    else if(element=="N") transfer_energies.push_back((*j)*(53));
-    else if(element=="O") transfer_energies.push_back((*j)*(57));
-    else if(element=="C"){
-      assigned_energy=false;
-      bond_list = i->GetBondList();
-      for(ost::mol::BondHandleList::iterator k=bond_list.begin();k!=bond_list.end();++k){
-        bond_order = k->GetBondOrder();
-        if(bond_order>'1'){
-          transfer_energies.push_back((*j)*(-22.6));
-          assigned_energy=true;
-          break;;
-        }
+
+    max_one += 3;
+    min_one -= 3;
+    max_two += 3;
+    min_two -= 3;
+    max_three += 3;
+    min_three -= 3;
+
+    geom::Vec3 min_vec(min_one,min_two,min_three);
+    geom::Vec3 max_vec(max_one,max_two,max_three);
+
+    geom::AlignedCuboid cuboid(min_vec,max_vec);
+
+    std::cerr<<"do grid stuff"<<std::endl;
+    SolvationGrid grid(cuboid, 0.5);
+
+    //grid.AddView(return_view);
+    std::cerr<<"Add surface"<<std::endl;
+    grid.AddSurface(surf);
+    std::cerr<<"Add view"<<std::endl;
+    grid.AddView(ent_view);
+    std::cerr<<"floood"<<std::endl;
+    grid.Flood(); 
+
+    std::cerr<<"get the solvated view"<<std::endl;
+    ost::mol::EntityView solvated_view = grid.GetSolvatedView();
+
+    //iterate through view and mark surface atoms with generic prop
+
+    ost::mol::AtomViewList a_view_list = solvated_view.GetAtomList();
+
+    for(ost::mol::AtomViewList::iterator i = a_view_list.begin(); i!=a_view_list.end();++i){
+      i->SetBoolProp("surface",true);
+    }
+
+    String element;
+    unsigned char bond_order;
+    ost::mol::BondHandleList bond_list;
+    bool assigned_energy=false;
+
+    ost::mol::AtomHandleList::iterator i;
+    std::vector<Real>::iterator j;
+
+    transfer_energies.clear();
+    atom_positions.clear();
+
+    std::cerr<<"extract energies and atom positions"<<std::endl;
+
+    for(i=a_list.begin(), j=asa.begin();i!=a_list.end(),j!=asa.end();++i,++j){
+      //we don't even have to check for true, since prop is only set for surface atoms
+      if(!i->HasProp("surface")){
+        continue;
       }
-      if(!assigned_energy) transfer_energies.push_back((*j)*(-19));
+      atom_positions.push_back(i->GetPos());
+      element = i->GetElement();
+      if(element=="S") transfer_energies.push_back((*j)*(10));
+      else if(element=="N") transfer_energies.push_back((*j)*(53));
+      else if(element=="O") transfer_energies.push_back((*j)*(57));
+      else if(element=="C"){
+        assigned_energy=false;
+        bond_list = i->GetBondList();
+        for(ost::mol::BondHandleList::iterator k=bond_list.begin();k!=bond_list.end();++k){
+          bond_order = k->GetBondOrder();
+          if(bond_order>'1'){
+            transfer_energies.push_back((*j)*(-22.6));
+            assigned_energy=true;
+            break;;
+          }
+        }
+        if(!assigned_energy) transfer_energies.push_back((*j)*(-19));
+      }
+      else if(element=="H") continue;
+      else throw("fuuuuuuck");
     }
-    else if(element=="H") continue;
-    else throw("fuuuuuuck");
+
+    std::cerr<<"minimize along axis"<<std::endl;
+
+    MinimizeAlongAxis(atom_positions,transfer_energies,*ax_it);
+
+    std::cerr<<std::endl;
+    std::cerr<<std::endl;
+    std::cerr<<std::endl;
   }
-
-  std::cerr<<"minimize along axis"<<std::endl;
-
-  MinimizeAlongAxis(atom_positions,transfer_energies,geom::Vec3(0,0,1));
 
 }
 
 EnergyF::FMatrixType EnergyF::operator()(const Eigen::Matrix<Real, 4, 1>& x) const{
 
   FMatrixType result;
+  result(0,0) = 0.0;
   geom::Vec3 tilted_axis = axis;
 
   tilted_axis = RotateAroundAxis(tilted_axis, base[1], x(0,0));
   tilted_axis = RotateAroundAxis(tilted_axis, base[0], x(1,0));
   
+
   std::vector<Real>::const_iterator e_it = transfer_energies.begin();
   std::vector<geom::Vec3>::const_iterator pos_it = positions.begin();
 
   Real distance_to_center;
   Real pos_on_axis;
   Real half_width = x(2,0)/2.0;
+  Real exponent;
+  Real energy;
 
   for(;pos_it!=positions.end() && e_it!=transfer_energies.end();++pos_it,++e_it){
     pos_on_axis = geom::Dot(tilted_axis,*pos_it);
     distance_to_center = std::abs(x[3]-pos_on_axis);
-    result(0,0)+=(1.0/(1.0+std::exp((distance_to_center-half_width)/lambda))*(*e_it));
+    exponent = (distance_to_center-half_width)/lambda;
+    energy = (1.0/(1.0+std::exp(exponent)))*(*e_it);
+    result(0,0)=result(0,0)+energy;
   }
+
+  result(0,0)+=80000;
 
   return result;
 }
@@ -1047,8 +1130,8 @@ Eigen::Matrix<Real,1,4> EnergyDF::operator()(const Eigen::Matrix<Real, 4, 1>& x)
 
   parameter1=x;
   parameter2=x;
-  parameter1(2,0)+=d_pos;
-  parameter2(2,0)-=d_pos;
+  parameter1(3,0)+=d_pos;
+  parameter2(3,0)-=d_pos;
   result(0,3) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_pos);
   
   return result;

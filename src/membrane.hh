@@ -4,6 +4,9 @@
 #include <vector>
 #include <numeric>
 #include <limits>
+#include <iostream>
+#include <cstdio>
+#include <ctime>
 #include <qmean/module_config.hh>
 #include <ost/mol/surface_handle.hh>
 #include <ost/img/image_handle.hh>
@@ -107,8 +110,8 @@ struct EnergyF {
 
 struct EnergyDF {
 
-   EnergyDF(const EnergyF& f): function(f),d_tilt(0.01),d_angle(0.01),
-                         d_width(0.01),d_pos(0.01) { }
+   EnergyDF(const EnergyF& f): function(f),d_tilt(0.1),d_angle(0.1),
+                         d_width(0.2),d_pos(0.2) { }
 
    Eigen::Matrix<Real,1,4> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 
