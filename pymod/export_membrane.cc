@@ -8,11 +8,10 @@
 using namespace boost::python;
 
 
-void FindMembraneWrapper(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, list& asa){
+FindMemParam FindMembraneWrapper(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, list& asa){
   std::vector<Real> real_asa = ListToVec<Real>(asa);
-  FindMembrane(ent, surf, real_asa);
+  return FindMembrane(ent, surf, real_asa);
 }
-
 
 
 
@@ -20,6 +19,15 @@ void FindMembraneWrapper(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& s
 
 void export_Membrane()
 {
+
+  class_<FindMemParam>("FindMemParam", no_init)
+    .def_readwrite("tilt", &FindMemParam::tilt)
+    .def_readwrite("angle", &FindMemParam::angle)
+    .def_readwrite("width", &FindMemParam::width)
+    .def_readwrite("pos", &FindMemParam::pos)
+    .def_readwrite("axis", &FindMemParam::axis)
+    .def_readwrite("energy", &FindMemParam::energy)
+  ;
 
   class_<SolvationGrid>("SolvationGrid", init<geom::AlignedCuboid&, Real>())
     .def("GetOrigin", &SolvationGrid::GetOrigin)

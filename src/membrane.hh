@@ -30,13 +30,14 @@ typedef boost::shared_ptr<SolvationGrid> SolvationGridPtr;
 
 struct FindMemParam{
   FindMemParam() { }
-  FindMemParam(Real t, Real a, Real w, Real p, geom::Vec3 ax):
-              tilt(t), angle(a), width(w), pos(p),axis(ax) { }
+  FindMemParam(Real t, Real a, Real w, Real p, geom::Vec3 ax,Real e):
+              tilt(t), angle(a), width(w), pos(p),axis(ax),energy(e) { }
   Real tilt;
   Real angle;
   Real width;
   Real pos;
   geom::Vec3 axis;
+  Real energy;
 };
 
 class DLLEXPORT_QMEAN SolvationGrid {
@@ -126,12 +127,12 @@ ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, co
 
 
 
-void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis, Real lambda);
+FindMemParam MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis, Real lambda);
 
 geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle);
 
 std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis, Real lambda);
 
-void FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa);
+FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa);
 
 
