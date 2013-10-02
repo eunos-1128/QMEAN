@@ -723,7 +723,7 @@ std::vector<geom::Vec3> BuildNewBase(geom::Vec3& x){
   return base; 
 }
 
-void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis){
+void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis, Real lambda){
 
 
   geom::Vec3 normalized_axis = geom::Normalize(axis);
@@ -745,10 +745,14 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
 
   FindMemParam parameters;
 
+  std::clock_t start;
+  double duration;
+
+  start = std::clock();
+
   for(int tilt_deg = 0; tilt_deg<=30; tilt_deg+=5){
 
     //the tilt is a rotation around base_two
-
     if(tilt_deg == 0){
       tilted_axis = base[0];
       tilt_rad = 0.0;
@@ -761,14 +765,17 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
     //if we would choos equidistant angles, rotations from higher tilts would be sampled more sparse.
     //We tilt until 30 degrees. If we fully rotate with a tilted axis in a sphere of radius 1, we would
     //get a circle with circumference of pi. Let's say we want to sample this region widh d_angle of
-    //10 degrees, we need 36 different angles and the points are on average 
-    //0.0872664625997 (arclength) apart. We can now calculate the circumference for every circle at
+    //5 degrees, we need 72 different angles and the points are on average 
+    //0.0436332312999 (arclength) apart. We can now calculate the circumference for every circle at
     //a specific tilt and then have a look how many angles we need to get a similar d_arclength...
 
     Real circumference = 2*3.141592654*std::sin(tilt_rad);
-    int num_angles = ceil(std::max(5,int(ceil(circumference/0.0872664625997))));
+    int num_angles = ceil(std::max(5,int(ceil(circumference/0.0436332312999))));
+    Real d_angle = 2*3.141592654/num_angles;
+    std::cerr<<std::endl;
+    std::cerr<<tilt_deg<<std::endl;
 
-    for(int angle_deg = 0; angle_deg<360; angle_deg+=20){
+    for(int i = 0; i<num_angles; ++i){
       //we now rotate around base_one
       
       if(tilt_deg==0){
@@ -776,11 +783,11 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
         angle_rad = 0.0;
       }
       else{
-        angle_rad = Real(angle_deg)/360*2*3.141592654;
+        angle_rad = i*d_angle;
         scan_axis = RotateAroundAxis(tilted_axis,base[0],angle_rad);
       }
-
-      actual_solution = ScanAxis(atom_positions,transfer_energies,scan_axis);
+      std::cerr<<angle_rad<<" ";
+      actual_solution = ScanAxis(atom_positions,transfer_energies,scan_axis,lambda);
 
       if(initial_solutions.size()==0){
         parameters = FindMemParam(tilt_rad,angle_rad,actual_solution.first.first,actual_solution.first.second,scan_axis);
@@ -818,6 +825,10 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
       }
     }
   }
+
+  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+
+  std::cout<<"initial gridscan needed "<<duration<<" s"<<std::endl;
 
   
   for(std::vector<std::pair<FindMemParam,Real> >::iterator i= initial_solutions.begin();
@@ -866,7 +877,7 @@ void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real
 
 }
 
-std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis){
+std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis, Real lambda){
   
   geom::Vec3 normalized_axis = geom::Normalize(axis);
   std::vector<Real> pos_on_axis;
@@ -1065,7 +1076,7 @@ void FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, st
 
     std::cerr<<"minimize along axis"<<std::endl;
 
-    MinimizeAlongAxis(atom_positions,transfer_energies,*ax_it);
+    MinimizeAlongAxis(atom_positions,transfer_energies,*ax_it,0.9);
 
     std::cerr<<std::endl;
     std::cerr<<std::endl;

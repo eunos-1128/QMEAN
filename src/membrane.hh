@@ -110,8 +110,8 @@ struct EnergyF {
 
 struct EnergyDF {
 
-   EnergyDF(const EnergyF& f): function(f),d_tilt(0.1),d_angle(0.1),
-                         d_width(0.2),d_pos(0.2) { }
+   EnergyDF(const EnergyF& f): function(f),d_tilt(0.05),d_angle(0.05),
+                         d_width(0.1),d_pos(0.1) { }
 
    Eigen::Matrix<Real,1,4> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 
@@ -126,11 +126,11 @@ ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, co
 
 
 
-void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis);
+void MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis, Real lambda);
 
 geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle);
 
-std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis);
+std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis, Real lambda);
 
 void FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa);
 
