@@ -85,13 +85,27 @@ class ReferenceSet:
     cutoff=1
     p=self.data.Plot('num_residues', score_name, x_range=(0, 600), style=style,
                      clear=False, legend='|Z-score|<1',
-                     y_range=(-1.0, 1.5), y_title=self.nice_titles[score_name],
+                     y_range=(-0.5, 1.3), y_title=self.nice_titles[score_name],
                      x_title='Protein Size (Residues)', color=(0.3,0.3,0.3),
                      title='Comparison with Non-redundant Set of PDB Structures',
                      plot_if=_SelectValues)
-    p.plot([num_residues], [qmean_norm_score], 'r*', label='model',
+    p.plot([min(num_residues,595)], [qmean_norm_score], 'r*', label='model',
            markeredgecolor='white', markersize=10)
-    p.legend(loc=4, markerscale=2,numpoints=1)
+    p.legend(loc=4, markerscale=2,numpoints=1, frameon=False)
+
+    #these things have already been set, in the table plot class
+    #Nevertheless we overwrite it to make it consistent with the 
+    #style of other plots
+    p.title('Comparison with Non-redundant Set of PDB Structures',
+             size='x-large', fontweight = 'normal')
+    p.xlabel('Protein Size (Residues)', size='large',fontweight='normal')
+    p.ylabel(self.nice_titles[score_name],size='large',fontweight='normal')
+
+    if(num_residues>600):
+      text = 'Number of residues (%i) has been\n'%(num_residues)
+      text += 'capped at 600 for visualisation\nand Z-score calculation!'
+      p.text(35,-0.365,text,color='black',bbox=dict(facecolor='red',alpha=0.3,edgecolor='black',
+                                                  boxstyle='round,pad=1'))
 
     return p
 
