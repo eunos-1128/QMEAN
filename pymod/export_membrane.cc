@@ -25,8 +25,9 @@ void export_Membrane()
     .def_readwrite("angle", &FindMemParam::angle)
     .def_readwrite("width", &FindMemParam::width)
     .def_readwrite("pos", &FindMemParam::pos)
-    .def_readwrite("axis", &FindMemParam::axis)
+    .def_readwrite("transformation", &FindMemParam::transform)
     .def_readwrite("energy", &FindMemParam::energy)
+    .def_readonly("membrane_axis", &FindMemParam::GetMembraneAxis)
   ;
 
   class_<SolvationGrid>("SolvationGrid", init<geom::AlignedCuboid&, Real>())
@@ -43,4 +44,6 @@ void export_Membrane()
 
   def("FillMembraneDummies",&FillMembraneDummies,(arg("cuboid"),arg("surface"),arg("solvation_grid_bin_size")=0.5,arg("density")=0.035));
   def("FindMembrane",&FindMembraneWrapper,(arg("ent"),arg("surf"),arg("asa")));
+  def("TransformSurface",&TransformSurface,(arg("surf"),arg("transform")));
+
 }

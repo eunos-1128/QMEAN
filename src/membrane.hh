@@ -15,6 +15,7 @@
 #include <ost/img/point.hh>
 #include <ost/img/size.hh>
 #include <ost/mol/atom_handle.hh>
+#include <ost/geom/transform.hh>
 
 #include <ost/img/alg/levenberg_marquardt.h>
 
@@ -30,13 +31,18 @@ typedef boost::shared_ptr<SolvationGrid> SolvationGridPtr;
 
 struct FindMemParam{
   FindMemParam() { }
-  FindMemParam(Real t, Real a, Real w, Real p, geom::Vec3 ax,Real e):
-              tilt(t), angle(a), width(w), pos(p),axis(ax),energy(e) { }
+
+  geom::Vec3 GetMembraneAxis(){
+    geom::Vec3 transformed_x = transform.Apply(geom::Vec3(1.0,0.0,0.0));
+    geom::Vec3 transformed_y = transform.Apply(geom::Vec3(0.0,1.0,0.0));
+    return geom::Normalize(geom::Cross(transformed_x,transformed_y));
+    //return transform.Apply(geom::Vec3(0.0,0.0,1.0));
+  }
   Real tilt;
   Real angle;
   Real width;
   Real pos;
-  geom::Vec3 axis;
+  geom::Transform transform;
   Real energy;
 };
 
@@ -90,12 +96,12 @@ private:
 };
 
 
-std::vector<geom::Vec3> BuildNewBase(geom::Vec3& axis);
+geom::Vec3 GetTiltAxis(geom::Vec3& axis);
 
 struct EnergyF {
-  EnergyF(geom::Vec3& a, std::vector<geom::Vec3>& p, std::vector<Real>& t_e, Real l):
-          axis(a),positions(p),transfer_energies(t_e),
-          base(BuildNewBase(a)),lambda(l) { }
+  EnergyF(std::vector<geom::Vec3>& p, std::vector<Real>& t_e, Real l):
+          positions(p),transfer_energies(t_e), axis(geom::Vec3(0.0,0.0,1.0)),
+          tilt_axis(geom::Vec3(1.0,0.0,0.0)), lambda(l) { }
 
   typedef Eigen::Matrix<Real, 4, 1> XMatrixType;
   typedef Eigen::Matrix<Real, 1, 1> FMatrixType;
@@ -103,9 +109,9 @@ struct EnergyF {
   Eigen::Matrix<Real,1,1> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 
   geom::Vec3 axis;
+  geom::Vec3 tilt_axis;
   Real lambda;
   std::vector<geom::Vec3> positions;
-  std::vector<geom::Vec3> base;
   std::vector<Real> transfer_energies;
 };
 
@@ -127,7 +133,7 @@ ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, co
 
 
 
-FindMemParam MinimizeAlongAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis, Real lambda);
+FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies,geom::Vec3& axis, Real lambda);
 
 geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle);
 
@@ -135,4 +141,4 @@ std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_posit
 
 FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa);
 
-
+ost::mol::SurfaceHandle TransformSurface(ost::mol::SurfaceHandle& s, geom::Transform& t);
