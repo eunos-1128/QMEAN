@@ -247,19 +247,57 @@ class LocalResult:
 
   def PlotlDDTProfile(self, chain=None):
 
+    plt.clf()
+
+    color_scheme = ['#D55E00','#0072B2','#F0E442','#009E73','#56B4E9','#E69F00','#999999','#000000']
+
+    chain_idx = self.score_table.GetColIndex('chain')
+    rnum_idx = self.score_table.GetColIndex('rnum')
+    lddt_idx = self.score_table.GetColIndex('lDDT')
+
+    chains = list()
+    chains.append(self.score_table.rows[0][chain_idx])
+
+    for r in self.score_table.rows:
+      if r[chain_idx] != chains[-1]:
+        chains.append(r[chain_idx])
+
+
     if chain == None:
-      return self.score_table.Plot('rnum','lDDT', style='-r',
-                                   x_title='Residue Number', 
-                                   y_title='Predicted lDDT',
-                                   title='Local Model Quality',
-                                   y_range = [-0.1,1.1], linewidth=2.0)
+      for i,ch in enumerate(chains):
+        chain_tab = self.score_table.Filter(chain=ch)
+        
+        res_num = list()
+        lddt = list()
+
+        for r in chain_tab.rows:
+          res_num.append(r[rnum_idx])
+          lddt.append(r[lddt_idx])
+
+        plt.plot(res_num,lddt,color=color_scheme[i],linewidth=2.0)
+
+      plt.ylim((-0.1,1.1))
+
+      return plt
+         
     else:
-      tab = self.score_table.Filter(chain=chain)
-      return tab.Plot('rnum','lDDT', style='-r',
-                       x_title='Residue Number', 
-                       y_title='Predicted lDDT',
-                       title='Local Model Quality',
-                       y_range = [-0.1,1.1], linewidth=2.0)
+      chain_tab = self.score_table.Filter(chain=chain)
+
+      res_num = list()
+      lddt = list()
+
+      for r in chain_tab.rows:
+        res_num.append(r[rnum_idx])
+        lddt.append(r[lddt_idx])
+
+      color_idx = chains.index(chain)
+
+      plt.plot(res_num,lddt,color=color_scheme[color_idx],linewidth=2.0)
+
+      plt.ylim((-0.1,1.1))
+
+
+
 
 
   @staticmethod
@@ -392,6 +430,8 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
       for ch in model.chains:
         p=local_result.PlotlDDTProfile(chain=ch.name)
         p.savefig(os.path.join(plot_dir,'local_lDDT_%s.png' % (ch.name)))
+      p=local_result.PlotlDDTProfile()
+      p.savefig(os.path.join(plot_dir,'local_lDDT.png'))
     results.append(local_result)
 
   return results
