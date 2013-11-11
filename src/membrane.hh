@@ -32,17 +32,16 @@ typedef boost::shared_ptr<SolvationGrid> SolvationGridPtr;
 struct FindMemParam{
   FindMemParam() { }
 
-  geom::Vec3 GetMembraneAxis(){
-    geom::Vec3 transformed_x = transform.Apply(geom::Vec3(1.0,0.0,0.0));
-    geom::Vec3 transformed_y = transform.Apply(geom::Vec3(0.0,1.0,0.0));
-    return geom::Normalize(geom::Cross(transformed_x,transformed_y));
-    //return transform.Apply(geom::Vec3(0.0,0.0,1.0));
-  }
+  geom::Vec3 GetMembraneAxis();
+
+  geom::Vec3 GetTiltAxis();
+
   Real tilt;
   Real angle;
   Real width;
   Real pos;
-  geom::Transform transform;
+  Real euler_one;
+  Real euler_two;
   Real energy;
 };
 
@@ -53,6 +52,8 @@ public:
   SolvationGrid(geom::AlignedCuboid cub, Real bin_size);
 
   void AddView(const ost::mol::EntityView& view) { view_ = view; };
+
+  void AddView(const ost::mol::EntityHandle& handle) { this->AddView(handle.CreateFullView()); }
 
   void AddSurface(const ost::mol::SurfaceHandle& surface);
 
@@ -99,9 +100,9 @@ private:
 geom::Vec3 GetTiltAxis(geom::Vec3& axis);
 
 struct EnergyF {
-  EnergyF(std::vector<geom::Vec3>& p, std::vector<Real>& t_e, Real l):
+  EnergyF(std::vector<geom::Vec3>& p, std::vector<Real>& t_e, Real l, Real o):
           positions(p),transfer_energies(t_e), axis(geom::Vec3(0.0,0.0,1.0)),
-          tilt_axis(geom::Vec3(1.0,0.0,0.0)), lambda(l) { }
+          tilt_axis(geom::Vec3(1.0,0.0,0.0)), lambda(l), offset(o) { }
 
   typedef Eigen::Matrix<Real, 4, 1> XMatrixType;
   typedef Eigen::Matrix<Real, 1, 1> FMatrixType;
@@ -113,12 +114,19 @@ struct EnergyF {
   Real lambda;
   std::vector<geom::Vec3> positions;
   std::vector<Real> transfer_energies;
+
+  //define an offset parameter...
+  //The levenberg-marquardt algorithm is designed to minimize an error function,
+  //aims to converge towards zero. The offset parameter gets added at the end of
+  //the energy calculation to get a positive result => forces algorithm to minimize
+
+  Real offset;
 };
 
 struct EnergyDF {
 
-   EnergyDF(const EnergyF& f): function(f),d_tilt(0.05),d_angle(0.05),
-                         d_width(0.1),d_pos(0.1) { }
+   EnergyDF(const EnergyF& f): function(f),d_tilt(0.02),d_angle(0.02),
+                         d_width(0.2),d_pos(0.2) { }
 
    Eigen::Matrix<Real,1,4> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 
@@ -137,7 +145,7 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
 
 geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle);
 
-std::pair<std::pair<int,int>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis, Real lambda);
+std::pair<std::pair<Real,Real>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis);
 
 FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa);
 

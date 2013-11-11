@@ -13,6 +13,9 @@ FindMemParam FindMembraneWrapper(ost::mol::EntityHandle& ent, ost::mol::SurfaceH
   return FindMembrane(ent, surf, real_asa);
 }
 
+void AddViewEntity(SolvationGrid& g, ost::mol::EntityHandle& e) { g.AddView(e); }
+void AddViewView(SolvationGrid& g, ost::mol::EntityView& v) { g.AddView(v); }
+
 
 
 
@@ -25,14 +28,17 @@ void export_Membrane()
     .def_readwrite("angle", &FindMemParam::angle)
     .def_readwrite("width", &FindMemParam::width)
     .def_readwrite("pos", &FindMemParam::pos)
-    .def_readwrite("transformation", &FindMemParam::transform)
+    .def_readwrite("euler_one", &FindMemParam::euler_one)
+    .def_readwrite("euler_two", &FindMemParam::euler_two)
     .def_readwrite("energy", &FindMemParam::energy)
     .def_readonly("membrane_axis", &FindMemParam::GetMembraneAxis)
+    .def_readonly("tilt_axis", &FindMemParam::GetTiltAxis)
   ;
 
   class_<SolvationGrid>("SolvationGrid", init<geom::AlignedCuboid&, Real>())
     .def("GetOrigin", &SolvationGrid::GetOrigin)
-    .def("AddView", &SolvationGrid::AddView, (arg("view")))
+    .def("AddView", &AddViewEntity, (arg("handle")))
+    .def("AddView", &AddViewView, (arg("view")))
     .def("AddSurface", &SolvationGrid::AddSurface, (arg("surface")))
     .def("Flood", &SolvationGrid::Flood)
     .def("IsFilled", &SolvationGrid::IsFilled, (arg("pos")))
