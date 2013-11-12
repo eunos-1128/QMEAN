@@ -339,9 +339,9 @@ void SolvationGrid::CalculateSolvatedSurface(){
   }
 
   solvated_surf_ = ost::mol::CreateSurface();
+  solvated_vertices_.clear();
 
   int level,x,y;
-
 
   std::clock_t start;
   double duration;
@@ -427,6 +427,7 @@ void SolvationGrid::CalculateSolvatedSurface(){
 
     added_vertex = false;
 
+
     tri = surf_.GetTri(*it);
     u0 = surf_.GetVertex(tri.v0).position;
     u1 = surf_.GetVertex(tri.v1).position;
@@ -463,6 +464,9 @@ void SolvationGrid::CalculateSolvatedSurface(){
               id2 = solvated_surf_.AddVertex(v2);
               solvated_surf_.AddTri(id0, id1, id2);
               added_vertex = true;
+              solvated_vertices_.push_back(id0);
+              solvated_vertices_.push_back(id1);
+              solvated_vertices_.push_back(id2);
               break;
             }
           }
@@ -771,8 +775,10 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
       actual_solution = ScanAxis(atom_positions,transfer_energies,scan_axis);
 
       if(initial_solutions.size()==0){
-        parameters.angle = angle_rad;
+        parameters.axis = normalized_axis;
+        parameters.tilt_axis = tilt_axis;
         parameters.tilt = tilt_rad;
+        parameters.angle = angle_rad;
         parameters.width = actual_solution.first.first;
         parameters.pos = actual_solution.first.second;
         parameters.energy = actual_solution.second;
@@ -784,8 +790,10 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
 
       if(initial_solutions.size()<10){
 
-        parameters.angle = angle_rad;
+        parameters.axis = normalized_axis;
+        parameters.tilt_axis = tilt_axis;
         parameters.tilt = tilt_rad;
+        parameters.angle = angle_rad;
         parameters.width = actual_solution.first.first;
         parameters.pos = actual_solution.first.second;
         parameters.energy = actual_solution.second;
@@ -807,8 +815,10 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
       }
 
       if(actual_solution.second < initial_solutions.back().energy){
-        parameters.angle = angle_rad;
+        parameters.axis = normalized_axis;
+        parameters.tilt_axis = tilt_axis;
         parameters.tilt = tilt_rad;
+        parameters.angle = angle_rad;
         parameters.width = actual_solution.first.first;
         parameters.pos = actual_solution.first.second;
         parameters.energy = actual_solution.second;
@@ -832,7 +842,7 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
 
   //go through the initial solutions found by simple scanning and run
   //levenberg marquardt minimization
-  for(int i=0;i<10;++i){
+  for(int i=0;i<5;++i){
 
     temp = initial_solutions[i];
 
@@ -863,6 +873,8 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
       mem_param.width = lm_parameters(2,0);
       mem_param.pos = lm_parameters(3,0);
       mem_param.energy = minimized_energy;
+      mem_param.axis = temp.axis;
+      mem_param.tilt_axis = temp.tilt_axis;
       final_solution = mem_param;
     }
   }
@@ -937,6 +949,9 @@ std::pair<std::pair<Real,Real>, Real> ScanAxis(std::vector<geom::Vec3>& atom_pos
 
 FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa){
 
+  ost::io::IOProfile io_profile;
+
+
   ost::mol::EntityHandle rotated_ent;
   ost::mol::SurfaceHandle rotated_surf;
 
@@ -949,37 +964,94 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
   final_solution.energy = std::numeric_limits<Real>::max();
 
   //The whole grid stuff for defining surface atoms only works along the
-  //z-axis. We therefore have to transform the structure. The euler transform 
-  //is used for this task. Euler one is the rotation around z-axis and euler two
-  //is the rotation around the rotated y axis.
-  std::vector<Real> euler_one;
-  std::vector<Real> euler_two;
+  //z-axis. We therefore have to transform the structure. We use a rotation 
+  //around the z-axis with subsequent rotation around the x-axis for this task
+  std::vector<Real> z_rotations;
+  std::vector<Real> x_rotations;
 
-  euler_one.push_back(0.0);
-  euler_one.push_back(M_PI/4);
-  euler_one.push_back(3*M_PI/4);
-  euler_one.push_back(5*M_PI/4);
-  euler_one.push_back(7*M_PI/4);
+  z_rotations.push_back(0.0);
+  z_rotations.push_back(0.0);
+  z_rotations.push_back(1*(2*M_PI/5));
+  z_rotations.push_back(2*(2*M_PI/5));
+  z_rotations.push_back(3*(2*M_PI/5));
+  z_rotations.push_back(4*(2*M_PI/5));
 
-  euler_two.push_back(0.0);
-  euler_two.push_back(M_PI/4);
-  euler_two.push_back(M_PI/4);
-  euler_two.push_back(M_PI/4);
-  euler_two.push_back(M_PI/4);
-
+  
+  x_rotations.push_back(0.0);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  
   geom::Transform transform;
-  geom::Mat3 euler;
+  geom::Mat3 z_rot_matrix, x_rot_matrix, rot_matrix;
+  Real z_rot, x_rot;
 
 
-  for(int t_counter = 0; t_counter<euler_one.size();++t_counter){
+  //we look, which vertex is associated to which atom...
+  //this will speed up some calculations later on
+  std::map<ost::mol::SurfaceVertexID,int> vertex_atom_mapper;
+
+  ost::mol::SurfaceVertexIDList v_list = surf.GetVertexIDList();
+  ost::mol::SurfaceVertex vert;
+  ost::mol::AtomHandleList a_list;
+
+  for(ost::mol::SurfaceVertexIDList::iterator it=v_list.begin();it!=v_list.end();++it){
+    vert = surf.GetVertex(*it);
+    a_list = ent.FindWithin(vert.position,3.0);
+    if(a_list.empty()) continue;
+    ost::mol::AtomHandleList::iterator ait=a_list.begin();
+    Real best_dist2 = geom::Length2(ait->GetPos()-vert.position);
+    ost::mol::AtomHandle best_atom = *ait;
+    ++ait;
+    for(;ait!=a_list.end();++ait) {
+      Real dist2 = geom::Length2(ait->GetPos()-vert.position);
+      if(dist2<best_dist2) {
+        best_dist2=dist2;
+        best_atom = *ait;
+      }
+    }
+    best_atom.SetIntProp("surface_vertex",*it);
+  }
+
+  a_list = ent.GetAtomList();
+
+  for(int i = 0; i < a_list.size(); ++i){
+    if(a_list[i].HasProp("surface_vertex")){
+      vertex_atom_mapper[a_list[i].GetIntProp("surface_vertex")] = i;
+    }
+  }
+
+
+  for(int t_counter = 0; t_counter<z_rotations.size();++t_counter){
 
     //rotate entity and surface to start a search around the global z-axis
     rotated_ent = ent.Copy();
     ost::mol::XCSEditor ed = rotated_ent.EditXCS();
-    euler = geom::EulerTransformation(0.0,euler_two[t_counter],euler_one[t_counter]);
-    transform.SetRot(euler);
+
+    z_rot = z_rotations[t_counter];
+    x_rot = x_rotations[t_counter];
+
+    z_rot_matrix = geom::Mat3(std::cos(z_rot),-std::sin(z_rot),0.0,
+                              std::sin(z_rot),std::cos(z_rot),0.0,
+                              0.0, 0.0, 1.0);
+
+    x_rot_matrix = geom::Mat3(1.0, 0.0, 0.0,
+                              0.0, std::cos(x_rot),-std::sin(x_rot),
+                              0.0,std::sin(x_rot),std::cos(x_rot));
+
+    rot_matrix = z_rot_matrix*x_rot_matrix;
+
+    std::cerr<<rot_matrix;
+
+    
+    transform.SetRot(rot_matrix);
+
     ed.ApplyTransform(transform.GetMatrix());
     rotated_surf = TransformSurface(surf, transform);
+
+
 
     //to define the grid size later on, we have to find the structures extent
     ost::mol::AtomHandleList a_list = rotated_ent.GetAtomList();
@@ -1016,6 +1088,8 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
 
     //Add the rotated surface and the rotated structure to the grid
     grid.AddSurface(rotated_surf);
+
+    /*
     grid.AddView(rotated_ent);
 
     //finally flood it. A flood fill algorithm is used along the z-axis
@@ -1033,6 +1107,24 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
     for(ost::mol::AtomViewList::iterator i = a_view_list.begin(); i!=a_view_list.end();++i){
       i->SetBoolProp("surface",true);
     }
+    */
+
+    grid.Flood();
+    grid.CalculateSolvatedSurface();
+    v_list = grid.GetSolvatedVertices();
+    a_list = rotated_ent.GetAtomList();
+
+    for(ost::mol::SurfaceVertexIDList::iterator i = v_list.begin();
+        i != v_list.end(); ++i){
+      a_list[vertex_atom_mapper[*i]].SetBoolProp("surface",true);
+    }
+
+    std::stringstream ss;
+    ss  << "test" << t_counter << ".pdb";
+
+    ost::io::PDBWriter writer(ss.str(), io_profile);
+
+    writer.Write(rotated_ent);
 
     String element;
     unsigned char bond_order;
@@ -1078,8 +1170,10 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
     //Check whether newly calculated minimum is better than global solution
     if(actual_solution.energy < final_solution.energy){
       final_solution = actual_solution;
-      final_solution.euler_one = euler_one[t_counter];
-      final_solution.euler_two = euler_two[t_counter];
+      //we still have to correct the membrane and tilt axis for the initial transform
+      final_solution.tilt_axis = transform.ApplyInverse(final_solution.tilt_axis);
+      final_solution.axis = transform.ApplyInverse(final_solution.axis);
+
     }
   }
   return final_solution;
@@ -1144,31 +1238,17 @@ Eigen::Matrix<Real,1,4> EnergyDF::operator()(const Eigen::Matrix<Real, 4, 1>& x)
   parameter1(3,0)+=d_pos;
   parameter2(3,0)-=d_pos;
   result(0,3) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_pos);
-
-  std::cerr<<"parameters: ";
-  std::cerr<<x(0,0)<<" "<<x(1,0)<<" "<<x(2,0)<<" "<<x(3,0)<<std::endl;
-  std::cerr<<"derivative: ";
-  std::cerr<<result(0,0)<<" "<<result(0,1)<<" "<<result(0,2)<<" "<<result(0,3)<<std::endl;
   
   return result;
 }
 
 
-geom::Vec3 FindMemParam::GetMembraneAxis(){
+geom::Vec3 FindMemParam::GetMembraneAxis(){  
 
-  geom::Vec3 y(0,1,0);
-  geom::Vec3 z(0,0,1);  
-  geom::Vec3 temp = RotateAroundAxis(y,z,euler_one);
-  temp = RotateAroundAxis(z,temp,-euler_two);
-  return RotateAroundAxis(temp,z,-euler_one);
+  geom::Vec3 result = RotateAroundAxis(axis,tilt_axis,tilt);
+  result = RotateAroundAxis(result,axis,angle);
+  return result;
+
 }
 
-geom::Vec3 FindMemParam::GetTiltAxis(){
 
-  geom::Vec3 y(0,1,0);
-  geom::Vec3 z(0,0,1);
-  geom::Vec3 x(1,0,0);  
-  geom::Vec3 temp = RotateAroundAxis(y,z,euler_one); 
-  temp = RotateAroundAxis(x,temp,-euler_two);
-  return RotateAroundAxis(temp,z,-euler_one);
-}

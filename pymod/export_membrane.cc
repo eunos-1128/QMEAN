@@ -24,15 +24,14 @@ void export_Membrane()
 {
 
   class_<FindMemParam>("FindMemParam", no_init)
-    .def_readwrite("tilt", &FindMemParam::tilt)
-    .def_readwrite("angle", &FindMemParam::angle)
-    .def_readwrite("width", &FindMemParam::width)
-    .def_readwrite("pos", &FindMemParam::pos)
-    .def_readwrite("euler_one", &FindMemParam::euler_one)
-    .def_readwrite("euler_two", &FindMemParam::euler_two)
-    .def_readwrite("energy", &FindMemParam::energy)
+    .def_readonly("tilt", &FindMemParam::tilt)
+    .def_readonly("angle", &FindMemParam::angle)
+    .def_readonly("width", &FindMemParam::width)
+    .def_readonly("pos", &FindMemParam::pos)
+    .def_readonly("energy", &FindMemParam::energy)
+    .def_readonly("axis", &FindMemParam::axis)
+    .def_readonly("tilt_axis", &FindMemParam::tilt_axis)
     .def_readonly("membrane_axis", &FindMemParam::GetMembraneAxis)
-    .def_readonly("tilt_axis", &FindMemParam::GetTiltAxis)
   ;
 
   class_<SolvationGrid>("SolvationGrid", init<geom::AlignedCuboid&, Real>())

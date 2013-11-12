@@ -2,6 +2,7 @@
 
 #include <ost/geom/geom.hh>
 #include <vector>
+#include <map>
 #include <numeric>
 #include <limits>
 #include <iostream>
@@ -20,6 +21,10 @@
 #include <ost/img/alg/levenberg_marquardt.h>
 
 
+#include <ost/io/pdb_writer.hh>
+#include <ost/io/io_profile.hh>
+
+
 #include <Eigen/Core>
 #include <Eigen/Array>
 #include <Eigen/SVD>
@@ -33,15 +38,12 @@ struct FindMemParam{
   FindMemParam() { }
 
   geom::Vec3 GetMembraneAxis();
-
-  geom::Vec3 GetTiltAxis();
-
+  geom::Vec3 axis;
+  geom::Vec3 tilt_axis;
   Real tilt;
   Real angle;
   Real width;
   Real pos;
-  Real euler_one;
-  Real euler_two;
   Real energy;
 };
 
@@ -73,6 +75,8 @@ public:
 
   ost::mol::EntityView GetSolvatedView();
 
+  ost::mol::SurfaceVertexIDList GetSolvatedVertices() { return solvated_vertices_; }
+
 
 private:
 
@@ -89,6 +93,7 @@ private:
   ost::mol::EntityView view_;
   ost::mol::EntityView solvated_view_;
   ost::mol::SurfaceHandle surf_;
+  ost::mol::SurfaceVertexIDList solvated_vertices_;
   ost::mol::SurfaceHandle solvated_surf_;
   bool is_flooded_;
   int xbins_;
