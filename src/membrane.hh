@@ -1,6 +1,7 @@
 #include <ost/mol/mol.hh>
 
 #include <ost/geom/geom.hh>
+#include <fstream>
 #include <vector>
 #include <map>
 #include <numeric>
@@ -131,7 +132,7 @@ struct EnergyF {
 struct EnergyDF {
 
    EnergyDF(const EnergyF& f): function(f),d_tilt(0.02),d_angle(0.02),
-                         d_width(0.2),d_pos(0.2) { }
+                         d_width(0.4),d_pos(0.4) { }
 
    Eigen::Matrix<Real,1,4> operator()(const Eigen::Matrix<Real, 4, 1>& x) const;
 

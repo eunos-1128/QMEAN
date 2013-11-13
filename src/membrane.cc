@@ -343,10 +343,114 @@ void SolvationGrid::CalculateSolvatedSurface(){
 
   int level,x,y;
 
-  std::clock_t start;
-  double duration;
-
-  start = std::clock();
+  /*
+  for(level=0;level<zbins_;++level){
+    for(x=2;x<xbins_-2;++x){
+      for(y=2;y<ybins_-2;++y){
+        if(grid_[x][y][level] == 1){
+          //we check the first layer
+          if(grid_[x-1][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-1][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-1][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          //now we check the second layer
+          if(grid_[x-2][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-2][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x-2][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-2][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x-2][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-1][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x-1][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x+1][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x+2][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+2][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x+2][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+2][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+2][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+        }
+      }
+    }
+  }
+  */
 
 
   for(level=0;level<zbins_;++level){
@@ -378,14 +482,7 @@ void SolvationGrid::CalculateSolvatedSurface(){
         }
       }
     }
-  }
-
-  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-
-  std::cout<<"flooding the stuff needed "<<duration<<" whatever"<<std::endl;
-
-  start = std::clock();
-
+  } 
 
   ost::mol::SurfaceTriIDList tri_id = surf_.GetTriIDList();
   ost::mol::SurfaceTri tri;
@@ -427,7 +524,6 @@ void SolvationGrid::CalculateSolvatedSurface(){
 
     added_vertex = false;
 
-
     tri = surf_.GetTri(*it);
     u0 = surf_.GetVertex(tri.v0).position;
     u1 = surf_.GetVertex(tri.v1).position;
@@ -464,9 +560,9 @@ void SolvationGrid::CalculateSolvatedSurface(){
               id2 = solvated_surf_.AddVertex(v2);
               solvated_surf_.AddTri(id0, id1, id2);
               added_vertex = true;
-              solvated_vertices_.push_back(id0);
-              solvated_vertices_.push_back(id1);
-              solvated_vertices_.push_back(id2);
+              solvated_vertices_.push_back(tri.v0);
+              solvated_vertices_.push_back(tri.v1);
+              solvated_vertices_.push_back(tri.v2);
               break;
             }
           }
@@ -491,14 +587,6 @@ void SolvationGrid::CalculateSolvatedSurface(){
       }
     }
   }
-
-  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-
-  std::cout<<"doing awesom stuff took "<<duration<<" whatever"<<std::endl;
-
-
-
-
 }
 
 ost::mol::SurfaceHandle SolvationGrid::GetSolvatedSurface(){
@@ -526,11 +614,6 @@ void SolvationGrid::CalculateSolvatedView(){
     this->CalculateSolvatedSurface();
   }
 
-  std::clock_t start;
-  double duration;
-
-  start = std::clock();
-
 
   ost::mol::SurfaceVertexIDList v_list = solvated_surf_.GetVertexIDList();
   ost::mol::SurfaceVertex vert;
@@ -554,10 +637,6 @@ void SolvationGrid::CalculateSolvatedView(){
 
     best_atom.SetIntProp("surface_atom",1);
   }
-
-  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-
-  std::cout<<"calculating solvated view took "<<duration<<" whatever"<<std::endl;
 
   solvated_view_ = view_.Select("gasurface_atom:0=1");
 }
@@ -854,18 +933,9 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
     //set offset parameter
     en_f.offset = std::abs(temp.energy*2);
 
-    std::cout<<"initial parameters: "<<std::endl;
-    std::cout<<lm_parameters(0,0)<<" "<<lm_parameters(1,0)<<" "<<lm_parameters(2,0)<<" "<<lm_parameters(3,0)<<std::endl;
-    std::cout<<"energy: "<<en_f(lm_parameters)(0,0)-en_f.offset<<std::endl;
     ost::img::alg::LevenbergMarquardt<EnergyF,EnergyDF> lm(en_f);
     lm_result = lm.minimize(&lm_parameters);
     Real minimized_energy = en_f(lm_parameters)(0,0)-en_f.offset;
-
-    std::cout<<"minimized parameters: "<<std::endl;
-    std::cout<<lm_parameters(0,0)<<" "<<lm_parameters(1,0)<<" "<<lm_parameters(2,0)<<" "<<lm_parameters(3,0)<<std::endl;
-    std::cout<<"energy: "<<minimized_energy<<std::endl;
-    std::cout<<"status: "<<lm_result.status<<std::endl;
-    std::cout<<std::endl;
     if(minimized_energy<final_solution.energy){
       FindMemParam mem_param;
       mem_param.tilt = lm_parameters(0,0);
@@ -975,7 +1045,6 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
   z_rotations.push_back(2*(2*M_PI/5));
   z_rotations.push_back(3*(2*M_PI/5));
   z_rotations.push_back(4*(2*M_PI/5));
-
   
   x_rotations.push_back(0.0);
   x_rotations.push_back(M_PI/4);
@@ -983,6 +1052,7 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
   x_rotations.push_back(M_PI/4);
   x_rotations.push_back(M_PI/4);
   x_rotations.push_back(M_PI/4);
+
   
   geom::Transform transform;
   geom::Mat3 z_rot_matrix, x_rot_matrix, rot_matrix;
@@ -1041,17 +1111,12 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
                               0.0, std::cos(x_rot),-std::sin(x_rot),
                               0.0,std::sin(x_rot),std::cos(x_rot));
 
-    rot_matrix = z_rot_matrix*x_rot_matrix;
-
-    std::cerr<<rot_matrix;
-
-    
+    //rot_matrix = z_rot_matrix*x_rot_matrix;
+    rot_matrix = x_rot_matrix*z_rot_matrix;
     transform.SetRot(rot_matrix);
 
     ed.ApplyTransform(transform.GetMatrix());
     rotated_surf = TransformSurface(surf, transform);
-
-
 
     //to define the grid size later on, we have to find the structures extent
     ost::mol::AtomHandleList a_list = rotated_ent.GetAtomList();
@@ -1072,12 +1137,12 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
       if(pos[2]<min_z) min_z = pos[2];
     }
 
-    max_x += 3;
-    min_x -= 3;
-    max_y += 3;
-    min_y -= 3;
-    max_z += 3;
-    min_z -= 3;
+    max_x += 2;
+    min_x -= 2;
+    max_y += 2;
+    min_y -= 2;
+    max_z += 2;
+    min_z -= 2;
 
     //define a cuboid with the previously found extents and generate a grid
     //with that size
@@ -1086,31 +1151,14 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
     geom::AlignedCuboid cuboid(min_vec,max_vec);
     SolvationGrid grid(cuboid, 0.5);
 
-    //Add the rotated surface and the rotated structure to the grid
+    //Add the rotated surface to the grid
     grid.AddSurface(rotated_surf);
-
-    /*
-    grid.AddView(rotated_ent);
-
-    //finally flood it. A flood fill algorithm is used along the z-axis
-    //starting from the borders...
-    //The surface faces serve as borders => pores are not filled
-    grid.Flood(); 
-
-    //returns a view consisting of atoms, that are in contact with
-    //the flooded region.
-    ost::mol::EntityView solvated_view = grid.GetSolvatedView();
-
-
-    //iterate through view and mark surface atoms with generic prop
-    ost::mol::AtomViewList a_view_list = solvated_view.GetAtomList();
-    for(ost::mol::AtomViewList::iterator i = a_view_list.begin(); i!=a_view_list.end();++i){
-      i->SetBoolProp("surface",true);
-    }
-    */
-
     grid.Flood();
     grid.CalculateSolvatedSurface();
+
+    //note, that we defined the mapping between the vertex indices and the
+    //corresponding atoms. It is therefore possible, to just look at the
+    //remaining vertices of the solvated surface
     v_list = grid.GetSolvatedVertices();
     a_list = rotated_ent.GetAtomList();
 
@@ -1119,12 +1167,17 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
       a_list[vertex_atom_mapper[*i]].SetBoolProp("surface",true);
     }
 
+    /*
     std::stringstream ss;
     ss  << "test" << t_counter << ".pdb";
 
+    ost::mol::EntityView solvated_atoms = rotated_ent.Select("gasurface:false=true");
+
     ost::io::PDBWriter writer(ss.str(), io_profile);
 
-    writer.Write(rotated_ent);
+    writer.Write(solvated_atoms);
+    */
+
 
     String element;
     unsigned char bond_order;
