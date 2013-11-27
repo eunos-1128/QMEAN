@@ -330,7 +330,7 @@ bool SolvationGrid::IsFilled(geom::Vec3& pos){
 
 void SolvationGrid::CalculateSolvatedSurface(){
   if(!surf_.IsValid()){
-    throw "You have to add surface first!";
+    throw ost::Error("Cannot calculate solvated surface in grid without attached surface!");
   }
 
   if(!is_flooded_){
@@ -1214,7 +1214,7 @@ FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& 
         if(!assigned_energy) transfer_energies.push_back((*j)*(-22.6));
       }
       else if(element=="H") continue;
-      else throw("fuuuuuuck");
+      else transfer_energies.push_back(0.0); // in case of unknown atom...
     }
 
     //we now try to find a solution, taking the global z-axis as a starting point
