@@ -25,7 +25,11 @@ public:
 
   static InteractionPotentialPtr Create(InteractionStatisticPtr s, Real sigma, const String& reference_state);
 
+  static InteractionPotentialPtr Create(InteractionStatisticPtr s1, InteractionStatisticPtr s2, Real sigma, const String& reference_state, Real max_energy);
+
   void Fill(InteractionStatisticPtr stat, const String& reference_state);
+
+  void Fill(InteractionStatisticPtr s1, InteractionStatisticPtr s2, const String& reference_state, Real max_energy);
 
   PotentialType GetType() { return Interaction; }
 

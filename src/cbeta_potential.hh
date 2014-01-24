@@ -26,7 +26,11 @@ public:
 
   static CBetaPotentialPtr Create(CBetaStatisticPtr s, Real sigma, const String& reference_state);
 
+  static CBetaPotentialPtr Create(CBetaStatisticPtr s1, CBetaStatisticPtr s2, Real sigma, const String& reference_state, Real max_energy);
+
   void Fill(CBetaStatisticPtr stat, const String& reference_state);
+
+  void Fill(CBetaStatisticPtr s1, CBetaStatisticPtr s2, const String& reference_state, Real max_energy);
 
   PotentialType GetType() { return CBeta; }
 

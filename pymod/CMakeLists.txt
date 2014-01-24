@@ -6,6 +6,7 @@ set(QMEAN_MODULES
   mqa.py
   mqa_result.py
   mqa_membrane.py
+  mqa_membrane_hybrid.py
   mqa_result_membrane.py
   crap_checker.py
   score_calculator.py

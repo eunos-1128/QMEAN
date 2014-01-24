@@ -23,6 +23,17 @@ list WrapGetEnergies(InteractionPotentialPtr p, ost::mol::EntityView& target, os
   return ret_list;
 }
 
+InteractionPotentialPtr WrapCreate(InteractionStatisticPtr s, Real sigma, const String& reference){
+  InteractionPotentialPtr p = InteractionPotential::Create(s,sigma,reference);
+  return p;
+}
+
+InteractionPotentialPtr WrapHybridCreate(InteractionStatisticPtr s1, InteractionStatisticPtr s2, Real sigma, const String& reference, Real max_energy){
+  InteractionPotentialPtr p = InteractionPotential::Create(s1,s2,sigma,reference,max_energy);
+  return p;
+}
+
+
 void export_Interaction()
 {
   enum_<qmean::atom::ChemType>("ChemType")
@@ -229,7 +240,8 @@ void export_Interaction()
   class_<InteractionPotential, bases<PotentialBase> >("InteractionPotential", no_init) //no_init=>forces to use create function
     .def("Load", &InteractionPotential::Load, (arg("filename"))).staticmethod("Load")
     .def("Save", &InteractionPotential::Save, (arg("filename")))
-    .def("Create", &InteractionPotential::Create, (arg("interaction_statistic"),arg("sigma")=0.02,arg("reference_state")="classic")).staticmethod("Create")
+    .def("Create", &WrapHybridCreate, (arg("interaction_statistic_one"),arg("interaction_statistic_two"),arg("sigma")=0.02,arg("reference_state")="classic",arg("max_energy")=8.0))
+    .def("Create", &WrapCreate, (arg("interaction_statistic"), arg("sigma")=0.02, arg("reference_state")="classic")).staticmethod("Create")    
     .def("SetEnvironment", &InteractionPotential::SetEnvironment, (arg("environment")))
     .def("GetEnergy", &GetEnergyatomdist, (arg("atom_a"),arg("atom_b"), arg("dist")))
     .def("GetEnergy", &GetEnergyresidueenv, (arg("target_residue"), arg("env"),arg("normalize")=true))

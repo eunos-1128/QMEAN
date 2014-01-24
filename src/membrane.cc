@@ -1304,4 +1304,29 @@ geom::Vec3 FindMemParam::GetMembraneAxis(){
 
 }
 
+FindMemParam FindMemParam::Load(const String& filename){
+
+  if (!boost::filesystem::exists(filename)) {
+    std::stringstream ss;
+    ss << "Could not open MemParam. File '"
+       << filename << "' does not exist";
+    throw ost::io::IOException(ss.str());
+  }
+
+  std::ifstream stream(filename.c_str(), std::ios_base::binary);
+  ost::io::BinaryDataSource ds(stream);
+  FindMemParam param;
+  ds >> param;
+  return param;
+}
+
+
+void FindMemParam::Save(const String& filename){
+  std::ofstream stream(filename.c_str(), std::ios_base::binary);
+  ost::io::BinaryDataSink ds(stream);
+  ds << *this;
+}
+
+
+
 

@@ -18,6 +18,9 @@
 #include <ost/img/size.hh>
 #include <ost/mol/atom_handle.hh>
 #include <ost/geom/transform.hh>
+#include <ost/io/binary_data_source.hh>
+#include <ost/io/binary_data_sink.hh>
+#include <ost/io/io_exception.hh>
 
 #include <ost/img/alg/levenberg_marquardt.h>
 
@@ -30,6 +33,8 @@
 #include <Eigen/Array>
 #include <Eigen/SVD>
 #include <Eigen/LU>
+
+#include <boost/filesystem.hpp>
 
 
 class SolvationGrid;
@@ -46,6 +51,28 @@ struct FindMemParam{
   Real width;
   Real pos;
   Real energy;
+
+  static FindMemParam Load(const String& filename);
+  void Save(const String& filename);
+
+  template <typename DS>
+  void Serialize(DS& ds){
+    ds & tilt;
+    ds & angle;
+    ds & width;
+    ds & pos;
+    ds & energy;
+    ds & axis[0];
+    ds & axis[1];
+    ds & axis[2];
+    ds & tilt_axis[0];
+    ds & tilt_axis[1];
+    ds & tilt_axis[2];
+  }
+
+
+
+
 };
 
 class DLLEXPORT_QMEAN SolvationGrid {

@@ -32,6 +32,8 @@ void export_Membrane()
     .def_readonly("axis", &FindMemParam::axis)
     .def_readonly("tilt_axis", &FindMemParam::tilt_axis)
     .def_readonly("membrane_axis", &FindMemParam::GetMembraneAxis)
+    .def("Save", &FindMemParam::Save)
+    .def("Load", &FindMemParam::Load).staticmethod("Load")
   ;
 
   class_<SolvationGrid>("SolvationGrid", init<geom::AlignedCuboid&, Real>())

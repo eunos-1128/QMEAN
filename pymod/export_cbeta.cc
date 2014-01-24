@@ -22,6 +22,16 @@ list WrapGetEnergies(CBetaPotentialPtr p, ost::mol::EntityView& target, ost::mol
   return ret_list;
 }
 
+CBetaPotentialPtr WrapCreate(CBetaStatisticPtr s, Real sigma, const String& reference){
+  CBetaPotentialPtr p = CBetaPotential::Create(s,sigma,reference);
+  return p;
+}
+
+CBetaPotentialPtr WrapHybridCreate(CBetaStatisticPtr s1, CBetaStatisticPtr s2, Real sigma, const String& reference, Real max_energy){
+  CBetaPotentialPtr p = CBetaPotential::Create(s1,s2,sigma,reference,max_energy);
+  return p;
+}
+
 void export_CBeta(){
 
   class_<impl::CBetaOpts>("CBetaOpts", no_init)
@@ -46,7 +56,8 @@ void export_CBeta(){
   class_<CBetaPotential, bases<PotentialBase> >("CBetaPotential", no_init)
     .def("Load", &CBetaPotential::Load, (arg("filename"))).staticmethod("Load")
     .def("Save", &CBetaPotential::Save, (arg("filename")))
-    .def("Create", &CBetaPotential::Create, (arg("cbeta_statistic"), arg("sigma")=0.02, arg("reference_state")="classic")).staticmethod("Create")
+    .def("Create", &WrapHybridCreate, (arg("cbeta_statistic_one"),arg("cbeta_statistic_two"),arg("sigma")=0.02,arg("reference_state")="classic",arg("max_energy")=8.0))
+    .def("Create", &WrapCreate, (arg("cbeta_statistic"), arg("sigma")=0.02, arg("reference_state")="classic")).staticmethod("Create")
     .def("SetEnvironment", &CBetaPotential::SetEnvironment, args("environment"))
     .def("GetEnergy", &GetEnergyatomdist, (arg("atom_a"),arg("atom_b"), arg("dist")))
     .def("GetEnergy", &GetEnergyresidueenv, (arg("target_residue"), arg("env"), arg("normalize")=true))
