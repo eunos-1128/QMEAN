@@ -8,7 +8,7 @@ from ost import mol
 
 class MembraneScores:
 
-  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None):
+  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
 
     self.data=dict()
     self.target=target
@@ -19,56 +19,71 @@ class MembraneScores:
     self.psipred=psipred
     self.accpro=accpro
     self.norm=norm
+    self.mem_param = mem_param
     self.ca_positions=None
     self.spherical_smoother=None
-
-    if mem_param == None:
-
-      surf = msms.CalculateSurface(self.target,radius=1.4)[0]
-      naccess.CalculateSurfaceArea(self.target)
-
-      asa = list()
-      for a in self.target.atoms:
-        if a.HasProp('asaAtom'):
-          print a.GetFloatProp('asaAtom')
-          asa.append(a.GetFloatProp('asaAtom'))
-        else:
-          asa.append(0.0)
-
-      mem_param = FindMembrane(mol.CreateEntityFromView(self.target,False), surf, asa)
-
-    self.mem_param = mem_param
-
-    membrane_axis = geom.Normalize(mem_param.membrane_axis)
-    membrane_center = mem_param.pos
-    membrane_width = mem_param.width
-
-    top = membrane_center * membrane_axis + membrane_axis * membrane_width/2
-    bottom = membrane_center * membrane_axis - membrane_axis * membrane_width/2
-
-    plane_one = geom.Plane(top, membrane_axis)
-    plane_two = geom.Plane(bottom, membrane_axis)
 
     for r in self.target.residues:
       r.SetIntProp('membrane_state',0)
       r.SetIntProp('in_membrane',0)
 
-    for r in self.target.residues:
-      ca = r.FindAtom('CA')
-      if not ca.IsValid():
-        continue
-      dist_one = geom.Distance(plane_one,ca.GetPos())
-      dist_two = geom.Distance(plane_two,ca.GetPos())
-
-      if abs(dist_one) < membrane_width and abs(dist_two) < membrane_width:
-        r.SetIntProp('in_membrane', 1)
-
-      if abs(dist_one) < 5 or abs(dist_two) < 5:
-        r.SetIntProp('membrane_state',2)
-        continue
-
-      if abs(dist_one) < membrane_width and abs(dist_two) < membrane_width:
+    if membrane_query != None and interface_query != None:
+      membrane_selection = target.Select(membrane_query)
+      interface_selection = target.Select(interface_query)
+      intersection = mol.Intersection(membrane_selection, interface_selection)
+      if len(intersection.residues) > 0:
+        raise RuntimeError("The views resulting from your membrane and interface query must not intersect!")
+      for r in membrane_selection.residues:
         r.SetIntProp('membrane_state',1)
+      for r in interface_selection.residues:
+        r.SetIntProp('membrane_state',2)
+      
+      ca_selection = self.target.Select('aname=CA')
+
+      for r in membrane_selection.residues:
+        ca = r.FindAtom('CA')
+        if ca.IsValid():
+          in_range = ca_selection.FindWithin(ca.GetPos(),5.0)
+          for a in in_range:
+            a.GetResidue().SetIntProp('in_membrane',1)
+
+    else:
+      if self.mem_param == None:
+        membrane_finder_input = self.target.Select('ele!=H')
+        surf = msms.CalculateSurface(membrane_finder_input,radius=1.4)[0]
+        naccess.CalculateSurfaceArea(membrane_finder_input)
+        asa = list()
+        for a in membrane_finder_input.atoms:
+          if a.HasProp('asaAtom'):
+            print a.GetFloatProp('asaAtom')
+            asa.append(a.GetFloatProp('asaAtom'))
+          else:
+            asa.append(0.0)
+        self.mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
+
+      membrane_axis = geom.Normalize(self.mem_param.membrane_axis)
+      membrane_center = self.mem_param.pos
+      membrane_width = self.mem_param.width
+
+      top = membrane_center * membrane_axis + membrane_axis * membrane_width/2
+      bottom = membrane_center * membrane_axis - membrane_axis * membrane_width/2
+
+      plane_one = geom.Plane(top, membrane_axis)
+      plane_two = geom.Plane(bottom, membrane_axis)
+
+      for r in self.target.residues:
+        ca = r.FindAtom('CA')
+        if not ca.IsValid():
+          continue
+        dist_one = abs(geom.Distance(plane_one,ca.GetPos()))
+        dist_two = abs(geom.Distance(plane_two,ca.GetPos()))
+        if dist_one < membrane_width and dist_two < membrane_width:
+          r.SetIntProp('in_membrane', 1)
+        if dist_one < 5 or dist_two < 5:
+          r.SetIntProp('membrane_state',2)
+          continue
+        if dist_one < membrane_width and dist_two < membrane_width:
+          r.SetIntProp('membrane_state',1)
 
     self.interface_target = self.target.Select('grmembrane_state=2')
     self.membrane_target = self.target.Select('grmembrane_state=1')
@@ -117,8 +132,10 @@ class MembraneScores:
       else:
         self.dssp_ss.append('C')
 
+    temp_ss = ""
     if psipred != None:
-      temp_ss = psipred.GetPSIPREDSS(target)
+      for chain in target.chains:
+        temp_ss += psipred.GetPSIPREDSS(chain)
     else:
       temp_ss = self.dssp_ss
 
@@ -129,7 +146,6 @@ class MembraneScores:
       else:
         self.sec_structure.append(ss)
 
-      
     #map the secondary structure onto the target
     for ss, r in zip(self.sec_structure, self.target.residues):
       if ss=='H':
@@ -425,18 +441,15 @@ class MembraneScores:
   def GetExposed(self):
 
     exposed=list()
-
     for r in self.target.residues:
       try:
         exposed.append(r.GetFloatProp('relative_solvent_accessibility'))
       except:
         exposed.append(float('NaN'))
-
     if self.smooth_std!=None:
       self.data['exposed']=self.spherical_smoother.Smooth(exposed)
     else:
       self.data['exposed']=exposed
-
     self.data['avg_exposed'] = self.GetAverage(exposed)
 
   def GetFractionLoops(self):
@@ -455,23 +468,28 @@ class MembraneScores:
 
   def GetSSAgreement(self):
     if self.psipred!=None:
-      ss_agreement=self.psipred.GetSSAgreementFromChain(self.full_target, dssp_assigned=True)
+      ss_agreement = []
+      for chain in self.target.chains:
+        ss_agreement+=self.psipred.GetSSAgreementFromChain(chain, dssp_assigned=True)
+      self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
       else:
         self.data['ss_agreement']=ss_agreement
-      self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
     else:
       raise ValueError("Cannot calculate ss_agreement term without psipred information!")
 
   def GetACCAgreement(self):
     if self.accpro!=None:
-      acc_agreement=self.accpro.GetACCAgreementFromChain(self.full_target, dssp_assigned=True)
+      acc_agreement = []
+      for chain in self.target.chains:
+        acc_agreement+=self.accpro.GetACCAgreementFromChain(chain, 
+                                                            dssp_assigned=True)
+      self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)
       else:
-        self.data['acc_agreement'] = acc_agreement
-      self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
+        self.data['acc_agreement']=acc_agreement
     else:
       raise ValueError("Cannot calculate acc_agreement term without accpro information!")
 

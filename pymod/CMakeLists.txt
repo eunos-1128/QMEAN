@@ -8,6 +8,7 @@ set(QMEAN_MODULES
   mqa_membrane.py
   mqa_membrane_hybrid.py
   mqa_result_membrane.py
+  mqa_result_membrane_hybrid.py
   crap_checker.py
   score_calculator.py
   build_custom_potentials.py
