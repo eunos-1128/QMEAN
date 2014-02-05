@@ -10,6 +10,7 @@ class MembraneScores:
 
   def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
 
+    print "start initialisation"
     self.data=dict()
     self.target=target
     self.environment=environment
@@ -127,10 +128,12 @@ class MembraneScores:
     for r in target.residues:
       if r.GetSecStructure().IsHelical():
         self.dssp_ss.append('H')
-      if r.GetSecStructure().IsExtended():
+      elif r.GetSecStructure().IsExtended():
         self.dssp_ss.append('E')
       else:
         self.dssp_ss.append('C')
+
+    print len(self.dssp_ss)
 
     temp_ss = ""
     if psipred != None:
@@ -179,6 +182,8 @@ class MembraneScores:
     self.data['sequence'] = sequence
     self.data['sec_structure'] = self.sec_structure
     self.data['dssp_ss'] = self.dssp_ss
+
+    print "finished initialization"
 
 
   def GetLocalData(self,features):
