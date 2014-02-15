@@ -67,8 +67,6 @@ class PSIPREDHandler:
 
     data_index=0
 
-    print al.ToString(80)
-    print len(al), len(chain.residues), chain
     for col in al:
       if col[1]!='-':
         if col[1]==col[0]:
@@ -264,7 +262,6 @@ def CutStuff(seqres, values, chain):
   cut_values=list()
 
   data_index=0
-  print al.ToString(80)
 
   for col in al:
     if col[1]!='-':
