@@ -1,13 +1,16 @@
 from qmean import *
 from qmean import conf
 from ost.bindings import dssp
+from ost.bindings import msms
+from ost.bindings import naccess
 from ost import mol
 
 
 class MembraneScores:
 
-  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, membrane_query, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True):
+  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
 
+    print "start initialisation"
     self.data=dict()
     self.target=target
     self.environment=environment
@@ -17,16 +20,83 @@ class MembraneScores:
     self.psipred=psipred
     self.accpro=accpro
     self.norm=norm
-    self.membrane_query=membrane_query
+    self.mem_param = mem_param
     self.ca_positions=None
     self.spherical_smoother=None
-    self.transmembrane_type=None
 
-    self.membrane_target=target.Select(membrane_query)
-    self.soluble_target=mol.Difference(target, self.membrane_target)
-    self.membrane_environment=environment.Select(membrane_query)
-    self.soluble_environment=mol.Difference(environment, self.membrane_environment)
-    
+    for r in self.target.residues:
+      r.SetIntProp('membrane_state',0)
+      r.SetIntProp('in_membrane',0)
+
+    if membrane_query != None and interface_query != None:
+      membrane_selection = target.Select(membrane_query)
+      interface_selection = target.Select(interface_query)
+      intersection = mol.Intersection(membrane_selection, interface_selection)
+      if len(intersection.residues) > 0:
+        raise RuntimeError("The views resulting from your membrane and interface query must not intersect!")
+      for r in membrane_selection.residues:
+        r.SetIntProp('membrane_state',1)
+      for r in interface_selection.residues:
+        r.SetIntProp('membrane_state',2)
+      
+      ca_selection = self.target.Select('aname=CA')
+
+      for r in membrane_selection.residues:
+        ca = r.FindAtom('CA')
+        if ca.IsValid():
+          in_range = ca_selection.FindWithin(ca.GetPos(),5.0)
+          for a in in_range:
+            a.GetResidue().SetIntProp('in_membrane',1)
+
+    else:
+      if self.mem_param == None:
+        membrane_finder_input = self.target.Select('ele!=H')
+        surf = msms.CalculateSurface(membrane_finder_input,radius=1.4)[0]
+        naccess.CalculateSurfaceArea(membrane_finder_input)
+        asa = list()
+        for a in membrane_finder_input.atoms:
+          if a.HasProp('asaAtom'):
+            print a.GetFloatProp('asaAtom')
+            asa.append(a.GetFloatProp('asaAtom'))
+          else:
+            asa.append(0.0)
+        self.mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
+
+      membrane_axis = geom.Normalize(self.mem_param.membrane_axis)
+      membrane_center = self.mem_param.pos
+      membrane_width = self.mem_param.width
+
+      top = membrane_center * membrane_axis + membrane_axis * membrane_width/2
+      bottom = membrane_center * membrane_axis - membrane_axis * membrane_width/2
+
+      plane_one = geom.Plane(top, membrane_axis)
+      plane_two = geom.Plane(bottom, membrane_axis)
+
+      for r in self.target.residues:
+        ca = r.FindAtom('CA')
+        if not ca.IsValid():
+          continue
+        dist_one = abs(geom.Distance(plane_one,ca.GetPos()))
+        dist_two = abs(geom.Distance(plane_two,ca.GetPos()))
+        if dist_one < membrane_width and dist_two < membrane_width:
+          r.SetIntProp('in_membrane', 1)
+        if dist_one < 5 or dist_two < 5:
+          r.SetIntProp('membrane_state',2)
+          continue
+        if dist_one < membrane_width and dist_two < membrane_width:
+          r.SetIntProp('membrane_state',1)
+
+    self.interface_target = self.target.Select('grmembrane_state=2')
+    self.membrane_target = self.target.Select('grmembrane_state=1')
+    self.soluble_target = self.target.Select('grmembrane_state=0')
+
+    self.membrane_states = list()
+    self.membrane_associations = list()
+
+    for r in self.target.residues:
+      self.membrane_states.append(r.GetIntProp('membrane_state'))
+      self.membrane_associations.append(r.GetIntProp('in_membrane'))
+
     if target.handle != environment.handle:
       raise RuntimeError('Target and Environment must be views of the same handle!')
 
@@ -45,15 +115,11 @@ class MembraneScores:
       elif r.GetSecStructure().IsExtended():
         num_extended_membrane_residues+=1
 
-    self.transmembrane_type=""
-    if num_helical_membrane_residues > num_extended_membrane_residues:
-      self.transmembrane_type="helical"
-    else:
-      self.transmembrane_type="extended"
-
+    if num_helical_membrane_residues < num_extended_membrane_residues:
+      raise RuntimeError("QMEANBrane is currently only trained on alpha helical membrane proteins!")
 
     #if psipred data is provided, take secondary information from there. Particularly in models with
-    #low quality, the secondary structure assignment of DSSP srews up. In case of membrane proteins,
+    #low quality, the secondary structure assignment of DSSP screws up. In case of membrane proteins,
     #the secondary structure of the membrane spanning region is either set to helical or extended, 
     #depending on the majority of residues.
 
@@ -62,29 +128,27 @@ class MembraneScores:
     for r in target.residues:
       if r.GetSecStructure().IsHelical():
         self.dssp_ss.append('H')
-      if r.GetSecStructure().IsExtended():
+      elif r.GetSecStructure().IsExtended():
         self.dssp_ss.append('E')
       else:
         self.dssp_ss.append('C')
 
+    print len(self.dssp_ss)
 
+    temp_ss = ""
     if psipred != None:
-      temp_ss = psipred.GetPSIPREDSS(target)
+      for chain in target.chains:
+        temp_ss += psipred.GetPSIPREDSS(chain)
     else:
       temp_ss = self.dssp_ss
-
 
     self.sec_structure=list()
     for ss, r in zip(temp_ss, self.target.residues):
       if self.membrane_target.ViewForHandle(r.handle).IsValid():
-        if self.transmembrane_type=='helical':
-          self.sec_structure.append('H')
-        else:
-          self.sec_structure.append('E')
+        self.sec_structure.append('H')
       else:
         self.sec_structure.append(ss)
 
-      
     #map the secondary structure onto the target
     for ss, r in zip(self.sec_structure, self.target.residues):
       if ss=='H':
@@ -107,9 +171,9 @@ class MembraneScores:
       self.spherical_smoother=SphericalSmoother(self.ca_positions,smooth_std)
 
     #make the selections...
-    self.soluble_helix_selection = self.soluble_target.Select('grSS=0')
-    self.soluble_extended_selection = self.soluble_target.Select('grSS=1')
-    self.soluble_coil_selection = self.soluble_target.Select('grSS=2')
+    self.soluble_helix_target = self.soluble_target.Select('grSS=0')
+    self.soluble_extended_target = self.soluble_target.Select('grSS=1')
+    self.soluble_coil_target = self.soluble_target.Select('grSS=2')
 
     sequence=list()
     for r in self.target.residues:
@@ -118,6 +182,8 @@ class MembraneScores:
     self.data['sequence'] = sequence
     self.data['sec_structure'] = self.sec_structure
     self.data['dssp_ss'] = self.dssp_ss
+
+    print "finished initialization"
 
 
   def GetLocalData(self,features):
@@ -138,11 +204,6 @@ class MembraneScores:
           return_data['cbeta']=self.data['cbeta']
         except:
           raise ValueError("Did not calculate the cbeta feature!")
-      elif f == 'reduced':
-        try:
-          return_data['reduced']=self.data['reduced']
-        except:
-          raise ValueError("Did not calculate the reduced feature!")
       elif f == 'packing':
         try:
           return_data['packing']=self.data['packing']
@@ -191,11 +252,6 @@ class MembraneScores:
           return_data['cbeta']=self.data['avg_cbeta']
         except:
           raise ValueError("Did not calculate the cbeta feature!")
-      elif f == 'reduced':
-        try:
-          return_data['reduced']=self.data['avg_reduced']
-        except:
-          raise ValueError("Did not calculate the reduced feature!")
       elif f == 'packing':
         try:
           return_data['packing']=self.data['avg_packing']
@@ -238,17 +294,23 @@ class MembraneScores:
   def GetMembraneTarget(self):
     return self.membrane_target
 
-  def GetSolubleEnvironment(self):
-    return self.soluble_environment
-
-  def GetMembraneEnvironment(self):
-    return self.membrane_environment
+  def GetInterfaceTarget(self):
+    return self.interface_target
 
   def GetDSSPSS(self):
     return self.dssp_ss
 
   def GetAssignedSS(self):
     return self.sec_structure
+
+  def GetMembraneState(self):
+    return self.membrane_states
+
+  def GetMembraneAssociation(self):
+    return self.membrane_associations
+
+  def GetMemParam(self):
+    return self.mem_param
 
   def CalculateScores(self, features):
 
@@ -259,8 +321,6 @@ class MembraneScores:
         self.GetInteraction()
       elif f == 'cbeta':
         self.GetCBeta()
-      elif f == 'reduced':
-        self.GetReduced()
       elif f == 'packing':
         self.GetPacking()
       elif f == 'ss_agreement':
@@ -280,84 +340,31 @@ class MembraneScores:
       else:
         raise ValueError('Requested feature is not supported in local scorer!')
 
-  
   def GetTorsion(self):
-
-
-    if self.smooth_std==None:
-      soluble_torsion = self.potential_container_soluble['torsion'].GetEnergies(self.soluble_target, normalize=self.norm)
-      if self.transmembrane_type=="helical":
-        membrane_torsion = self.potential_container_membrane['torsion_helix'].GetEnergies(self.membrane_target, normalize=self.norm)
-      else:
-        membrane_torsion = self.potential_container_membrane['torsion_extended'].GetEnergies(self.membrane_target, normalize=self.norm)
-
-      torsion_energies=list()
-      for r in self.target.residues:
-        if self.membrane_target.ViewForHandle(r.handle).IsValid():
-          torsion_energies.append(membrane_torsion.pop(0))
-        else:
-          torsion_energies.append(soluble_torsion.pop(0))
-      self.data['torsion'] = torsion_energies
-
-      overall_soluble_torsion = self.potential_container_soluble['torsion'].GetEnergies(self.target,normalize=self.norm)
-      self.data['avg_torsion'] = self.GetAverage(overall_soluble_torsion)
-
+    #we use the soluble torsion potential in the membrane!
+    torsion = self.potential_container_soluble['torsion'].GetEnergies(self.target, normalize=self.norm)
+    self.data['avg_torsion'] = self.GetAverage(torsion)
+    if self.smooth_std!=None:
+      self.data['torsion'] = self.spherical_smoother.Smooth(torsion)
     else:
-      soluble_torsion_helical=self.potential_container_soluble['simple_torsion_helix'].GetEnergies(self.soluble_helix_selection, normalize=self.norm)
-      soluble_torsion_extended=self.potential_container_soluble['simple_torsion_extended'].GetEnergies(self.soluble_extended_selection, normalize=self.norm)
-      soluble_torsion_coil=self.potential_container_soluble['simple_torsion_coil'].GetEnergies(self.soluble_coil_selection, normalize=self.norm)
-      if self.transmembrane_type=="helical":
-        membrane_torsion=self.potential_container_membrane['torsion_helix'].GetEnergies(self.membrane_target, normalize=self.norm)
-      else:
-        membrane_torsion=self.potential_container_membrane['torsion_extended'].GetEnergies(self.membrane_target, normalize=self.norm)
-
-
-      temp_membrane=list()
-
-      for r in self.target.residues:
-        if self.membrane_target.ViewForHandle(r.handle).IsValid():
-          temp_membrane.append(membrane_torsion.pop(0))
-        else:
-          if r.GetIntProp('SS')==0:
-            temp_membrane.append(soluble_torsion_helical.pop(0))
-          elif r.GetIntProp('SS')==1:
-            temp_membrane.append(soluble_torsion_extended.pop(0))
-          else:
-            temp_membrane.append(soluble_torsion_coil.pop(0))
-
-      smoothed_temp_membrane = self.spherical_smoother.Smooth(temp_membrane)
-
-      temp_soluble = self.potential_container_soluble['torsion'].GetEnergies(self.target,normalize=self.norm)
-      smoothed_temp_soluble = self.spherical_smoother.Smooth(temp_soluble)
-
-      torsion_energies=list()
-      for r, s_t_m, s_t_s in zip(self.target.residues, smoothed_temp_membrane, smoothed_temp_soluble):
-        if self.membrane_target.ViewForHandle(r.handle).IsValid():
-          torsion_energies.append(s_t_m)
-        else:
-          torsion_energies.append(s_t_s)
-
-      self.data['torsion'] = torsion_energies
-
-      self.data['avg_torsion'] = self.GetAverage(temp_soluble)
+      self.data['torsion'] = torsion
  
   def GetInteraction(self):
 
-
     interaction=list()
 
-    soluble_helix_interaction = self.potential_container_soluble['interaction_helix'].GetEnergies(self.soluble_helix_selection, self.soluble_environment, normalize=self.norm)
-    soluble_extended_interaction = self.potential_container_soluble['interaction_extended'].GetEnergies(self.soluble_extended_selection, self.soluble_environment, normalize=self.norm)
-    soluble_coil_interaction = self.potential_container_soluble['interaction_coil'].GetEnergies(self.soluble_coil_selection, self.soluble_environment, normalize=self.norm)
+    soluble_helix_interaction = self.potential_container_soluble['interaction_helix'].GetEnergies(self.soluble_helix_target, self.environment, normalize=self.norm)
+    soluble_extended_interaction = self.potential_container_soluble['interaction_extended'].GetEnergies(self.soluble_extended_target, self.environment, normalize=self.norm)
+    soluble_coil_interaction = self.potential_container_soluble['interaction_coil'].GetEnergies(self.soluble_coil_target, self.environment, normalize=self.norm)
 
-    if self.transmembrane_type=="helical":
-      membrane_interaction = self.potential_container_membrane['interaction_helix'].GetEnergies(self.membrane_target,self.membrane_environment,normalize=self.norm)
-    else:
-      membrane_interaction = self.potential_container_membrane['interaction_extended'].GetEnergies(self.membrane_target,self.membrane_environment, normalize=self.norm)
+    membrane_interaction = self.potential_container_membrane['membrane_interaction_helix'].GetEnergies(self.membrane_target,self.environment,normalize=self.norm)
+    interface_interaction = self.potential_container_membrane['interface_interaction_helix'].GetEnergies(self.interface_target,self.environment,normalize=self.norm)
 
     for r in self.target.residues:
       if self.membrane_target.ViewForHandle(r.handle).IsValid():
         interaction.append(membrane_interaction.pop(0))
+      elif self.interface_target.ViewForHandle(r.handle).IsValid():
+        interaction.append(interface_interaction.pop(0))
       else:
         if r.GetIntProp('SS')==0:
           interaction.append(soluble_helix_interaction.pop(0))
@@ -377,18 +384,18 @@ class MembraneScores:
   def GetCBeta(self):
     cbeta=list()
 
-    soluble_helix_cbeta = self.potential_container_soluble['cbeta_helix'].GetEnergies(self.soluble_helix_selection, self.soluble_environment, normalize=self.norm)
-    soluble_extended_cbeta = self.potential_container_soluble['cbeta_extended'].GetEnergies(self.soluble_extended_selection, self.soluble_environment, normalize=self.norm)
-    soluble_coil_cbeta = self.potential_container_soluble['cbeta_coil'].GetEnergies(self.soluble_coil_selection, self.soluble_environment, normalize=self.norm)
+    soluble_helix_cbeta = self.potential_container_soluble['cbeta_helix'].GetEnergies(self.soluble_helix_target, self.environment, normalize=self.norm)
+    soluble_extended_cbeta = self.potential_container_soluble['cbeta_extended'].GetEnergies(self.soluble_extended_target, self.environment, normalize=self.norm)
+    soluble_coil_cbeta = self.potential_container_soluble['cbeta_coil'].GetEnergies(self.soluble_coil_target, self.environment, normalize=self.norm)
 
-    if self.transmembrane_type=="helical":
-      membrane_cbeta = self.potential_container_membrane['cbeta_helix'].GetEnergies(self.membrane_target, self.membrane_environment, normalize=self.norm)
-    else:
-      membrane_cbeta = self.potential_container_membrane['cbeta_extended'].GetEnergies(self.membrane_target, self.membrane_environment, normalize=self.norm)
+    membrane_cbeta = self.potential_container_membrane['membrane_cbeta_helix'].GetEnergies(self.membrane_target,self.environment,normalize=self.norm)
+    interface_cbeta = self.potential_container_membrane['interface_cbeta_helix'].GetEnergies(self.interface_target,self.environment,normalize=self.norm)
 
     for r in self.target.residues:
       if self.membrane_target.ViewForHandle(r.handle).IsValid():
         cbeta.append(membrane_cbeta.pop(0))
+      elif self.interface_target.ViewForHandle(r.handle).IsValid():
+        cbeta.append(interface_cbeta.pop(0))
       else:
         if r.GetIntProp('SS')==0:
           cbeta.append(soluble_helix_cbeta.pop(0))
@@ -405,52 +412,21 @@ class MembraneScores:
     self.data['avg_cbeta'] = self.GetAverage(cbeta)
 
 
-  def GetReduced(self):
-    reduced=list()
-
-    soluble_helix_reduced = self.potential_container_soluble['reduced_helix'].GetEnergies(self.soluble_helix_selection, self.soluble_environment, normalize=self.norm)
-    soluble_extended_reduced = self.potential_container_soluble['reduced_extended'].GetEnergies(self.soluble_extended_selection, self.soluble_environment, normalize=self.norm)
-    soluble_coil_reduced = self.potential_container_soluble['reduced_coil'].GetEnergies(self.soluble_coil_selection, self.soluble_environment, normalize=self.norm)
-
-    if self.transmembrane_type=="helical":
-      membrane_reduced = self.potential_container_membrane['reduced_helix'].GetEnergies(self.membrane_target, self.membrane_environment, normalize=self.norm)
-    else:
-      membrane_reduced = self.potential_container_membrane['reduced_extended'].GetEnergies(self.membrane_target, self.membrane_environment, normalize=self.norm)
-
-    for r in self.target.residues:
-      if self.membrane_target.ViewForHandle(r.handle).IsValid():
-        reduced.append(membrane_reduced.pop(0))
-      else:
-        if r.GetIntProp('SS')==0:
-          reduced.append(soluble_helix_reduced.pop(0))
-        elif r.GetIntProp('SS')==1:
-          reduced.append(soluble_extended_reduced.pop(0))
-        else:
-          reduced.append(soluble_coil_reduced.pop(0))
-
-    if self.smooth_std!=None:
-      self.data['reduced'] = self.spherical_smoother.Smooth(reduced)
-    else:
-      self.data['reduced'] = reduced
-
-    self.data['avg_reduced'] = self.GetAverage(reduced)
-
-
   def GetPacking(self):
     packing=list()
 
-    soluble_helix_packing = self.potential_container_soluble['packing_helix'].GetEnergies(self.soluble_helix_selection, self.environment,normalize=self.norm)
-    soluble_extended_packing = self.potential_container_soluble['packing_extended'].GetEnergies(self.soluble_extended_selection, self.environment,normalize=self.norm)
-    soluble_coil_packing = self.potential_container_soluble['packing_coil'].GetEnergies(self.soluble_coil_selection, self.environment,normalize=self.norm)
+    soluble_helix_packing = self.potential_container_soluble['packing_helix'].GetEnergies(self.soluble_helix_target, self.environment,normalize=self.norm)
+    soluble_extended_packing = self.potential_container_soluble['packing_extended'].GetEnergies(self.soluble_extended_target, self.environment,normalize=self.norm)
+    soluble_coil_packing = self.potential_container_soluble['packing_coil'].GetEnergies(self.soluble_coil_target, self.environment,normalize=self.norm)
 
-    if self.transmembrane_type=="helical":
-      membrane_packing = self.potential_container_membrane['packing_helix'].GetEnergies(self.membrane_target, self.environment, normalize=self.norm)
-    else:
-      membrane_packing = self.potential_container_membrane['packing_extended'].GetEnergies(self.membrane_target, self.environment, normalize=self.norm)
+    membrane_packing = self.potential_container_membrane['membrane_packing_helix'].GetEnergies(self.membrane_target,self.environment,normalize=self.norm)
+    interface_packing = self.potential_container_membrane['interface_packing_helix'].GetEnergies(self.interface_target,self.environment,normalize=self.norm)
 
     for r in self.target.residues:
       if self.membrane_target.ViewForHandle(r.handle).IsValid():
         packing.append(membrane_packing.pop(0))
+      elif self.interface_target.ViewForHandle(r.handle).IsValid():
+        packing.append(interface_packing.pop(0))
       else:
         if r.GetIntProp('SS')==0:
           packing.append(soluble_helix_packing.pop(0))
@@ -470,18 +446,15 @@ class MembraneScores:
   def GetExposed(self):
 
     exposed=list()
-
     for r in self.target.residues:
       try:
         exposed.append(r.GetFloatProp('relative_solvent_accessibility'))
       except:
         exposed.append(float('NaN'))
-
     if self.smooth_std!=None:
       self.data['exposed']=self.spherical_smoother.Smooth(exposed)
     else:
       self.data['exposed']=exposed
-
     self.data['avg_exposed'] = self.GetAverage(exposed)
 
   def GetFractionLoops(self):
@@ -498,26 +471,30 @@ class MembraneScores:
 
     self.data['avg_fraction_loops'] = self.GetAverage(fraction_loops)
 
-
   def GetSSAgreement(self):
     if self.psipred!=None:
-      ss_agreement=self.psipred.GetSSAgreementFromChain(self.full_target, dssp_assigned=True)
+      ss_agreement = []
+      for chain in self.target.chains:
+        ss_agreement+=self.psipred.GetSSAgreementFromChain(chain, dssp_assigned=True)
+      self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
       else:
         self.data['ss_agreement']=ss_agreement
-      self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
     else:
       raise ValueError("Cannot calculate ss_agreement term without psipred information!")
 
   def GetACCAgreement(self):
     if self.accpro!=None:
-      acc_agreement=self.accpro.GetACCAgreementFromChain(self.full_target, dssp_assigned=True)
+      acc_agreement = []
+      for chain in self.target.chains:
+        acc_agreement+=self.accpro.GetACCAgreementFromChain(chain, 
+                                                            dssp_assigned=True)
+      self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)
       else:
-        self.data['acc_agreement'] = acc_agreement
-      self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
+        self.data['acc_agreement']=acc_agreement
     else:
       raise ValueError("Cannot calculate acc_agreement term without accpro information!")
 
