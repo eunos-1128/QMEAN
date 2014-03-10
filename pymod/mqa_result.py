@@ -252,7 +252,7 @@ class LocalResult:
     pyplot.figure(figsize=[8,6],dpi=80)
     pyplot.ylim((-0.1,1.1))
     pyplot.xlabel('Residue Number',size='large')
-    pyplot.ylabel('Predicted lDDT',size='large')
+    pyplot.ylabel('Predicted Local Similarity to Target',size='large')
 
 #    color_scheme = ['#D55E00','#0072B2','#F0E442','#009E73','#56B4E9','#E69F00','#999999','#000000']
     color_scheme = ['#ff420e','#004586','#ffd320','#578d1c','#7e0021']
@@ -271,7 +271,7 @@ class LocalResult:
 
     if chain == None:
 
-      pyplot.title('Local lDDT',size='x-large')
+      pyplot.title('Local Quality Estimate',size='x-large')
 
       for i,ch in enumerate(chains):
         chain_tab = self.score_table.Filter(chain=ch)  
@@ -285,7 +285,7 @@ class LocalResult:
          
     else:
 
-      pyplot.title('Local lDDT Chain %s'%(chain),size='x-large')
+      pyplot.title('Local Quality Estimate: Chain %s'%(chain),size='x-large')
       chain_tab = self.score_table.Filter(chain=chain)
       res_num = list()
       lddt = list()
@@ -431,9 +431,9 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
     if plots:
       for ch in model.chains:
         p=local_result.PlotlDDTProfile(chain=ch.name)
-        p.savefig(os.path.join(plot_dir,'local_lDDT_%s.png' % (ch.name)))
+        p.savefig(os.path.join(plot_dir,'local_quality_estimate_%s.png' % (ch.name)))
       p=local_result.PlotlDDTProfile()
-      p.savefig(os.path.join(plot_dir,'local_lDDT.png'))
+      p.savefig(os.path.join(plot_dir,'local_quality_estimate.png'))
     results.append(local_result)
 
   return results
