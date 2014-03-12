@@ -1,5 +1,5 @@
 from qmean import *
-from qmean import mqa_membrane_hybrid
+from qmean import mqa_membrane
 from qmean import score_calculator
 from qmean import reference_set
 from qmean import conf
@@ -147,7 +147,7 @@ class LocalMembraneResult:
     pot_soluble = PotentialContainer.Load(settings.local_potentials_soluble)
     scorer_membrane = score_calculator.LocalScorer.Load(settings.local_scorer_membrane)
     scorer_soluble = score_calculator.LocalScorer.Load(settings.local_scorer_soluble)
-    local_mqa = mqa_membrane_hybrid.MembraneScores(model, model, pot_soluble, pot_membrane, smooth_std=5.0, psipred=psipred, 
+    local_mqa = mqa_membrane.MembraneScores(model, model, pot_soluble, pot_membrane, smooth_std=5.0, psipred=psipred, 
                             accpro=accpro, membrane_query = membrane_query, interface_query = interface_query,mem_param = mem_param)
 
 
