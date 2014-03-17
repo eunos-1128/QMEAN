@@ -10,7 +10,6 @@ class MembraneScores:
 
   def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
 
-    print "start initialisation"
     self.data=dict()
     self.target=target
     self.environment=environment
@@ -56,7 +55,6 @@ class MembraneScores:
         asa = list()
         for a in membrane_finder_input.atoms:
           if a.HasProp('asaAtom'):
-            print a.GetFloatProp('asaAtom')
             asa.append(a.GetFloatProp('asaAtom'))
           else:
             asa.append(0.0)
@@ -133,8 +131,6 @@ class MembraneScores:
       else:
         self.dssp_ss.append('C')
 
-    print len(self.dssp_ss)
-
     temp_ss = ""
     if psipred != None:
       for chain in target.chains:
@@ -182,8 +178,6 @@ class MembraneScores:
     self.data['sequence'] = sequence
     self.data['sec_structure'] = self.sec_structure
     self.data['dssp_ss'] = self.dssp_ss
-
-    print "finished initialization"
 
 
   def GetLocalData(self,features):
