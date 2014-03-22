@@ -13,7 +13,6 @@ label_conversions = {'interaction':'All Atom', 'cbeta':'CBeta','packing':'Solvat
                      'torsion':'Torsion','ss_agreement':'SS Agree','acc_agreement':'ACC Agree',
                      'QMEAN4':'QMEAN4','QMEAN6':'QMEAN6'}
 
-
 LSCORES_TABLE_HEADER='''\
 This file contains local scores calculated by the QMEAN scoring function.
 
@@ -56,7 +55,8 @@ Description of columns:
   acc_agreement Agreement score of burial status predicted by accpro, with the
                 the observed burial status in the structure (DSSP).
 
-  lddt          Predicted local lDDT value 
+  lddt          Predicted local lDDT value. A value describing the expected local
+                similarity to the target structure with a range of [0,1]. 
 '''
 
 
@@ -182,9 +182,8 @@ class GlobalResult:
 
     global_mqa.CalculateScores(features)
 
-
     data = global_mqa.GetAVGData(['interaction','cbeta','torsion','packing'])
-    s = scorer.GetGlobalScore('soluble', data)
+    s = min(max(scorer.GetGlobalScore('soluble', data),0.0),1.0)
     z = ref_set.ZScoreFromNormScore('QMEAN4',model.residue_count,s)
 
     tab.AddRow({'name':'qmean4','norm':s,'z_score':z})
@@ -342,7 +341,7 @@ class LocalResult:
         ss = 'extended'
       else:
         ss = 'coil'
-      scores.append(scorer.GetLocalScore(ss, r.one_letter_code, residue_data))
+      scores.append(min(max(scorer.GetLocalScore(ss, r.one_letter_code, residue_data),0.0),1.0))
 
     data['lDDT'] = scores
 
