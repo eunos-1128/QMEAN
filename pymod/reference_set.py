@@ -178,7 +178,7 @@ class ReferenceSet:
                        autoscaley_on=False)
       
       
-      bounded_zscore=max(-6, min(z_score, 2))
+      bounded_zscore=max(-5.94, min(z_score, 2.0))
       transf_zscore=(bounded_zscore+6)/8.0
 
       ax.plot([transf_zscore, transf_zscore], [0, 1],
