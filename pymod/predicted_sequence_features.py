@@ -6,17 +6,35 @@ import traceback
 def AlignChainToSEQRES(chain, seqres):
   """
   aligns the chain to the seqres sequence, first by using AlignToSEQRES,
-  and if that fails by aligning the sequence with Needleman-Wunsch using 
-  a very strict substitution matrix.
+  and if that fails (usually when connectivity problems are present) 
+  by aligning the sequence with Smith-Waterman using a very strict 
+  substitution matrix.
   """
   try:
     return seq.alg.AlignToSEQRES(chain.Select(''), seqres, 
-                                  try_resnum_first=True)
+                                 try_resnum_first=True)
   except Exception, e:
     print e
+
   chain_seq = seq.SequenceFromChain('atom_seq', chain)
-  return seq.alg.GlobalAlign(seq.CreateSequence('seqres',seqres),
-                              chain_seq, seq.alg.BLOSUM100)[0]
+  aln = seq.alg.LocalAlign(seq.CreateSequence('seqres',seqres),
+                            chain_seq, seq.alg.BLOSUM100)[0]
+
+  #the seqres must not contain gaps...
+  if str(aln.sequences[0]).find('-') != -1:
+    raise ValueError("Could not align atomseq to seqres provided in predicted sequence feature input!")
+  
+  new_aln = seq.CreateAlignment(seq.CreateSequence('seqres',seqres),
+                                seq.CreateSequence('atom_seq','-'*len(seqres)))
+
+  start = aln.sequences[0].offset
+  end = start + len(str(aln.sequences[0]))
+
+  new_aln[start:end].Replace(aln[:])
+  new_aln.SetSequenceOffset(1,aln.sequences[1].offset)
+
+  return new_aln
+  
 
 class PSIPREDHandler:
   def __init__(self,psipred_data):
