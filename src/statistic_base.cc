@@ -6,6 +6,7 @@
 #include <qmean/cbeta_statistics.hh>
 #include <qmean/packing_statistics.hh>
 #include <qmean/torsion_statistics.hh>
+#include <qmean/cb_packing_statistics.hh>
 
 using namespace ost;
 
@@ -60,6 +61,12 @@ StatisticContainerPtr StatisticContainer::Load(const String& filename){
       }
       case Torsion:{
         TorsionStatisticPtr p_load(new TorsionStatistic);
+        ds & *p_load;
+        (*p)[key]=p_load;
+        break;
+      }
+      case CBPacking:{
+        CBPackingStatisticPtr p_load(new CBPackingStatistic);
         ds & *p_load;
         (*p)[key]=p_load;
         break;

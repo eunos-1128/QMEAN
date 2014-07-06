@@ -18,6 +18,7 @@ export_torsion.cc
 export_packing.cc
 export_reduced.cc
 export_cbeta.cc
+export_cb_packing.cc
 export_ss_agreement.cc
 export_base.cc
 export_spherical_smoother.cc

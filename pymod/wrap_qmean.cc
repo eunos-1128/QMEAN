@@ -10,6 +10,7 @@ void export_SSAgreement();
 void export_Base();
 void export_SphericalSmoother();
 void export_Membrane();
+void export_CBPacking();
 
 using namespace boost::python;
 
@@ -24,4 +25,5 @@ BOOST_PYTHON_MODULE(_qmean)
   export_SSAgreement();
   export_SphericalSmoother();
   export_Membrane();
+  export_CBPacking();
 }

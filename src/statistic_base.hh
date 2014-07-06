@@ -26,7 +26,7 @@ typedef boost::shared_ptr<StatisticContainer> StatisticContainerPtr;
 
 typedef enum  {
   Interaction, CBeta,
-  Reduced, Packing, Torsion
+  Reduced, Packing, Torsion, CBPacking
 } PotentialType;
 
 class DLLEXPORT_QMEAN StatisticContainer{
