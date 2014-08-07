@@ -40,7 +40,7 @@ CBPackingPotentialPtr CBPackingPotential::Create(CBPackingStatisticPtr stat, Rea
   p->opts_=stat->GetOpts();
   p->opts_.sigma=sigma;
   p->energies_=CBPackingEnergies(0.0, IntegralClassifier(ost::conop::XXX, 0),
-                                      IntegralClassifier(floor(p->opts_.max_counts/p->opts_.bin_size)+1, 0));
+                                      IntegralClassifier(int(floor(p->opts_.max_counts/p->opts_.bin_size))+1, 0));
 
   p->Fill(stat, reference_state);
   return p;

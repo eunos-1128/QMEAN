@@ -13,7 +13,7 @@ CBPackingStatistic::CBPackingStatistic(Real cutoff_radius,
    impl::CBPackingOpts opts(cutoff_radius, max_count, bin_size);
    opts_=opts;
    CBPackingHistogram histo=CBPackingHistogram(IntegralClassifier(ost::conop::XXX, 0),       
-                                               IntegralClassifier(floor(max_count/bin_size)+1, 0));
+                                               IntegralClassifier(int(floor(max_count/bin_size))+1, 0));
    histo_=histo;
 }
 

@@ -94,12 +94,12 @@ void SolvationGrid::AddSurface(const ost::mol::SurfaceHandle& surf){
     max_y = std::max(u0[1],std::max(u1[1],u2[1]));
     max_z = std::max(u0[2],std::max(u1[2],u2[2]));
 
-    min_x_idx = std::floor((min_x-origin_[0])/bin_size_);
-    max_x_idx = std::ceil((max_x-origin_[0])/bin_size_);
-    min_y_idx = std::floor((min_y-origin_[1])/bin_size_);
-    max_y_idx = std::ceil((max_y-origin_[1])/bin_size_);
-    min_z_idx = std::floor((min_z-origin_[2])/bin_size_);
-    max_z_idx = std::ceil((max_z-origin_[2])/bin_size_);
+    min_x_idx = int(std::floor((min_x-origin_[0])/bin_size_));
+    max_x_idx = int(std::ceil((max_x-origin_[0])/bin_size_));
+    min_y_idx = int(std::floor((min_y-origin_[1])/bin_size_));
+    max_y_idx = int(std::ceil((max_y-origin_[1])/bin_size_));
+    min_z_idx = int(std::floor((min_z-origin_[2])/bin_size_));
+    max_z_idx = int(std::ceil((max_z-origin_[2])/bin_size_));
 
     for(i=std::max(min_x_idx,0);i<=std::min(max_x_idx,xbins_-1);++i){
       for(j=std::max(min_y_idx,0);j<=std::min(max_y_idx,ybins_-1);++j){
@@ -537,12 +537,12 @@ void SolvationGrid::CalculateSolvatedSurface(){
     max_y = std::max(u0[1],std::max(u1[1],u2[1]));
     max_z = std::max(u0[2],std::max(u1[2],u2[2]));
 
-    min_x_idx = std::floor((min_x-origin_[0])/bin_size_);
-    max_x_idx = std::ceil((max_x-origin_[0])/bin_size_);
-    min_y_idx = std::floor((min_y-origin_[1])/bin_size_);
-    max_y_idx = std::ceil((max_y-origin_[1])/bin_size_);
-    min_z_idx = std::floor((min_z-origin_[2])/bin_size_);
-    max_z_idx = std::ceil((max_z-origin_[2])/bin_size_);
+    min_x_idx = int(std::floor((min_x-origin_[0])/bin_size_));
+    max_x_idx = int(std::ceil((max_x-origin_[0])/bin_size_));
+    min_y_idx = int(std::floor((min_y-origin_[1])/bin_size_));
+    max_y_idx = int(std::ceil((max_y-origin_[1])/bin_size_));
+    min_z_idx = int(std::floor((min_z-origin_[2])/bin_size_));
+    max_z_idx = int(std::ceil((max_z-origin_[2])/bin_size_));
 
     for(i=std::max(min_x_idx,0);i<=std::min(max_x_idx,xbins_-1);++i){
       for(j=std::max(min_y_idx,0);j<=std::min(max_y_idx,ybins_-1);++j){
@@ -843,7 +843,7 @@ FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector
     //a specific tilt and then have a look how many angles we need to get a similar d_arclength...
 
     Real circumference = 2*M_PI*std::sin(tilt_rad);
-    int num_angles = ceil(std::max(12,int(ceil(circumference/0.0550135287662))));
+    int num_angles = int(ceil(std::max(12,int(ceil(circumference/0.0550135287662)))));
     Real d_angle = 2*M_PI/num_angles;
 
     for(int actual_angle = 0; actual_angle<num_angles; ++actual_angle){
@@ -970,7 +970,7 @@ std::pair<std::pair<Real,Real>, Real> ScanAxis(std::vector<geom::Vec3>& atom_pos
     if(max_pos<(*i)) max_pos = (*i);
   }
 
-  int width = ceil(max_pos)-floor(min_pos);
+  int width = int(ceil(max_pos)-floor(min_pos));
 
 
   //energies representing the energy profile along the axis

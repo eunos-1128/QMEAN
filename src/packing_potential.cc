@@ -55,7 +55,7 @@ PackingPotentialPtr PackingPotential::Create(PackingStatisticPtr stat, Real sigm
   p->opts_=stat->GetOpts();
   p->opts_.sigma=sigma;
   p->energies_=PackingEnergies(0.0, IntegralClassifier(atom::UNKNOWN, 0),
-                                    IntegralClassifier(floor(p->opts_.max_counts/p->opts_.bin_size)+1, 0));
+                                    IntegralClassifier(int(floor(p->opts_.max_counts/p->opts_.bin_size))+1, 0));
 
   p->Fill(stat, reference_state);
   return p;
@@ -72,7 +72,7 @@ PackingPotentialPtr PackingPotential::Create(PackingStatisticPtr s1, PackingStat
   p->opts_=s1->GetOpts();
   p->opts_.sigma=sigma;
   p->energies_=PackingEnergies(0.0, IntegralClassifier(atom::UNKNOWN, 0),
-                                    IntegralClassifier(floor(p->opts_.max_counts/p->opts_.bin_size)+1, 0));
+                                    IntegralClassifier(int(floor(p->opts_.max_counts/p->opts_.bin_size))+1, 0));
 
   p->Fill(s1, s2, reference_state, max_energy);
   return p;
