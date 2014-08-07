@@ -258,3 +258,4 @@ void export_Interaction()
   register_ptr_to_python<InteractionPotentialPtr>();
   
 }
+

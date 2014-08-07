@@ -87,3 +87,4 @@ protected:
 
 
 #endif // CBETA_IMPL_HH
+

@@ -102,3 +102,4 @@ int CBPackingPotentialImpl::GetBin(int count){
 }
 
 }}
+

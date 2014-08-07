@@ -131,3 +131,4 @@ String TorsionPotentialImpl::FindStat(std::vector<String>& residues){
 }
 
 }}//namespaces
+

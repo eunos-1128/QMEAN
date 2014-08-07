@@ -72,3 +72,4 @@ void export_Packing()
   register_ptr_to_python<PackingPotentialPtr>();
 
 }
+

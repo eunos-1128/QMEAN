@@ -72,3 +72,4 @@ void export_CBeta(){
   register_ptr_to_python<CBetaPotentialPtr>();
   
 }
+

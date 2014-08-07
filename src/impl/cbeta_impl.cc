@@ -100,3 +100,4 @@ bool CBetaPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
 }
 
 }}
+

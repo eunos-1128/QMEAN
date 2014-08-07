@@ -61,3 +61,4 @@ void export_CBPacking()
   register_ptr_to_python<CBPackingPotentialPtr>();
 
 }
+

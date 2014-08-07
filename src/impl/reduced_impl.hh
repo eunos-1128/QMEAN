@@ -91,3 +91,4 @@ protected:
 
 
 #endif // MREDUCED_IMPL_HH
+
