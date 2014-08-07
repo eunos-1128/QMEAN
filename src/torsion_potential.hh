@@ -65,3 +65,4 @@ private:
 
 
 #endif // TORSION_POTENTIAL_HH
+

@@ -65,3 +65,4 @@ private:
 
 }//namespace
 #endif // CBETA_POTENTIAL_HH
+

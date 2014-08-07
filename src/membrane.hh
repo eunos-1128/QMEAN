@@ -183,3 +183,4 @@ std::pair<std::pair<Real,Real>, Real> ScanAxis(std::vector<geom::Vec3>& atom_pos
 FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa);
 
 ost::mol::SurfaceHandle TransformSurface(ost::mol::SurfaceHandle& s, geom::Transform& t);
+

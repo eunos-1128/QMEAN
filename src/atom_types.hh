@@ -198,3 +198,4 @@ DLLEXPORT_QMEAN atom::ChemType GetAtomTypeByName(ost::conop::AminoAcid aa,
 }
 
 #endif
+

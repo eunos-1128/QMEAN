@@ -59,3 +59,4 @@ private:
 
 }//namespace
 #endif // MREDUCED_POTENTIAL_HH
+

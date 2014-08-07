@@ -141,3 +141,4 @@ Real ReducedPotential::GetTotalEnergy(ost::mol::EntityView& target, ost::mol::En
 }
 
 }//namespace
+

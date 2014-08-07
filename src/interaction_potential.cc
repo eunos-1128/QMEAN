@@ -205,3 +205,4 @@ Real InteractionPotential::GetTotalEnergy(ost::mol::EntityView& target, ost::mol
 }
 
 }//namespace
+

@@ -64,3 +64,4 @@ private:
 
 }//namespace
 #endif // INTERACTION_POTENTIAL_HH
+

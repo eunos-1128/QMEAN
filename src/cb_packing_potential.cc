@@ -139,3 +139,4 @@ Real CBPackingPotential::GetTotalEnergy(ost::mol::EntityView& target, ost::mol::
 }
 
 }
+
