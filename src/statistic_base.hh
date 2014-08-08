@@ -55,7 +55,9 @@ private:
 
 class DLLEXPORT_QMEAN StatisticBase{
 public:
-  StatisticBase() {}
+  StatisticBase() { }
+
+  virtual ~StatisticBase();
 
   virtual PotentialType GetType()=0;
 

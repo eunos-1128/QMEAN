@@ -51,6 +51,8 @@ class DLLEXPORT_QMEAN PotentialBase{
 public:
   PotentialBase() { }
 
+  virtual ~PotentialBase();
+
   virtual PotentialType GetType()=0;
 
   void Save(const String& filename);
