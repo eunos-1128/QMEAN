@@ -33,6 +33,7 @@ SolvationGrid::SolvationGrid(geom::AlignedCuboid cub, Real bin_size):
 
 }
 
+/*
 ost::img::ImageHandle SolvationGrid::AsIMG(){
 
   ost::img::ImageHandle img = ost::img::CreateImage(ost::img::Size(xbins_,ybins_,zbins_));
@@ -49,6 +50,7 @@ ost::img::ImageHandle SolvationGrid::AsIMG(){
 
   return img;
 }
+*/
 
 void SolvationGrid::AddSurface(const ost::mol::SurfaceHandle& surf){
 

@@ -43,7 +43,7 @@ void export_Membrane()
     .def("AddSurface", &SolvationGrid::AddSurface, (arg("surface")))
     .def("Flood", &SolvationGrid::Flood)
     .def("IsFilled", &SolvationGrid::IsFilled, (arg("pos")))
-    .def("AsIMG", &SolvationGrid::AsIMG)
+    //.def("AsIMG", &SolvationGrid::AsIMG)
     .def("GetSolvatedSurface", &SolvationGrid::GetSolvatedSurface)
     .def("GetSolvatedView", &SolvationGrid::GetSolvatedView)
   ;

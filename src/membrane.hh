@@ -11,7 +11,7 @@
 #include <ctime>
 #include <qmean/module_config.hh>
 #include <ost/mol/surface_handle.hh>
-#include <ost/img/image_handle.hh>
+//#include <ost/img/image_handle.hh>
 #include <math.h>
 #include <ost/img/image_factory.hh>
 #include <ost/img/point.hh>
@@ -93,7 +93,7 @@ public:
 
   geom::Vec3 GetOrigin() { return origin_; }
 
-  ost::img::ImageHandle AsIMG();
+  //ost::img::ImageHandle AsIMG();
 
   void CalculateSolvatedSurface();
 
