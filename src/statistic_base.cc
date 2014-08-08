@@ -112,6 +112,8 @@ std::vector<String> StatisticContainer::GetKeys(){
   return ret_vec;
 }
 
+StatisticBase::~StatisticBase() { }
+
 void StatisticBase::Save(const String& filename){
   std::ofstream stream(filename.c_str(), std::ios_base::binary);
   io::BinaryDataSink ds(stream);
