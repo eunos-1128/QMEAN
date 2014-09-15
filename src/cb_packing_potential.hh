@@ -32,8 +32,6 @@ public:
 
   PotentialType GetType() { return CBPacking; }
 
-  void SetEnvironment(ost::mol::EntityView& env) { this->SetEnvironment(env); }
-
   Real GetEnergy(ost::conop::AminoAcid aa, int count);
 
   Real GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env, bool normalize);
