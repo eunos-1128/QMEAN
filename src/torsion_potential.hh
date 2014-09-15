@@ -31,6 +31,8 @@ public:
 
   Real GetEnergy(std::vector<String>& residue_names, std::vector<Real>& angles);
 
+  Real GetEnergy(const String& group_id, std::vector<Real>& angles);
+
   Real GetTotalEnergy(ost::mol::EntityView& target, bool normalize);
 
   PotentialType GetType() { return Torsion; }
