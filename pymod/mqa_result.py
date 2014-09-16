@@ -8,6 +8,12 @@ from ost.bindings import dssp
 import os
 
 
+sm_conversions = {'QMEAN4':'qmean4','QMEAN6':'qmean6','interaction':'all_atom','cbeta':'cbeta','packing':'solvation','torsion':'torsion','ss_agreement':'ss_agreement','acc_agreement':'acc_agreement'}
+label_conversions = {'interaction':'All Atom', 'cbeta':'CBeta','packing':'Solvation',
+                     'torsion':'Torsion','ss_agreement':'SS Agree','acc_agreement':'ACC Agree',
+                     'QMEAN4':'QMEAN4','QMEAN6':'QMEAN6'}
+
+
 LSCORES_TABLE_HEADER='''\
 This file contains local scores calculated by the QMEAN scoring function.
 
@@ -133,17 +139,15 @@ class GlobalResult:
     else:
       raise ValueError('Can only create reference plots for qmean4 or qmean6!')
 
-  def ZScoreSlider(self, score):
-    return self.ref_set.ZScoreSliders([score.norm],[score.name],
-                                       self.model.residue_count,compact=True)
+  def ZScoreSlider(self, score, compact=True):
+    label = [label_conversions[score.name]]
+    return self.ref_set.ZScoreSliders([score.norm],[score.name], self.model.residue_count,
+                                      compact=compact,score_labels = label)
 
   def ZScoreSliders(self, scores):
     norm_scores = list()
     names = list()
     labels = list()
-
-    label_conversions = {'interaction':'All Atom', 'cbeta':'CBeta','packing':'Solvation',
-                         'torsion':'Torsion','ss_agreement':'SS Agree','acc_agreement':'ACC Agree'}
 
     for s in scores:
       norm_scores.append(s.norm)
@@ -229,9 +233,8 @@ class GlobalResult:
   @property
   def score_table(self):
     tab=Table(['name','norm','z_score'],'sff')
-    conversions = {'QMEAN4':'QMEAN4','QMEAN6':'QMEAN6','interaction':'all_atom','cbeta':'cbeta','packing':'solvation','torsion':'torsion','ss_agreement':'ss_agreement','acc_agreement':'acc_agreement'}
     for score in self.all_scores:
-      tab.AddRow([conversions[score.name], score.norm, score.z_score])
+      tab.AddRow([sm_conversions[score.name], score.norm, score.z_score])
     tab.comment=GSCORES_TABLE_HEADER
     return tab
 
@@ -244,19 +247,59 @@ class LocalResult:
 
   def PlotlDDTProfile(self, chain=None):
 
+    from matplotlib import pyplot
+    pyplot.clf()
+    pyplot.figure(figsize=[8,6],dpi=80)
+    pyplot.ylim((-0.1,1.1))
+    pyplot.xlabel('Residue Number',size='large')
+    pyplot.ylabel('Predicted lDDT',size='large')
+
+#    color_scheme = ['#D55E00','#0072B2','#F0E442','#009E73','#56B4E9','#E69F00','#999999','#000000']
+    color_scheme = ['#ff420e','#004586','#ffd320','#578d1c','#7e0021']
+
+    chain_idx = self.score_table.GetColIndex('chain')
+    rnum_idx = self.score_table.GetColIndex('rnum')
+    lddt_idx = self.score_table.GetColIndex('lDDT')
+
+    chains = list()
+    chains.append(self.score_table.rows[0][chain_idx])
+
+    for r in self.score_table.rows:
+      if r[chain_idx] != chains[-1]:
+        chains.append(r[chain_idx])
+
+
     if chain == None:
-      return self.score_table.Plot('rnum','lDDT', style='-r',
-                                   x_title='Residue Number', 
-                                   y_title='Predicted lDDT',
-                                   title='Local Model Quality',
-                                   y_range = [-0.1,1.1], linewidth=2.0)
+
+      pyplot.title('Local lDDT',size='x-large')
+
+      for i,ch in enumerate(chains):
+        chain_tab = self.score_table.Filter(chain=ch)  
+        res_num = list()
+        lddt = list()
+        for r in chain_tab.rows:
+          res_num.append(r[rnum_idx])
+          lddt.append(r[lddt_idx])
+        pyplot.plot(res_num,lddt,color=color_scheme[i%len(color_scheme)],linewidth=2.0)
+      return pyplot
+         
     else:
-      tab = self.score_table.Filter(chain=chain)
-      return tab.Plot('rnum','lDDT', style='-r',
-                       x_title='Residue Number', 
-                       y_title='Predicted lDDT',
-                       title='Local Model Quality',
-                       y_range = [-0.1,1.1], linewidth=2.0)
+
+      pyplot.title('Local lDDT Chain %s'%(chain),size='x-large')
+      chain_tab = self.score_table.Filter(chain=chain)
+      res_num = list()
+      lddt = list()
+      for r in chain_tab.rows:
+        res_num.append(r[rnum_idx])
+        lddt.append(r[lddt_idx])
+      color_idx = chains.index(chain)
+      pyplot.plot(res_num,lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
+
+
+      return pyplot
+
+
+
 
 
   @staticmethod
@@ -357,25 +400,29 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
     tab.Save(os.path.join(output_dir,'global_scores.txt'),format=table_format)
     if plots:
       p=global_result.ReferenceSetPlot('QMEAN4')
-      p.savefig(os.path.join(plot_dir,'qmean4_reference_set.png'))
+      p.savefig(os.path.join(plot_dir,'reference_set.png'))
       if psipred!=None and accpro!=None:
         p=global_result.ReferenceSetPlot('QMEAN6')
         p.savefig(os.path.join(plot_dir,'qmean6_reference_set.png'))
       qmean4_scores = [global_result.qmean4, global_result.interaction, global_result.cbeta, global_result.packing, global_result.torsion]
       p=global_result.ZScoreSliders(qmean4_scores)
-      p.savefig(os.path.join(plot_dir,'qmean4_slider.png'))
+      p.savefig(os.path.join(plot_dir,'qmean4.png'))
       for s in qmean4_scores:
         p=global_result.ZScoreSlider(s)
-        p.savefig(os.path.join(sliders_dir,'%s_compact.png'%(s.name)))
+        p.savefig(os.path.join(sliders_dir,'%s_compact.png'%(sm_conversions[s.name])))
+        p=global_result.ZScoreSlider(s, compact=False)
+        p.savefig(os.path.join(sliders_dir,'%s.png'%(sm_conversions[s.name])))
       if psipred!=None and accpro!=None:
         qmean6_scores = qmean4_scores
         qmean6_scores[0] = global_result.qmean6
         qmean6_scores+=[global_result.ss_agreement,global_result.acc_agreement]
         p=global_result.ZScoreSliders(qmean6_scores)
-        p.savefig(os.path.join(plot_dir,'qmean6_slider.png'))
+        p.savefig(os.path.join(plot_dir,'qmean6.png'))
         for s in [global_result.qmean6,global_result.ss_agreement,global_result.acc_agreement]:
           p=global_result.ZScoreSlider(s)
-          p.savefig(os.path.join(sliders_dir,'%s_compact.png'%(s.name)))
+          p.savefig(os.path.join(sliders_dir,'%s_compact.png'%(sm_conversions[s.name])))
+          p=global_result.ZScoreSlider(s,compact=False)
+          p.savefig(os.path.join(sliders_dir,'%s.png'%(sm_conversions[s.name])))
     results.append(global_result)
   if local_scores:
     local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro)
@@ -385,6 +432,8 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
       for ch in model.chains:
         p=local_result.PlotlDDTProfile(chain=ch.name)
         p.savefig(os.path.join(plot_dir,'local_lDDT_%s.png' % (ch.name)))
+      p=local_result.PlotlDDTProfile()
+      p.savefig(os.path.join(plot_dir,'local_lDDT.png'))
     results.append(local_result)
 
   return results
