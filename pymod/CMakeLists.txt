@@ -9,7 +9,6 @@ set(QMEAN_MODULES
   mqa_result_membrane.py
   crap_checker.py
   score_calculator.py
-  build_custom_potentials.py
   reference_set.py
 
 )
@@ -19,6 +18,7 @@ export_torsion.cc
 export_packing.cc
 export_reduced.cc
 export_cbeta.cc
+export_cb_packing.cc
 export_ss_agreement.cc
 export_base.cc
 export_spherical_smoother.cc

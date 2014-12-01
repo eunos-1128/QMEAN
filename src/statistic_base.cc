@@ -6,6 +6,7 @@
 #include <qmean/cbeta_statistics.hh>
 #include <qmean/packing_statistics.hh>
 #include <qmean/torsion_statistics.hh>
+#include <qmean/cb_packing_statistics.hh>
 
 using namespace ost;
 
@@ -64,6 +65,12 @@ StatisticContainerPtr StatisticContainer::Load(const String& filename){
         (*p)[key]=p_load;
         break;
       }
+      case CBPacking:{
+        CBPackingStatisticPtr p_load(new CBPackingStatistic);
+        ds & *p_load;
+        (*p)[key]=p_load;
+        break;
+      }
       default: throw io::IOException("Error in loading statistic container!");
     }
   }
@@ -105,6 +112,8 @@ std::vector<String> StatisticContainer::GetKeys(){
   return ret_vec;
 }
 
+StatisticBase::~StatisticBase() { }
+
 void StatisticBase::Save(const String& filename){
   std::ofstream stream(filename.c_str(), std::ios_base::binary);
   io::BinaryDataSink ds(stream);
@@ -112,3 +121,4 @@ void StatisticBase::Save(const String& filename){
 }
 
 }//namespace
+

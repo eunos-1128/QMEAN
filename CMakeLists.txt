@@ -29,10 +29,8 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(STAGE_DIR "${CMAKE_BINARY_DIR}/stage")
-set(EXECUTABLE_OUTPUT_PATH ${STAGE_DIR}/bin)
 set(HEADER_STAGE_PATH ${STAGE_DIR}/include)
 set(SHARED_DATA_PATH ${STAGE_DIR}/share/qmean)
-set(LIB_EXEC ${STAGE_DIR}/libexec/qmean)
 include_directories("${HEADER_STAGE_PATH}")
 link_directories(${LIB_STAGE_PATH})
 
@@ -48,13 +46,14 @@ else()
   set(LIB_STAGE_PATH "${STAGE_DIR}/lib")
 endif()
 
-file(MAKE_DIRECTORY ${STAGE_DIR} ${EXECUTABLE_OUTPUT_PATH} 
-                    ${HEADER_STAGE_PATH} ${LIB_STAGE_PATH})
+file(MAKE_DIRECTORY ${STAGE_DIR} ${HEADER_STAGE_PATH} ${LIB_STAGE_PATH})
 
 find_package(Python 2.4.0 REQUIRED)
 
 find_package(OPENSTRUCTURE 1.0 REQUIRED 
              COMPONENTS mol seq seq_alg mol_alg conop)
+
+find_package(Eigen 2.0.0 REQUIRED)
 
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
@@ -77,7 +76,6 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${OST_INCLUDE_DIR})
                     
 add_subdirectory(pymod)
-add_subdirectory(scripts)
 add_subdirectory(data)
 add_subdirectory(src)
 set (FILES_TO_BE_REMOVED stage CMakeFiles)

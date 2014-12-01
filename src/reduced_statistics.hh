@@ -59,3 +59,4 @@ private:
 
 }//namespace
 #endif // MREDUCED_STATISTICS_HH
+

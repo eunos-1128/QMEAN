@@ -23,6 +23,16 @@ list WrapGetEnergies(PackingPotentialPtr p, ost::mol::EntityView& target, ost::m
   return ret_list;
 }
 
+PackingPotentialPtr WrapCreate(PackingStatisticPtr s, Real sigma, const String& reference){
+  PackingPotentialPtr p = PackingPotential::Create(s,sigma,reference);
+  return p;
+}
+
+PackingPotentialPtr WrapHybridCreate(PackingStatisticPtr s1, PackingStatisticPtr s2, Real sigma, const String& reference, Real max_energy){
+  PackingPotentialPtr p = PackingPotential::Create(s1,s2,sigma,reference,max_energy);
+  return p;
+}
+
 void export_Packing()
 {
   class_<impl::PackingOpts>("PackingOpts", no_init)
@@ -46,7 +56,8 @@ void export_Packing()
   class_<PackingPotential, bases<PotentialBase> >("PackingPotential", no_init)
     .def("Load", PackingPotential::Load, (arg("filename"))).staticmethod("Load")
     .def("Save", &PackingPotential::Save, (arg("filename")))
-    .def("Create", &PackingPotential::Create, (arg("packing_statistic"),arg("sigma")=0.02,arg("reference_state")="classic")).staticmethod("Create")
+    .def("Create", &WrapHybridCreate, (arg("packing_statistic_one"),arg("packing_statistic_two"),arg("sigma")=0.02,arg("reference_state")="classic",arg("max_energy")=8.0))
+    .def("Create", &WrapCreate, (arg("packing_statistic"), arg("sigma")=0.02, arg("reference_state")="classic")).staticmethod("Create")    
     .def("SetEnvironment", &PackingPotential::SetEnvironment, (arg("environment")))
     .def("GetEnergy", &GetEnergy, (arg("atom"),arg("count")))   
     .def("GetEnergy", &GetEnergyResEnv, (arg("target_residue"),arg("environment"),arg("normalize")=true))
@@ -61,3 +72,4 @@ void export_Packing()
   register_ptr_to_python<PackingPotentialPtr>();
 
 }
+

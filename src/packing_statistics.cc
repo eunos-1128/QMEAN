@@ -13,7 +13,7 @@ PackingStatistic::PackingStatistic(Real cutoff_radius,
    impl::PackingOpts opts(cutoff_radius, max_count, bin_size);
    opts_=opts;
    PackingHistogram histo=PackingHistogram(IntegralClassifier(atom::UNKNOWN, 0),       
-          IntegralClassifier(floor(max_count/bin_size)+1, 0));
+          IntegralClassifier(int(floor(max_count/bin_size))+1, 0));
    histo_=histo;
 }
 
@@ -89,3 +89,4 @@ Real PackingStatistic::GetCount(int bin){
 }
 
 }//namespace
+

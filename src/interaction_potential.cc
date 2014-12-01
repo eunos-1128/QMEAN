@@ -43,6 +43,27 @@ InteractionPotentialPtr InteractionPotential::Create(InteractionStatisticPtr s, 
   return p;
 }
 
+InteractionPotentialPtr InteractionPotential::Create(InteractionStatisticPtr s1, InteractionStatisticPtr s2, Real sigma, const String& reference_state, Real max_energy){
+
+  InteractionPotentialPtr p(new InteractionPotential);
+
+  if(s1->GetOpts() != s1->GetOpts()){
+    throw io::IOException("The options for both statistics must be consistent!");
+  }
+
+
+  p->opts_=s1->GetOpts();
+  p->opts_.sigma=sigma;
+  p->energies_=InteractionEnergies(0.0, IntegralClassifier(atom::UNKNOWN, 0),
+                                        IntegralClassifier(atom::UNKNOWN, 0),
+                                        ContinuousClassifier(p->opts_.number_of_bins,
+                                                             p->opts_.lower_cutoff,
+                                                             p->opts_.upper_cutoff));
+
+  p->Fill(s1, s2, reference_state, max_energy);
+  return p;
+}
+
 void InteractionPotential::Fill(InteractionStatisticPtr stat, const String& reference_state)
 {
   typedef InteractionEnergies::IndexType Index;
@@ -74,6 +95,56 @@ void InteractionPotential::Fill(InteractionStatisticPtr stat, const String& refe
           propensity=sequence_conformation_count/sequence_count/reference[k];
         }
         Real e=log(1+opts_.sigma*sequence_count)-log(1+opts_.sigma*sequence_count*propensity);
+        energies_.Set(Index(i, j, k), e);
+      }
+    }
+  }
+}
+
+void InteractionPotential::Fill(InteractionStatisticPtr s1, InteractionStatisticPtr s2, const String& reference_state, Real max_energy)
+{
+  typedef InteractionEnergies::IndexType Index;
+  Real total_count_one = s1->GetTotalCount();
+  Real total_count_two = s2->GetTotalCount();
+  
+  boost::multi_array<Real,1> reference_one(boost::extents[opts_.number_of_bins]);
+  boost::multi_array<Real,1> reference_two(boost::extents[opts_.number_of_bins]);
+
+  if(reference_state=="classic") {
+    for(int i=0;i<opts_.number_of_bins;++i){
+      reference_one[i]=s1->GetCount(i)/total_count_one;
+    }
+  }
+  else{
+    std::stringstream ss;
+    ss << reference_state << " is not implemented as reference state in cbeta potential!"
+       << "implemented are: classic";
+    throw io::IOException(ss.str());
+
+  }
+
+  for(int i=0;i<opts_.number_of_bins;++i){
+    reference_two[i]=s2->GetCount(i)/total_count_two;
+  }
+
+  for (int i=0; i<atom::UNKNOWN; ++i) {
+    for (int j=0; j<atom::UNKNOWN; ++j) {
+      Real sequence_count_one=s1->GetCount(atom::ChemType(i), atom::ChemType(j));
+      Real sequence_count_two=s2->GetCount(atom::ChemType(i), atom::ChemType(j));
+
+      for (int k=0; k<opts_.number_of_bins; ++k) {
+        Real sequence_conformation_count_one=s1->GetCount(atom::ChemType(i), atom::ChemType(j),k);
+        Real sequence_conformation_count_two=s2->GetCount(atom::ChemType(i), atom::ChemType(j),k);
+        Real propensity_sum = 0.0;
+        if(sequence_count_one>0 && reference_one[k]>0){
+          propensity_sum += sequence_conformation_count_one/sequence_count_one/reference_one[k];
+        }
+        if(sequence_count_two>0 && reference_two[k]>0){
+          propensity_sum += sequence_count_two*opts_.sigma*sequence_conformation_count_two/sequence_count_two/reference_two[k];
+        }
+        Real e;
+        if(propensity_sum == 0) e = max_energy;
+        else e = std::min(max_energy,Real(log(1+opts_.sigma*sequence_count_two)-log(propensity_sum))); 
         energies_.Set(Index(i, j, k), e);
       }
     }
@@ -134,3 +205,4 @@ Real InteractionPotential::GetTotalEnergy(ost::mol::EntityView& target, ost::mol
 }
 
 }//namespace
+

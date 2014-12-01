@@ -27,7 +27,11 @@ public:
 
   static PackingPotentialPtr Create(PackingStatisticPtr stat, Real sigma, const String& reference_state);
 
+  static PackingPotentialPtr Create(PackingStatisticPtr s1, PackingStatisticPtr s2, Real sigma, const String& reference_state, Real max_energy);
+
   void Fill(PackingStatisticPtr stat, const String& reference_state);
+
+  void Fill(PackingStatisticPtr s1, PackingStatisticPtr s2, const String& reference_state, Real max_energy);
 
   PotentialType GetType() { return Packing; }
 

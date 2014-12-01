@@ -76,3 +76,4 @@ Real CBetaStatistic::GetCount(int dist_bin){
 }
 
 }
+

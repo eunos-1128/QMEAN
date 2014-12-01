@@ -52,3 +52,4 @@ private:
 
 }//namespace
 #endif // INTERACTION_STATISTICS_HH
+

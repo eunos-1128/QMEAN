@@ -113,3 +113,4 @@ Real SphericalSmoother::Evaluate(std::vector<std::pair<Real,Real> >& pair_vec){
 }
 
 }//namespace
+

@@ -33,6 +33,7 @@ SolvationGrid::SolvationGrid(geom::AlignedCuboid cub, Real bin_size):
 
 }
 
+/*
 ost::img::ImageHandle SolvationGrid::AsIMG(){
 
   ost::img::ImageHandle img = ost::img::CreateImage(ost::img::Size(xbins_,ybins_,zbins_));
@@ -49,6 +50,7 @@ ost::img::ImageHandle SolvationGrid::AsIMG(){
 
   return img;
 }
+*/
 
 void SolvationGrid::AddSurface(const ost::mol::SurfaceHandle& surf){
 
@@ -94,12 +96,12 @@ void SolvationGrid::AddSurface(const ost::mol::SurfaceHandle& surf){
     max_y = std::max(u0[1],std::max(u1[1],u2[1]));
     max_z = std::max(u0[2],std::max(u1[2],u2[2]));
 
-    min_x_idx = std::floor((min_x-origin_[0])/bin_size_);
-    max_x_idx = std::ceil((max_x-origin_[0])/bin_size_);
-    min_y_idx = std::floor((min_y-origin_[1])/bin_size_);
-    max_y_idx = std::ceil((max_y-origin_[1])/bin_size_);
-    min_z_idx = std::floor((min_z-origin_[2])/bin_size_);
-    max_z_idx = std::ceil((max_z-origin_[2])/bin_size_);
+    min_x_idx = int(std::floor((min_x-origin_[0])/bin_size_));
+    max_x_idx = int(std::ceil((max_x-origin_[0])/bin_size_));
+    min_y_idx = int(std::floor((min_y-origin_[1])/bin_size_));
+    max_y_idx = int(std::ceil((max_y-origin_[1])/bin_size_));
+    min_z_idx = int(std::floor((min_z-origin_[2])/bin_size_));
+    max_z_idx = int(std::ceil((max_z-origin_[2])/bin_size_));
 
     for(i=std::max(min_x_idx,0);i<=std::min(max_x_idx,xbins_-1);++i){
       for(j=std::max(min_y_idx,0);j<=std::min(max_y_idx,ybins_-1);++j){
@@ -261,55 +263,6 @@ void SolvationGrid::Flood(){
 }
 
 
-
-void SolvationGrid::FloodLevel8Neighbours(int level, std::pair<int,int> start_coordinates, int orig_value, int dest_value){
- 
-  if(orig_value!=grid_[start_coordinates.first][start_coordinates.second][level]){
-    return;
-  }
-
-  std::vector<std::pair<int,int> > queue;
-
-  queue.push_back(std::make_pair(start_coordinates.first,start_coordinates.second));
-
-  std::pair<int,int> actual_position;
-
-  while(!queue.empty()){
-    actual_position = queue.back();
-    queue.pop_back();
-    //check xrange
-    if(actual_position.first<0 || actual_position.first>=xbins_){
-      continue;
-    }
-    //check yrange
-    if(actual_position.second<0 || actual_position.second>=ybins_){
-      continue;
-    }
-    //check whether there is an atom
-    if(grid_[actual_position.first][actual_position.second][level]!=orig_value){
-      continue;
-    }
-    //check whether we already set the value
-    if(grid_[actual_position.first][actual_position.second][level]==dest_value){
-      continue;
-    }
-
-    //set value
-    grid_[actual_position.first][actual_position.second][level]=dest_value;
-    
-
-    queue.push_back(std::make_pair(actual_position.first,actual_position.second+1));
-    queue.push_back(std::make_pair(actual_position.first,actual_position.second-1));
-    queue.push_back(std::make_pair(actual_position.first+1,actual_position.second));
-    queue.push_back(std::make_pair(actual_position.first-1,actual_position.second));
-    queue.push_back(std::make_pair(actual_position.first-1,actual_position.second-1));
-    queue.push_back(std::make_pair(actual_position.first+1,actual_position.second+1));
-    queue.push_back(std::make_pair(actual_position.first+1,actual_position.second-1));
-    queue.push_back(std::make_pair(actual_position.first-1,actual_position.second+1));
-  }
-}
-
-
 void SolvationGrid::FloodLevel(int level, std::pair<int, int> start_coordinates, int orig_value, int dest_value){
   //http://lodev.org/cgtutor/floodfill.html
 
@@ -379,7 +332,7 @@ bool SolvationGrid::IsFilled(geom::Vec3& pos){
 
 void SolvationGrid::CalculateSolvatedSurface(){
   if(!surf_.IsValid()){
-    throw "You have to add surface first!";
+    throw ost::Error("Cannot calculate solvated surface in grid without attached surface!");
   }
 
   if(!is_flooded_){
@@ -388,8 +341,119 @@ void SolvationGrid::CalculateSolvatedSurface(){
   }
 
   solvated_surf_ = ost::mol::CreateSurface();
+  solvated_vertices_.clear();
 
   int level,x,y;
+
+  /*
+  for(level=0;level<zbins_;++level){
+    for(x=2;x<xbins_-2;++x){
+      for(y=2;y<ybins_-2;++y){
+        if(grid_[x][y][level] == 1){
+          //we check the first layer
+          if(grid_[x-1][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-1][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-1][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          //now we check the second layer
+          if(grid_[x-2][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-2][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x-2][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-2][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x-2][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x-1][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x-1][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x+1][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+1][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x+2][y-2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+2][y-1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }          
+          if(grid_[x+2][y][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+2][y+1][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+          if(grid_[x+2][y+2][level] == 2){
+            grid_[x][y][level] = 10;
+            continue;
+          }
+        }
+      }
+    }
+  }
+  */
+
 
   for(level=0;level<zbins_;++level){
     for(x=0;x<xbins_;++x){
@@ -420,8 +484,7 @@ void SolvationGrid::CalculateSolvatedSurface(){
         }
       }
     }
-  }
-
+  } 
 
   ost::mol::SurfaceTriIDList tri_id = surf_.GetTriIDList();
   ost::mol::SurfaceTri tri;
@@ -476,12 +539,12 @@ void SolvationGrid::CalculateSolvatedSurface(){
     max_y = std::max(u0[1],std::max(u1[1],u2[1]));
     max_z = std::max(u0[2],std::max(u1[2],u2[2]));
 
-    min_x_idx = std::floor((min_x-origin_[0])/bin_size_);
-    max_x_idx = std::ceil((max_x-origin_[0])/bin_size_);
-    min_y_idx = std::floor((min_y-origin_[1])/bin_size_);
-    max_y_idx = std::ceil((max_y-origin_[1])/bin_size_);
-    min_z_idx = std::floor((min_z-origin_[2])/bin_size_);
-    max_z_idx = std::ceil((max_z-origin_[2])/bin_size_);
+    min_x_idx = int(std::floor((min_x-origin_[0])/bin_size_));
+    max_x_idx = int(std::ceil((max_x-origin_[0])/bin_size_));
+    min_y_idx = int(std::floor((min_y-origin_[1])/bin_size_));
+    max_y_idx = int(std::ceil((max_y-origin_[1])/bin_size_));
+    min_z_idx = int(std::floor((min_z-origin_[2])/bin_size_));
+    max_z_idx = int(std::ceil((max_z-origin_[2])/bin_size_));
 
     for(i=std::max(min_x_idx,0);i<=std::min(max_x_idx,xbins_-1);++i){
       for(j=std::max(min_y_idx,0);j<=std::min(max_y_idx,ybins_-1);++j){
@@ -499,6 +562,9 @@ void SolvationGrid::CalculateSolvatedSurface(){
               id2 = solvated_surf_.AddVertex(v2);
               solvated_surf_.AddTri(id0, id1, id2);
               added_vertex = true;
+              solvated_vertices_.push_back(tri.v0);
+              solvated_vertices_.push_back(tri.v1);
+              solvated_vertices_.push_back(tri.v2);
               break;
             }
           }
@@ -537,6 +603,8 @@ ost::mol::SurfaceHandle SolvationGrid::GetSolvatedSurface(){
 
 
 void SolvationGrid::CalculateSolvatedView(){
+
+
   if(!surf_.IsValid()){
     throw "You have to add surface first!";
   }
@@ -658,4 +726,609 @@ ost::mol::EntityHandle FillMembraneDummies(const geom::AlignedCuboid& cuboid, co
   
   return return_handle;
 }
+
+
+ost::mol::SurfaceHandle TransformSurface(ost::mol::SurfaceHandle& s, geom::Transform& t){
+  
+  
+  ost::mol::SurfaceHandle transformed_surf = ost::mol::CreateSurface();
+  ost::mol::SurfaceTriIDList tri_id_list = s.GetTriIDList();
+  ost::mol::SurfaceVertexIDList v_id_list = s.GetVertexIDList();
+
+  std::map<ost::mol::SurfaceVertexID, ost::mol::SurfaceVertexID> v_mapper;
+
+  ost::mol::SurfaceVertex v;
+  ost::mol::SurfaceVertex transformed_v;
+  geom::Vec3 transformed_pos;
+  geom::Vec3 transformed_norm;
+  geom::Vec3 norm_helper;
+  ost::mol::SurfaceTri tri;
+
+
+  //vertices get added first
+  for(ost::mol::SurfaceVertexIDList::iterator i = v_id_list.begin(); i!=v_id_list.end(); ++i){
+    v = s.GetVertex(*i);
+    norm_helper = t.Apply(v.position+v.normal);
+    transformed_pos = t.Apply(v.position);
+    transformed_norm = norm_helper-transformed_pos;
+    transformed_v = ost::mol::SurfaceVertex(transformed_pos,transformed_norm,
+                                            v.type, v.atom);
+    v_mapper[*i] = transformed_surf.AddVertex(transformed_v);
+  }
+
+  //let's add the faces...
+  for(ost::mol::SurfaceTriIDList::iterator i=tri_id_list.begin();i!=tri_id_list.end();++i){ 
+    tri = s.GetTri(*i);
+    transformed_surf.AddTri(v_mapper[tri.v0],v_mapper[tri.v1],v_mapper[tri.v2]);
+  }
+  
+  return transformed_surf;
+}
+
+
+geom::Vec3 RotateAroundAxis(geom::Vec3 point, geom::Vec3 axis, Real angle){
+
+  Real aa,ab,ac,ba,bb,bc,ca,cb,cc,one_m_cos,cos_ang,sin_ang;
+  geom::Mat3 rot;
+  geom::Vec3 result;
+
+  cos_ang = std::cos(angle);
+  sin_ang = std::sin(angle);
+  one_m_cos = 1-cos_ang;
+
+  aa = cos_ang+axis[0]*axis[0]*one_m_cos;
+  ab = axis[0]*axis[1]*one_m_cos-axis[2]*sin_ang;
+  ac = axis[0]*axis[2]*one_m_cos+axis[1]*sin_ang;
+
+  ba = axis[1]*axis[0]*one_m_cos+axis[2]*sin_ang;
+  bb = cos_ang+axis[1]*axis[1]*one_m_cos;
+  bc = axis[1]*axis[2]*one_m_cos-axis[0]*sin_ang;
+
+  ca = axis[2]*axis[0]*one_m_cos-axis[1]*sin_ang;
+  cb = axis[2]*axis[1]*one_m_cos+axis[0]*sin_ang;
+  cc = cos_ang+axis[2]*axis[2]*one_m_cos;
+
+  rot = geom::Mat3(aa,ab,ac,ba,bb,bc,ca,cb,cc);
+
+  result = rot*point;
+
+  return result;
+
+}
+
+geom::Vec3 GetTiltAxis(geom::Vec3& x){
+  
+  geom::Vec3 base = geom::Normalize(x);
+  geom::Vec3 tilt_axis;
+
+  if(std::abs(base[0])>0.9999){
+    tilt_axis = geom::Vec3(0.0,1.0,0.0);
+  }
+  else{
+    geom::Vec3 x_base = geom::Vec3(1.0,0.0,0.0);
+    tilt_axis = geom::Normalize(geom::Cross(base,x_base));
+  }
+
+  return tilt_axis;
+}
+
+FindMemParam MinimizeAlongZ(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, Real lambda){
+
+
+  geom::Vec3 normalized_axis(0.0,0.0,1.0);
+  geom::Vec3 tilt_axis(1.0,0.0,0.0);
+
+  //top ten of the grid search solutions will be saved in here
+  std::vector<FindMemParam> initial_solutions;
+  std::pair<std::pair<Real,Real>, Real> actual_solution;
+
+  //the minimal solution will be stored in here
+  FindMemParam final_solution;
+  final_solution.energy = std::numeric_limits<Real>::max();
+
+  geom::Vec3 tilted_axis;
+  geom::Vec3 scan_axis;
+  Real tilt_rad,angle_rad;
+
+  FindMemParam parameters;
+
+  for(int tilt_deg = 0; tilt_deg<=52; tilt_deg+=4){
+
+    tilt_rad = Real(tilt_deg)/360*2*M_PI;
+    tilted_axis = RotateAroundAxis(normalized_axis,tilt_axis,tilt_rad);
+
+    //if we would choos equidistant angles, rotations from higher tilts would be sampled more sparse.
+    //We tilt until 52 degrees. If we fully rotate with a tilted axis in a sphere of radius 1, we would
+    //get a circle with circumference of pi. Let's say we want to sample this region widh d_angle of
+    //4 degrees, we need 90 different angles and the points are on average 
+    //0.0550135287662 (arclength) apart. We can now calculate the circumference for every circle at
+    //a specific tilt and then have a look how many angles we need to get a similar d_arclength...
+
+    Real circumference = 2*M_PI*std::sin(tilt_rad);
+    int num_angles = int(ceil(std::max(12,int(ceil(circumference/0.0550135287662)))));
+    Real d_angle = 2*M_PI/num_angles;
+
+    for(int actual_angle = 0; actual_angle<num_angles; ++actual_angle){
+      
+      angle_rad = actual_angle*d_angle;
+      scan_axis = RotateAroundAxis(tilted_axis,normalized_axis,angle_rad);
+
+      actual_solution = ScanAxis(atom_positions,transfer_energies,scan_axis);
+
+      if(initial_solutions.size()==0){
+        parameters.axis = normalized_axis;
+        parameters.tilt_axis = tilt_axis;
+        parameters.tilt = tilt_rad;
+        parameters.angle = angle_rad;
+        parameters.width = actual_solution.first.first;
+        parameters.pos = actual_solution.first.second;
+        parameters.energy = actual_solution.second;
+        initial_solutions.push_back(parameters);
+        //happens only once... At this time the tilt is zero
+        //and it makes no sense to do additional angle rotations...
+        break;
+      }
+
+      if(initial_solutions.size()<10){
+
+        parameters.axis = normalized_axis;
+        parameters.tilt_axis = tilt_axis;
+        parameters.tilt = tilt_rad;
+        parameters.angle = angle_rad;
+        parameters.width = actual_solution.first.first;
+        parameters.pos = actual_solution.first.second;
+        parameters.energy = actual_solution.second;
+
+        //we either append or insert the parameters
+        if(actual_solution.second>=initial_solutions.back().energy){
+          initial_solutions.push_back(parameters);
+          continue;
+        }
+
+        for(std::vector<FindMemParam>::iterator i = initial_solutions.begin();
+            i!=initial_solutions.end();++i){
+          if(i->energy > actual_solution.second){
+            initial_solutions.insert(i,parameters);
+            break;
+          }
+        }
+        continue;
+      }
+
+      if(actual_solution.second < initial_solutions.back().energy){
+        parameters.axis = normalized_axis;
+        parameters.tilt_axis = tilt_axis;
+        parameters.tilt = tilt_rad;
+        parameters.angle = angle_rad;
+        parameters.width = actual_solution.first.first;
+        parameters.pos = actual_solution.first.second;
+        parameters.energy = actual_solution.second;
+        for(std::vector<FindMemParam>::iterator i= initial_solutions.begin();
+            i!=initial_solutions.end();++i){
+          if(i->energy > actual_solution.second){
+            initial_solutions.insert(i,parameters);
+            initial_solutions.pop_back();
+            break;
+          }
+        }
+      } 
+    }
+  }
+
+  EnergyF en_f(atom_positions, transfer_energies, 0.9, 0.0);
+
+  Eigen::Matrix<Real, 4, 1> lm_parameters;
+  FindMemParam temp;
+  ost::img::alg::LevenbergMarquardt<EnergyF,EnergyDF>::Results lm_result; 
+
+  //go through the initial solutions found by simple scanning and run
+  //levenberg marquardt minimization
+  for(int i=0;i<5;++i){
+
+    temp = initial_solutions[i];
+
+    lm_parameters(0,0) = temp.tilt;
+    lm_parameters(1,0) = temp.angle;
+    lm_parameters(2,0) = temp.width;
+    lm_parameters(3,0) = temp.pos;
+
+    //set offset parameter
+    en_f.offset = std::abs(temp.energy*2);
+
+    ost::img::alg::LevenbergMarquardt<EnergyF,EnergyDF> lm(en_f);
+    lm_result = lm.minimize(&lm_parameters);
+    Real minimized_energy = en_f(lm_parameters)(0,0)-en_f.offset;
+    if(minimized_energy<final_solution.energy){
+      FindMemParam mem_param;
+      mem_param.tilt = lm_parameters(0,0);
+      mem_param.angle = lm_parameters(1,0);
+      mem_param.width = lm_parameters(2,0);
+      mem_param.pos = lm_parameters(3,0);
+      mem_param.energy = minimized_energy;
+      mem_param.axis = temp.axis;
+      mem_param.tilt_axis = temp.tilt_axis;
+      final_solution = mem_param;
+    }
+  }
+  return final_solution;
+}
+
+std::pair<std::pair<Real,Real>, Real> ScanAxis(std::vector<geom::Vec3>& atom_positions, std::vector<Real>& transfer_energies, geom::Vec3& axis){
+  
+  geom::Vec3 normalized_axis = geom::Normalize(axis);
+  std::vector<Real> pos_on_axis;
+
+  for(std::vector<geom::Vec3>::iterator i = atom_positions.begin();
+      i != atom_positions.end(); ++i){
+    pos_on_axis.push_back(geom::Dot(*i,normalized_axis));
+  }
+
+  Real min_pos = pos_on_axis[0];
+  Real max_pos = min_pos;
+
+  for(std::vector<Real>::iterator i = pos_on_axis.begin(); 
+      i != pos_on_axis.end(); ++i){
+    if(min_pos>(*i)) min_pos = (*i);
+    if(max_pos<(*i)) max_pos = (*i);
+  }
+
+  int width = int(ceil(max_pos)-floor(min_pos));
+
+
+  //energies representing the energy profile along the axis
+  Real energies[width];
+
+  for(int i=0;i<width;++i){
+    energies[i]=0.0;
+  }
+
+  std::vector<Real>::iterator i,j;
+
+  for(i = pos_on_axis.begin(),j = transfer_energies.begin();
+      i != pos_on_axis.end() && j != transfer_energies.end(); ++i, ++j){
+    energies[int(floor((*i)-min_pos))] += (*j);
+  }
+
+  // int pair: position and width, real value: energy
+  std::pair<std::pair<Real,Real>, Real> solution = std::make_pair(std::make_pair(0.0,0.0),std::numeric_limits<Real>::max());
+  Real energy;
+
+  for(int window_width = 10; window_width<=40; window_width+=1){
+
+    if(window_width>width) break;
+
+    energy=0.0;
+    for(int i=0;i<window_width;++i){
+      energy+=energies[i];
+    }
+    if(energy<solution.second){
+      Real center = min_pos+Real(window_width)/2;
+      solution = std::make_pair(std::make_pair(Real(window_width),center),energy);
+    }
+    
+    for(int pos = 1; pos<=width-window_width; ++pos){
+      energy-=energies[pos-1];
+      energy+=energies[pos+window_width-1];
+      if(energy<solution.second){
+        Real center = min_pos+pos+Real(window_width)/2;
+        solution = std::make_pair(std::make_pair(Real(window_width),center),energy);
+      }
+    }
+  }
+  return solution;
+}
+
+
+FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa){
+
+  ost::io::IOProfile io_profile;
+
+
+  ost::mol::EntityHandle rotated_ent;
+  ost::mol::SurfaceHandle rotated_surf;
+
+  std::vector<Real> transfer_energies;
+  std::vector<geom::Vec3> atom_positions;
+
+  FindMemParam final_solution;
+  FindMemParam actual_solution;
+
+  final_solution.energy = std::numeric_limits<Real>::max();
+
+  //The whole grid stuff for defining surface atoms only works along the
+  //z-axis. We therefore have to transform the structure. We use a rotation 
+  //around the z-axis with subsequent rotation around the x-axis for this task
+  std::vector<Real> z_rotations;
+  std::vector<Real> x_rotations;
+
+  z_rotations.push_back(0.0);
+  z_rotations.push_back(0.0);
+  z_rotations.push_back(1*(2*M_PI/5));
+  z_rotations.push_back(2*(2*M_PI/5));
+  z_rotations.push_back(3*(2*M_PI/5));
+  z_rotations.push_back(4*(2*M_PI/5));
+  
+  x_rotations.push_back(0.0);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+  x_rotations.push_back(M_PI/4);
+
+  
+  geom::Transform transform;
+  geom::Mat3 z_rot_matrix, x_rot_matrix, rot_matrix;
+  Real z_rot, x_rot;
+
+
+  //we look, which vertex is associated to which atom...
+  //this will speed up some calculations later on
+  std::map<ost::mol::SurfaceVertexID,int> vertex_atom_mapper;
+
+  ost::mol::SurfaceVertexIDList v_list = surf.GetVertexIDList();
+  ost::mol::SurfaceVertex vert;
+  ost::mol::AtomHandleList a_list;
+
+  for(ost::mol::SurfaceVertexIDList::iterator it=v_list.begin();it!=v_list.end();++it){
+    vert = surf.GetVertex(*it);
+    a_list = ent.FindWithin(vert.position,3.0);
+    if(a_list.empty()) continue;
+    ost::mol::AtomHandleList::iterator ait=a_list.begin();
+    Real best_dist2 = geom::Length2(ait->GetPos()-vert.position);
+    ost::mol::AtomHandle best_atom = *ait;
+    ++ait;
+    for(;ait!=a_list.end();++ait) {
+      Real dist2 = geom::Length2(ait->GetPos()-vert.position);
+      if(dist2<best_dist2) {
+        best_dist2=dist2;
+        best_atom = *ait;
+      }
+    }
+    best_atom.SetIntProp("surface_vertex",*it);
+  }
+
+  a_list = ent.GetAtomList();
+
+  for(int i = 0; i < a_list.size(); ++i){
+    if(a_list[i].HasProp("surface_vertex")){
+      vertex_atom_mapper[a_list[i].GetIntProp("surface_vertex")] = i;
+    }
+  }
+
+
+  for(int t_counter = 0; t_counter<z_rotations.size();++t_counter){
+
+    //rotate entity and surface to start a search around the global z-axis
+    rotated_ent = ent.Copy();
+    ost::mol::XCSEditor ed = rotated_ent.EditXCS();
+
+    z_rot = z_rotations[t_counter];
+    x_rot = x_rotations[t_counter];
+
+    z_rot_matrix = geom::Mat3(std::cos(z_rot),-std::sin(z_rot),0.0,
+                              std::sin(z_rot),std::cos(z_rot),0.0,
+                              0.0, 0.0, 1.0);
+
+    x_rot_matrix = geom::Mat3(1.0, 0.0, 0.0,
+                              0.0, std::cos(x_rot),-std::sin(x_rot),
+                              0.0,std::sin(x_rot),std::cos(x_rot));
+
+    //rot_matrix = z_rot_matrix*x_rot_matrix;
+    rot_matrix = x_rot_matrix*z_rot_matrix;
+    transform.SetRot(rot_matrix);
+
+    ed.ApplyTransform(transform.GetMatrix());
+    rotated_surf = TransformSurface(surf, transform);
+
+    //to define the grid size later on, we have to find the structures extent
+    ost::mol::AtomHandleList a_list = rotated_ent.GetAtomList();
+    Real max_x = std::numeric_limits<Real>::min();
+    Real min_x = std::numeric_limits<Real>::max();
+    Real max_y = std::numeric_limits<Real>::min();
+    Real min_y = std::numeric_limits<Real>::max();
+    Real max_z = std::numeric_limits<Real>::min();
+    Real min_z = std::numeric_limits<Real>::max();
+    geom::Vec3 pos;
+    for(ost::mol::AtomHandleList::iterator i = a_list.begin(); i!=a_list.end();++i){
+      pos = i->GetPos();
+      if(pos[0]>max_x) max_x = pos[0];
+      if(pos[0]<min_x) min_x = pos[0];
+      if(pos[1]>max_y) max_y = pos[1];
+      if(pos[1]<min_y) min_y = pos[1];
+      if(pos[2]>max_z) max_z = pos[2];
+      if(pos[2]<min_z) min_z = pos[2];
+    }
+
+    max_x += 2;
+    min_x -= 2;
+    max_y += 2;
+    min_y -= 2;
+    max_z += 2;
+    min_z -= 2;
+
+    //define a cuboid with the previously found extents and generate a grid
+    //with that size
+    geom::Vec3 min_vec(min_x,min_y,min_z);
+    geom::Vec3 max_vec(max_x,max_y,max_z);
+    geom::AlignedCuboid cuboid(min_vec,max_vec);
+    SolvationGrid grid(cuboid, 0.5);
+
+    //Add the rotated surface to the grid
+    grid.AddSurface(rotated_surf);
+    grid.Flood();
+    grid.CalculateSolvatedSurface();
+
+    //note, that we defined the mapping between the vertex indices and the
+    //corresponding atoms. It is therefore possible, to just look at the
+    //remaining vertices of the solvated surface
+    v_list = grid.GetSolvatedVertices();
+    a_list = rotated_ent.GetAtomList();
+
+    for(ost::mol::SurfaceVertexIDList::iterator i = v_list.begin();
+        i != v_list.end(); ++i){
+      a_list[vertex_atom_mapper[*i]].SetBoolProp("surface",true);
+    }
+
+    /*
+    std::stringstream ss;
+    ss  << "test" << t_counter << ".pdb";
+
+    ost::mol::EntityView solvated_atoms = rotated_ent.Select("gasurface:false=true");
+
+    ost::io::PDBWriter writer(ss.str(), io_profile);
+
+    writer.Write(solvated_atoms);
+    */
+
+
+    String element;
+    unsigned char bond_order;
+    ost::mol::BondHandleList bond_list;
+    bool assigned_energy=false;
+
+    ost::mol::AtomHandleList::iterator i;
+    std::vector<Real>::iterator j;
+
+    transfer_energies.clear();
+    atom_positions.clear();
+
+    for(i=a_list.begin(), j=asa.begin();i!=a_list.end(),j!=asa.end();++i,++j){
+      //we don't even have to check for true, since prop is only set for surface atoms
+      if(!i->HasProp("surface")){
+        continue;
+      }
+      atom_positions.push_back(i->GetPos());
+      element = i->GetElement();
+      if(element=="S") transfer_energies.push_back((*j)*(10.0));
+      else if(element=="N") transfer_energies.push_back((*j)*(53.0));
+      else if(element=="O") transfer_energies.push_back((*j)*(57.0));
+      else if(element=="C"){
+        assigned_energy=false;
+        bond_list = i->GetBondList();
+        for(ost::mol::BondHandleList::iterator k=bond_list.begin();k!=bond_list.end();++k){
+          bond_order = k->GetBondOrder();
+          if(bond_order>'1'){
+            transfer_energies.push_back((*j)*(-19.0));
+            assigned_energy=true;
+            break;;
+          }
+        }
+        if(!assigned_energy) transfer_energies.push_back((*j)*(-22.6));
+      }
+      else if(element=="H") continue;
+      else transfer_energies.push_back(0.0); // in case of unknown atom...
+    }
+
+    //we now try to find a solution, taking the global z-axis as a starting point
+    actual_solution = MinimizeAlongZ(atom_positions,transfer_energies,0.9);
+
+    //Check whether newly calculated minimum is better than global solution
+    if(actual_solution.energy < final_solution.energy){
+      final_solution = actual_solution;
+      //we still have to correct the membrane and tilt axis for the initial transform
+      final_solution.tilt_axis = transform.ApplyInverse(final_solution.tilt_axis);
+      final_solution.axis = transform.ApplyInverse(final_solution.axis);
+
+    }
+  }
+  return final_solution;
+}
+
+EnergyF::FMatrixType EnergyF::operator()(const Eigen::Matrix<Real, 4, 1>& x) const{
+
+  FMatrixType result;
+  result(0,0) = 0.0;
+  geom::Vec3 tilted_axis = axis;
+
+  tilted_axis = RotateAroundAxis(tilted_axis, tilt_axis, x(0,0));
+  tilted_axis = RotateAroundAxis(tilted_axis, axis, x(1,0));
+  
+
+  std::vector<Real>::const_iterator e_it = transfer_energies.begin();
+  std::vector<geom::Vec3>::const_iterator pos_it = positions.begin();
+
+  Real distance_to_center;
+  Real pos_on_axis;
+  Real half_width = x(2,0)/2.0;
+  Real exponent;
+  Real energy;
+
+  for(;pos_it!=positions.end() && e_it!=transfer_energies.end();++pos_it,++e_it){
+    pos_on_axis = geom::Dot(tilted_axis,*pos_it);
+    distance_to_center = std::abs(x[3]-pos_on_axis);
+    exponent = (distance_to_center-half_width)/lambda;
+    energy = (1.0/(1.0+std::exp(exponent)))*(*e_it);
+    result(0,0)=result(0,0)+energy;
+  }
+
+  result(0,0)+=offset;
+
+  return result;
+}
+
+Eigen::Matrix<Real,1,4> EnergyDF::operator()(const Eigen::Matrix<Real, 4, 1>& x) const{
+
+  Eigen::Matrix<Real,1,4> result;
+  Eigen::Matrix<Real, 4, 1> parameter1 = x;
+  Eigen::Matrix<Real, 4, 1> parameter2 = x;
+
+  parameter1(0,0)+=d_tilt;
+  parameter2(0,0)-=d_tilt;
+  result(0,0) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_tilt);
+
+  parameter1=x;
+  parameter2=x;
+  parameter1(1,0)+=d_angle;
+  parameter2(1,0)-=d_angle;
+  result(0,1) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_angle);
+
+  parameter1=x;
+  parameter2=x;
+  parameter1(2,0)+=d_width;
+  parameter2(2,0)-=d_width;
+  result(0,2) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_width);
+
+  parameter1=x;
+  parameter2=x;
+  parameter1(3,0)+=d_pos;
+  parameter2(3,0)-=d_pos;
+  result(0,3) = (function(parameter1)(0,0)-function(parameter2)(0,0))/(2*d_pos);
+  
+  return result;
+}
+
+
+geom::Vec3 FindMemParam::GetMembraneAxis(){  
+
+  geom::Vec3 result = RotateAroundAxis(axis,tilt_axis,tilt);
+  result = RotateAroundAxis(result,axis,angle);
+  return result;
+
+}
+
+FindMemParam FindMemParam::Load(const String& filename){
+
+  if (!boost::filesystem::exists(filename)) {
+    std::stringstream ss;
+    ss << "Could not open MemParam. File '"
+       << filename << "' does not exist";
+    throw ost::io::IOException(ss.str());
+  }
+
+  std::ifstream stream(filename.c_str(), std::ios_base::binary);
+  ost::io::BinaryDataSource ds(stream);
+  FindMemParam param;
+  ds >> param;
+  return param;
+}
+
+
+void FindMemParam::Save(const String& filename){
+  std::ofstream stream(filename.c_str(), std::ios_base::binary);
+  ost::io::BinaryDataSink ds(stream);
+  ds << *this;
+}
+
+
+
 

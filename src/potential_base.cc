@@ -106,6 +106,8 @@ std::vector<String> PotentialContainer::GetKeys(){
   return ret_vec;
 }
 
+PotentialBase::~PotentialBase() { }
+
 void PotentialBase::Save(const String& filename){
  
   std::ofstream stream(filename.c_str(), std::ios_base::binary);
@@ -114,3 +116,4 @@ void PotentialBase::Save(const String& filename){
 }
 
 }
+

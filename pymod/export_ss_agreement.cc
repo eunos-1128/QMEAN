@@ -19,7 +19,5 @@ void export_SSAgreement()
   ;
 
   register_ptr_to_python<SSAgreementPtr>();
-
-
-
 }
+

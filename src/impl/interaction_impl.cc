@@ -67,3 +67,4 @@ bool InteractionPotentialImpl::VisitAtom(const ost::mol::AtomHandle& at){
 }
 
 }} //namespaces
+

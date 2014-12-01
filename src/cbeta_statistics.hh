@@ -52,3 +52,4 @@ private:
 
 }//namespace
 #endif // CBETA_STATISTICS_HH
+

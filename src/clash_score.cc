@@ -68,3 +68,4 @@ Real ClashScore(const mol::AtomHandle& atom, const mol::EntityView& ent_b)
 }
 
 }
+

@@ -76,3 +76,4 @@ class_<TorsionPotential, bases<PotentialBase> >("TorsionPotential", no_init)
  register_ptr_to_python<TorsionStatisticPtr>();
  register_ptr_to_python<TorsionPotentialPtr>();
 }
+

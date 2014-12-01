@@ -89,3 +89,4 @@ Real ReducedStatistic::GetCount(int dist_bin, int ang_bin) {
 }
 
 }
+

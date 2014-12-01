@@ -49,8 +49,9 @@ bool PackingPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
 }
 
 int PackingPotentialImpl::GetBin(int count){
-  int bin=std::floor((std::min(count, opts_.max_counts))/opts_.bin_size);
+  int bin=int(std::floor((std::min(count, opts_.max_counts))/opts_.bin_size));
   return bin;
 }
 
 }}
+

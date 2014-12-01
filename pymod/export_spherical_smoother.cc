@@ -28,3 +28,4 @@ void export_SphericalSmoother()
   ;
   register_ptr_to_python<SphericalSmootherPtr>();
 }
+

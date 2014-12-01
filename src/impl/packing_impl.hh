@@ -12,26 +12,36 @@ namespace qmean { namespace impl {
   
 struct DLLEXPORT_QMEAN PackingOpts {
 
-    PackingOpts () { }
+  PackingOpts () { }
 
-    PackingOpts(Real co, int mc, int bs): cutoff(co), max_counts(mc), bin_size(bs), sigma(0)
-    { }
-    PackingOpts(Real co, int mc, int bs, Real s): cutoff(co), max_counts(mc), bin_size(bs), sigma(s)
-    { }
+  PackingOpts(Real co, int mc, int bs): cutoff(co), max_counts(mc), bin_size(bs), sigma(0)
+  { }
+  PackingOpts(Real co, int mc, int bs, Real s): cutoff(co), max_counts(mc), bin_size(bs), sigma(s)
+  { }
 
-    Real cutoff;
-    int max_counts;
-    int bin_size;
-    Real sigma;
 
-    template <typename DS>
-    void Serialize(DS& ds)
-    {
-      ds & cutoff;
-      ds & max_counts;
-      ds & bin_size;
-      ds & sigma;
-    }
+
+  inline bool operator == (const PackingOpts& opts) const {
+    return max_counts == opts.max_counts && cutoff == opts.cutoff &&
+           bin_size == opts.bin_size && sigma == opts.sigma;
+  }
+
+  inline bool operator != (const PackingOpts& opts) const {
+    return !(*this == opts);
+  }
+
+
+  Real cutoff;
+  int max_counts;
+  int bin_size;
+  Real sigma;
+  template <typename DS>
+  void Serialize(DS& ds){
+    ds & cutoff;
+    ds & max_counts;
+    ds & bin_size;
+    ds & sigma;
+  }
 };
 
 class DLLEXPORT_QMEAN PackingPotentialImpl : public ost::mol::EntityVisitor {
@@ -63,3 +73,4 @@ protected:
 
 
 #endif // PACKING_IMPL_HH
+

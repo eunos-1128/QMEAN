@@ -79,15 +79,8 @@ Real TorsionPotential::GetEnergy(ost::mol::ResidueView& target_view, bool normal
   }
 }
 
-Real TorsionPotential::GetEnergy(std::vector<String>& residue_names, std::vector<Real>& angles){
+Real TorsionPotential::GetEnergy(const String& group_id, std::vector<Real>& angles){
 
-  if(residue_names.size()!=3){
-    std::stringstream ss;
-    ss<<"requires 3 residue names, only ";
-    ss<<residue_names.size();
-    ss<<" provided.";
-    throw std::runtime_error(ss.str());
-  }
   if(angles.size()!=6){
     std::stringstream ss;
     ss<<"requires 6 angles, ";
@@ -98,11 +91,11 @@ Real TorsionPotential::GetEnergy(std::vector<String>& residue_names, std::vector
 
   energy_=0;
   count_=0;
-  String group_id=this->FindStat(residue_names);
+
   std::vector<Real> new_angles;
   Real new_angle;
 
-  if(group_id==""){
+  if(energies_.find(group_id) == energies_.end()){
     return std::numeric_limits<Real>::quiet_NaN();
   }
 
@@ -126,6 +119,23 @@ Real TorsionPotential::GetEnergy(std::vector<String>& residue_names, std::vector
     std::cout<<"no energy_counts"<<std::endl;
     return std::numeric_limits<Real>::quiet_NaN();
   }
+
+
+}
+
+Real TorsionPotential::GetEnergy(std::vector<String>& residue_names, std::vector<Real>& angles){
+
+  if(residue_names.size()!=3){
+    std::stringstream ss;
+    ss<<"requires 3 residue names, only ";
+    ss<<residue_names.size();
+    ss<<" provided.";
+    throw std::runtime_error(ss.str());
+  }
+
+  String group_id=this->FindStat(residue_names);
+
+  return this->GetEnergy(group_id,angles);
 }
 
 Real TorsionPotential::GetTotalEnergy(ost::mol::EntityView& target, bool normalize){
@@ -243,3 +253,4 @@ void TorsionPotential::Fill(TorsionStatisticPtr stat, const String& reference_st
 }
 
 }
+

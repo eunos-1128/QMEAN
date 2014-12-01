@@ -47,3 +47,4 @@ Real DLLEXPORT_QMEAN StericEnergy(const geom::Vec3& pos1, Real r1,
 }
 
 #endif
+

@@ -25,6 +25,15 @@ public:
   int sequence_sep;
   Real sigma;
 
+  inline bool operator == (const CBetaOpts& opts) const {
+    return lower_cutoff == opts.lower_cutoff && upper_cutoff == opts.upper_cutoff &&
+           number_of_bins == opts.number_of_bins && sequence_sep == opts.sequence_sep &&
+           sigma == opts.sigma;
+  }
+
+  inline bool operator != (const CBetaOpts& opts) const {
+    return !(*this == opts);
+  }
 
   template <typename DS>
   void Serialize(DS& ds)
@@ -78,3 +87,4 @@ protected:
 
 
 #endif // CBETA_IMPL_HH
+
