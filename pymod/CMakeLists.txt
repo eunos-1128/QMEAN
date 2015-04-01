@@ -23,6 +23,7 @@ export_ss_agreement.cc
 export_base.cc
 export_spherical_smoother.cc
 export_membrane.cc
+export_distance_constraints.cc
 wrap_qmean.cc
 )
 
