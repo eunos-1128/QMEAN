@@ -29,11 +29,10 @@ void CBPackingPotential::OnSave(io::BinaryDataSink& ds){
 void CBPackingPotential::OnInteraction(ost::conop::AminoAcid aa,
                                        int bin){
   if(aa != ost::conop::XXX){
-    energy_+=energies_.Get(aa, bin);
+    energy_+=energies_.Get(CBPackingEnergies::IndexType(aa, bin));
     ++count_;
   } 
 }
-
 
 CBPackingPotentialPtr CBPackingPotential::Create(CBPackingStatisticPtr stat, Real sigma, const String& reference_state){
   CBPackingPotentialPtr p(new CBPackingPotential);
@@ -90,7 +89,7 @@ void CBPackingPotential::Fill(CBPackingStatisticPtr stat, const String& referenc
 }
 
 Real CBPackingPotential::GetEnergy(ost::conop::AminoAcid aa, int count){
-  return energies_.Get(aa, this->GetBin(count));
+  return energies_.Get(CBPackingEnergies::IndexType(aa, this->GetBin(count)));
 }
 
 Real CBPackingPotential::GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env, bool normalize){

@@ -60,20 +60,20 @@ Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa){
 
   Real total_count=0;
   for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
-    total_count+=histo_.Get(aa,i);
+    total_count += this->GetCount(aa,i);
   }
   return total_count;
 }
 
 Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa, int bin){
-  return histo_.Get(aa,bin);
+  return histo_.Get(CBPackingHistogram::IndexType(aa,bin));
 }
 
 Real CBPackingStatistic::GetCount(int bin){
 
   Real total_count=0;
   for(int i=0; i < ost::conop::XXX; ++i){
-    total_count+=histo_.Get(i, bin);
+    total_count += this->GetCount(ost::conop::AminoAcid(i),bin);
   }
   return total_count;
 }
