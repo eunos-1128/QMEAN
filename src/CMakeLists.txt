@@ -19,6 +19,8 @@ cbeta_statistics.hh
 cbeta_potential.hh
 cb_packing_statistics.hh
 cb_packing_potential.hh
+hbond_statistics.hh
+hbond_potential.hh
 ss_agreement.hh
 spherical_smoother.hh
 vec_list_magic.hh
@@ -30,6 +32,7 @@ impl/packing_impl.hh
 impl/interaction_impl.hh
 impl/cbeta_impl.hh
 impl/cb_packing_impl.hh
+impl/hbond_impl.hh
 )
 
 set(QMEAN_SOURCES
@@ -48,6 +51,8 @@ cbeta_statistics.cc
 cbeta_potential.cc
 cb_packing_statistics.cc
 cb_packing_potential.cc
+hbond_statistics.cc
+hbond_potential.cc
 ss_agreement.cc
 spherical_smoother.cc
 membrane.cc
@@ -58,6 +63,7 @@ impl/packing_impl.cc
 impl/interaction_impl.cc
 impl/cbeta_impl.cc
 impl/cb_packing_impl.cc
+impl/hbond_impl.cc
 )
 
 

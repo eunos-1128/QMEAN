@@ -7,6 +7,8 @@
 #include <qmean/packing_statistics.hh>
 #include <qmean/torsion_statistics.hh>
 #include <qmean/cb_packing_statistics.hh>
+#include <qmean/hbond_statistics.hh>
+
 
 using namespace ost;
 
@@ -70,6 +72,11 @@ StatisticContainerPtr StatisticContainer::Load(const String& filename){
         ds & *p_load;
         (*p)[key]=p_load;
         break;
+      }
+      case HBond:{
+        HBondStatisticPtr p_load(new HBondStatistic);
+        ds & *p_load;
+        (*p)[key]=p_load;
       }
       default: throw io::IOException("Error in loading statistic container!");
     }

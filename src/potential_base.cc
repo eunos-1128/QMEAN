@@ -6,6 +6,8 @@
 #include <qmean/cbeta_potential.hh>
 #include <qmean/torsion_potential.hh>
 #include <qmean/packing_potential.hh>
+#include <qmean/cb_packing_potential.hh>
+#include <qmean/hbond_potential.hh>
 
 namespace qmean{
 
@@ -58,6 +60,18 @@ PotentialContainerPtr PotentialContainer::Load(const String& filename){
       }
       case Torsion:{
         TorsionPotentialPtr p_load(new TorsionPotential);
+        ds & *p_load;
+        (*p)[key]=p_load;
+        break;
+      }
+      case CBPacking:{
+        CBPackingPotentialPtr p_load(new CBPackingPotential);
+        ds & *p_load;
+        (*p)[key]=p_load;
+        break;
+      }
+      case HBond:{
+        HBondPotentialPtr p_load(new HBondPotential);
         ds & *p_load;
         (*p)[key]=p_load;
         break;
