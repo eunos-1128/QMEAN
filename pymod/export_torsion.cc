@@ -29,10 +29,16 @@ Real GetCount_bins(TorsionStatisticPtr s, boost::python::list& bins) {
 }
 
 Real GetEnergyView(TorsionPotentialPtr p, ost::mol::ResidueView& view, bool normalize){ return p->GetEnergy(view,normalize); }
+
 Real GetEnergyParams(TorsionPotentialPtr p, list& r_n, list& a){ 
   std::vector<String> residue_names = ListToVec<String>(r_n);
   std::vector<Real> angles = ListToVec<Real>(a);
   return p->GetEnergy(residue_names, angles); 
+}
+
+Real GetEnergyStringID(TorsionPotentialPtr p, const String& g_id, list& a){ 
+  std::vector<Real> angles = ListToVec<Real>(a);
+  return p->GetEnergy(g_id, angles); 
 }
 
 list WrapGetEnergies(TorsionPotentialPtr p, ost::mol::EntityView& target, bool normalize){
@@ -69,6 +75,7 @@ class_<TorsionPotential, bases<PotentialBase> >("TorsionPotential", no_init)
   .def("GetEnergies", &WrapGetEnergies, (arg("target"),arg("normalize")=true))
   .def("GetEnergy", &GetEnergyView, (arg("target_residue"),arg("normalize")=true))
   .def("GetEnergy", &GetEnergyParams, (arg("residue_names"),arg("angles")))
+  .def("GetEnergy", &GetEnergyStringID, (arg("g_id"),arg("angles")))
   .def("GetTotalEnergy", &TorsionPotential::GetTotalEnergy, (arg("target_view"),arg("normalize")=true))
   .def("GetOptions", &TorsionPotential::GetOpts, return_value_policy<reference_existing_object>())
   ; 
