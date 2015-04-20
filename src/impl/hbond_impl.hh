@@ -51,7 +51,6 @@ public:
   int beta_bins;
   int gamma_bins;
   int seq_sep;
-  std::vector<Real> abs_expectation_values;
 
   template <typename DS>
   void Serialize(DS& ds){
@@ -68,21 +67,6 @@ public:
     ds & beta_bins;
     ds & gamma_bins;
     ds & seq_sep;
-    if(ds.IsSource()){
-      int num_elements;
-      ds & num_elements;
-      for(int i = 0; i < num_elements; ++i){
-        abs_expectation_values.push_back(0);
-        ds & abs_expectation_values[i];
-      }
-    }
-    else{
-      int num_elements = abs_expectation_values.size();
-      ds & num_elements;
-      for(uint i = 0; i < abs_expectation_values.size(); ++i){
-        ds & abs_expectation_values[i];
-      }
-    }
   }
 };
 

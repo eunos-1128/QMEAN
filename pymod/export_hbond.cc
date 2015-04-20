@@ -48,6 +48,7 @@ void export_HBond()
     .def_readonly("alpha_bins",&impl::HBondOpts::alpha_bins)
     .def_readonly("beta_bins",&impl::HBondOpts::beta_bins)
     .def_readonly("gamma_bins",&impl::HBondOpts::gamma_bins)
+    .def_readonly("seq_sep",&impl::HBondOpts::seq_sep)
   ;
 
   class_<HBondStatistic, bases<StatisticBase> >("HBondStatistic", init<Real, Real, Real, Real, 

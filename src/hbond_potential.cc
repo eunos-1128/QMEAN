@@ -23,7 +23,7 @@ void HBondPotential::OnSave(io::BinaryDataSink& ds){
 }
 
 void HBondPotential::OnInteraction(int state, Real d, Real alpha, Real beta, Real gamma){
-  energy_ += energies_.Get(state,d,alpha,beta,gamma)/opts_.abs_expectation_values[state];
+  energy_ += energies_.Get(state,d,alpha,beta,gamma);
 }
 
 
@@ -50,7 +50,6 @@ void HBondPotential::Fill(HBondStatisticPtr stat){
   double frac;
   Real e;
   double expectation_value;
-  opts_.abs_expectation_values.resize(3);
 
   for (int i=0; i < 3; ++i) {
     state_count = stat->GetCount(i);
@@ -68,7 +67,17 @@ void HBondPotential::Fill(HBondStatisticPtr stat){
         }
       }
     }
-    opts_.abs_expectation_values[i] = std::abs(expectation_value);
+    expectation_value = std::abs(expectation_value);
+    for(uint j = 0; j < opts_.d_bins; ++j){
+      for(uint k = 0; k < opts_.alpha_bins; ++k){
+        for(uint l = 0; l < opts_.beta_bins; ++l){
+          for(uint m = 0; m < opts_.gamma_bins; ++m){
+            e = energies_.Get(Index(i,j,k,l,m));
+            energies_.Set(Index(i,j,k,l,m),e/expectation_value);            
+          }
+        }
+      }
+    }
   }
 }
 
@@ -78,7 +87,7 @@ Real HBondPotential::GetEnergy(int state, float d, float alpha, float beta, floa
   if(beta<opts_.beta_min || beta>=opts_.beta_max) return 0.0;
   if(gamma<opts_.gamma_min || gamma>=opts_.gamma_max) return 0.0;
   if(state < 0 || state >= 3) return 0.0;
-  return energies_.Get(state, d, alpha, beta, gamma)/opts_.abs_expectation_values[state];
+  return energies_.Get(state, d, alpha, beta, gamma);
 }
 
 Real HBondPotential::GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env){
