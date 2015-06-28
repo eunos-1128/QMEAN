@@ -29,11 +29,6 @@
 #include <ost/io/io_profile.hh>
 
 
-#include <Eigen/Core>
-#include <Eigen/Array>
-#include <Eigen/SVD>
-#include <Eigen/LU>
-
 #include <boost/filesystem.hpp>
 
 
