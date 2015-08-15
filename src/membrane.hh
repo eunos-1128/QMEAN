@@ -21,15 +21,13 @@
 #include <ost/io/binary_data_source.hh>
 #include <ost/io/binary_data_sink.hh>
 #include <ost/io/io_exception.hh>
-
-#include <ost/img/alg/levenberg_marquardt.h>
-
-
 #include <ost/io/pdb_writer.hh>
 #include <ost/io/io_profile.hh>
 
 
 #include <boost/filesystem.hpp>
+
+#include <qmean/levenberg_marquardt.h>
 
 
 class SolvationGrid;
