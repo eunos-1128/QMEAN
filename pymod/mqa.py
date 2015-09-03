@@ -7,6 +7,8 @@ class Scores:
 
   def __init__(self, target, environment, potential_container, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True):
     self.data=dict()
+
+    #set structural data
     if isinstance(target, mol.EntityHandle):
       self.target = target.Select('')
     else:
@@ -15,10 +17,27 @@ class Scores:
       self.environment = environment.Select('')
     else:
       self.environment=environment
+
+    #set predicted sequence data
+    if psipred != None:
+      if isinstance(psipred,list):
+        if len(psipred) != len(target.chains):
+          raise ValueError("List of provided PSIPREDHandlers must have same length as chains in target!")
+        self.psipred = psipred
+      else:
+        self.psipred = len(self.target.chains) * [psipred]
+
+    if accpro != None:
+      if isinstance(accpro,list):
+        if len(accpro) != len(target.chains):
+          raise ValueError("List of provided ACCPROHandlers must have same length as chains in target!")
+        self.accpro = accpro
+      else:
+        self.accpro = len(self.target.chains) * [accpro]
+
+    #set all the other parameters
     self.potential_container=potential_container
     self.smooth_std=smooth_std
-    self.psipred=psipred
-    self.accpro=accpro
     self.norm=norm
     self.ca_positions=None
     self.spherical_smoother=None
@@ -44,11 +63,10 @@ class Scores:
       else:
         dssp_ss+='C' 
 
-
     if psipred != None:
       self.sec_structure = ''
-      for chain in target.chains:
-        self.sec_structure+= psipred.GetPSIPREDSS(chain)
+      for c,p in zip(self.target.chains, self.psipred):
+        self.sec_structure+= p.GetPSIPREDSS(c)
     else:
       self.sec_structure = dssp_ss
  
@@ -363,8 +381,8 @@ class Scores:
   def GetSSAgreement(self):
     if self.psipred!=None:
       ss_agreement = []
-      for chain in self.target.chains:
-        ss_agreement+=self.psipred.GetSSAgreementFromChain(chain, dssp_assigned=True)
+      for c, p in zip(self.target.chains, self.psipred):
+        ss_agreement += p.GetSSAgreementFromChain(c, dssp_assigned=True)
       self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
@@ -376,9 +394,8 @@ class Scores:
   def GetACCAgreement(self):
     if self.accpro!=None:
       acc_agreement = []
-      for chain in self.target.chains:
-        acc_agreement+=self.accpro.GetACCAgreementFromChain(chain, 
-                                                            dssp_assigned=True)
+      for c,a in in zip(self.target.chains, self.accpro):
+        acc_agreement += a.GetACCAgreementFromChain(c, dssp_assigned=True)
       self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)
