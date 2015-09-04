@@ -1,0 +1,18 @@
+{% extends 'base.html '%}
+
+{% block helpActive %} class="active"{% endblock %}
+{% block main-content %}
+<div class="jumbotron">
+<h2>Help</h2>
+Upload a file, check the results!
+</div>
+
+<p>Estimating the quality of protein structure models is a vital step in protein structure prediction. Often one ends up in having a set of alternative models (e.g. from different modeling servers or based on alternative template structures and alignments) from which the best candidate shall be selected. Or a singe model has been built from which the absolute quality needs to be predicted in order to have an idea about its suitability for subsequent experiments. The QMEAN server provides access to two scoring functions for the quality estimation of protein structure models which allow to rank a set of models and to identify potentially unreliable region within these. Both single models and set of models submitted as tar.gz-archives can be analysed. The user has the possibility to choose between the following two scoring functions:</p>
+
+<p>QMEAN [1,3] is a composite scoring function which is able to derive both global (i.e. for the entire structure) and local (i.e. per residue) error estimates on the basis of one single model.</p>
+<p>NEW Recently (manuscript in preparation), the QMEAN score has been extended to an absolute quality estimate (see section "Estimated absolute model quality" below).</p>
+<p>QMEANclust [3] derives the score for a model by analysing its structural difference to all other models in the ensemble. The basic idea behind it is, that structural features observed more frequently have a higher probability to be correct. The initial ranking obtained by QMEAN is thereby used to weight the contribution of each model in the calculation of the QMEANclust consensus score.</p>
+
+<p>The accuracy of the QMEANclust quality estimation improves with the size, the diversity (models from different severs, models based on different templates etc.) and the quality (fraction of near-native structures) of the model ensemble to be analysed. In order to obtain meaningful results a minimum number of models should be provided (e.g. > 30 models).</p>
+
+{% endblock %}

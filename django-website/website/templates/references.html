@@ -1,0 +1,18 @@
+{% extends 'base.html '%}{% load static %}
+
+{% block refActive %} class="active"{% endblock %}
+{% block main-content %}
+<div class="jumbotron">
+  <h2>References</h2>
+  <p><i>Reference for the QMEAN scoring function:</i><br>
+  [1] Benkert, P., Tosatto, S.C.E. and Schomburg, D. (2008). "QMEAN: A comprehensive scoring function
+  for model quality assessment." Proteins: Structure, Function, and Bioinformatics, 71(1):261-277.
+<a target="_blank" href="http://www.ncbi.nlm.nih.gov/pubmed/17932912"><img border="0" height="16px" src="{% static 'img/pubmed.jpg' %}"></a></p>  <p><i>Reference for the QMEAN Z-scores:</i><br>
+  [2] Benkert, P., Biasini, M. and Schwede, T. (2011). "Toward the estimation of the absolute quality of individual protein structure models." Bioinformatics (2010). doi: 10.1093/bioinformatics/btq662
+<a target="_blank" href="http://www.ncbi.nlm.nih.gov/pubmed/21134891"><img border="0" height="16px" src="{% static 'img/pubmed.jpg' %}"></a></p>  <p><i>Reference for the QMEANclust scoring function:</i><br>
+  [3] Benkert, P., Schwede, T. and Tosatto, S.C.E. (2009). "QMEANclust: Estimation of protein model quality by 
+#   combining a composite scoring function with structural density information." BMC Struct Biol. 2009 May 20;9:35.
+<a target="_blank" href="http://www.ncbi.nlm.nih.gov/pubmed/19457232"><img border="0" height="16px" src="{% static 'img/pubmed.jpg' %}"></a></p>  <p><i>Reference for the QMEAN server:</i><br>
+  [4] Benkert P, Künzli M, Schwede T. (2009). "QMEAN Server for Protein Model Quality Estimation." Nucleic Acids Res. 2009 Jul 1;37(Web Server issue):W510-4. 
+<a target="_blank" href="http://www.ncbi.nlm.nih.gov/pubmed/19429685"><img border="0" height="16px" src="{% static 'img/pubmed.jpg' %}"></a></p></div>     
+{% endblock %}

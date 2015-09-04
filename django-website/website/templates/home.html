@@ -1,0 +1,147 @@
+{% extends 'base.html '%}{% load static %}
+{% block css %}<link href="{% static 'css/jquery.fileupload.css' %}" rel="stylesheet">
+<link href="{% static 'css/jquery.fileupload-ui.css' %}" rel="stylesheet">{% endblock %}
+{% block homeActive %} class="active"{% endblock %}
+
+{% block main-content %}
+
+{% if project_creation_error %}
+<div id="errorMessage" class="alert alert-danger" role="alert">
+  <h1><i class="glyphicon glyphicon-exclamation-sign" style="top:4px;"></i> {{ project_creation_error }}</h1>
+</div>
+<script>setTimeout(function(){ $('#errorMessage').slideUp();},3000);</script>
+{% endif %}
+{{ form.errors }}
+<div class="jumbotron">
+        <h2>QMEAN <small>Estimating the quality of protein structure models .</small></h2>
+        <form method="POST" enctype="multipart/form-data">
+        	{% csrf_token %}
+            <input type="hidden" name="whatsthis">
+        	<table class="table ">
+                <tr id="structureDropZone" {% if form.structureUploaded.errors %} class="error"{% else %}style="border:1px dashed #CCC"{% endif %} ><td>
+                        <span class="btn btn-success fileinput-button">
+                            <i class="glyphicon glyphicon-plus"></i>
+                            <span>Select PDB File...</span>
+                            <input id="structureFile" multiple="" type="file" name="structureFile">
+                        </span>
+                        {{ form.structureUploaded }}
+                    </td>
+                    <td><div id="progress" class="progress" style="margin-bottom:4px;">
+                            <div id="progressBar" class="progress-bar progress-bar-success"></div>
+                        </div>
+                        <div id="files" class="files"></div>
+                    </td>
+                </tr>
+        		<tr id="sequenceDropZone" style="border:1px dashed #CCC"><td>{{ form.sequence.label }}</td>
+        			<td{% if form.sequence.errors %} class="error"{% endif %}>{{ form.sequence }}
+                    <input style="display:none;" id="sequenceFile" type="file" name="sequenceFile">
+                </td></tr>
+
+                <tr><td>Options</td>
+                    <td><div class="col-xs-6"><label>{{ form.QMEANDisCo.label }}
+                            {{ form.QMEANDisCo }}</label></div>
+                        <div class="col-xs-6">
+                        <label>{{ form.QMEANBrane.label }}
+                            {{ form.QMEANBrane }}</label></div>
+                        </td></tr>
+                <tr><td>{{ form.email.label }}</td>
+
+
+                <tr><td width="180">{{ form.project_name.label }}</td>
+                    <td{% if form.project_name.errors %} class="error"{% endif %}>{{ form.project_name }}</td></tr>
+                <tr><td>{{ form.email.label }}</td>
+                    <td{% if form.email.errors %} class="error"{% endif %}>{{ form.email }}</td></tr>
+        	</table>
+        	<button id="submitButton" type="submit" class="btn btn-lg btn-success" disabled="disabled">Submit</button>
+        </form>
+
+</div>
+{% endblock %}
+{% block js %}
+<script src="{% static 'js/vendor/jquery.ui.widget.js' %}"></script>
+<script src="{% static 'js/jquery.iframe-transport.js' %}"></script>
+<script src="{% static 'js/jquery.fileupload.js' %}"></script>
+<script>
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    crossDomain: false,
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type))
+            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+    }
+});
+
+$('#sequenceFile').fileupload({
+        dropZone: $('#sequenceDropZone'),
+        url: '{% url 'sequence_upload' %}',
+        dataType: 'json',
+        done: function (e, data) {
+            $.each(data.result.files, function (index, file) 
+            {
+                if(file.error)
+                {
+                                
+                }
+                else
+                   $('#id_sequence').val(file.content); 
+            });
+        }
+    }).prop('disabled', !$.support.fileInput)
+        .parent().addClass($.support.fileInput ? undefined : 'disabled');
+
+$('#structureFile').fileupload({
+        dropZone: $('#structureDropZone'),
+        url: '{% url 'structure_upload' %}',
+        dataType: 'json',
+        drop: function(){
+            $('#structureDropZone').removeClass('error');
+            $('#progressBar')
+                        .removeClass('progress-bar-danger')
+                        .addClass('progress-bar-success')
+                        .show();
+        },
+        done: function (e, data) {
+            $.each(data.result.files, function (index, file) 
+            {
+            	if(file.error)
+            	{
+            		$('#progressBar')
+            				.removeClass('progress-bar-success')
+            				.addClass('progress-bar-danger');
+            		 $('<div class="uploadFail">'+file.name+' '+file.error
+                        +' <i class="glyphicon glyphicon-remove"></i>'
+                        +'</div>').appendTo('#files');         	
+            	}
+            	else
+            	{
+                    $('<div class="uploadSuccess">'+file.name
+                        +' <i class="glyphicon glyphicon-ok"></i>'
+                        +'</div>').appendTo('#files');
+                    $('#id_structureUploaded').val(
+                            $('#id_structureUploaded').val()
+                            +($('#id_structureUploaded').val().length>0?',':'')
+                            +file.file_id );
+                    $('#submitButton').prop('disabled','');
+                }
+
+                setTimeout(function()
+                {
+                    $('#progressBar')
+                        .hide()
+                        .removeClass('progress-bar-danger')
+                        .addClass('progress-bar-success')
+                        .css('width','0%');
+                },1500);
+            });
+        },
+        progressall: function (e, data) {
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            $('#progressBar').css('width',progress + '%');
+        }
+    }).prop('disabled', !$.support.fileInput)
+        .parent().addClass($.support.fileInput ? undefined : 'disabled');
+</script>
+{% endblock %}
