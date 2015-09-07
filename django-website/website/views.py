@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from .forms import UploadForm
-import os, json, tempfile, tarfile, random, re, traceback, codecs
+import io, os, json, tempfile, tarfile, random, re, traceback, codecs
 
 def home(request):
 	project_creation_error = False
@@ -38,23 +38,30 @@ def create_project(request, form):
 				os.makedirs(input_dir)
 				os.makedirs(os.path.join(new_proj_dir,'output'))
 
-				f = codecs.open(os.path.join(input_dir,'meta.txt'),'w','utf-8')
-				f.write('QMEANDISCO\t%s\n' % ('True' if form.cleaned_data['QMEANDisCo'] else 'False'))
-				f.write('QMEANBRANE\t%s\n' % ('True' if form.cleaned_data['QMEANBrane'] else 'False'))
+				data = {
+						'meta':{},
+						'options':{},
+						'sequence':[],
+						'models':[]
+				}
+				data['options']['qmeandisco'] = (True if form.cleaned_data['QMEANDisCo'] else False)
+				data['options']['qmeanbrane'] = (True if form.cleaned_data['QMEANBrane'] else False)
 				if form.cleaned_data['email']:
-					f.write('EMAIL\t%s\n' % form.cleaned_data['email'])
+					data['meta']['email'] = form.cleaned_data['email']
 				if form.cleaned_data['project_name']:
-					f.write('PROJECT_NAME\t%s\n' % form.cleaned_data['project_name'])
+					data['meta']['project_name'] = form.cleaned_data['project_name']
 
+				data['models'] = []
 				for i,tmpname in enumerate(form.cleaned_data['structureUploaded']):
 					model_id = 'model_%03d.pdb' % (i+1)
 					os.rename(os.path.join(settings.TMP_DIR,tmpname), os.path.join(input_dir,model_id) )
-					f.write('%s\t%s\n' %(model_id,request.session['uploaded_'+tmpname]))
-				f.close()
-				if form.cleaned_data['sequence']:
-					f = open(os.path.join(input_dir,'target.fasta'),'w')
-					f.write(form.cleaned_data['sequence'])
-					f.close()
+					data['models'].append({model_id:request.session['uploaded_'+tmpname]})
+				
+				data['sequence'].append( form.cleaned_data['sequence'] )
+
+				with io.open(os.path.join(input_dir,'project.json'), 'w', encoding='utf8') as json_file:
+					data = json.dumps(data, ensure_ascii=False, encoding='utf8',indent=4, separators=(',', ': '))
+					json_file.write(unicode(data))
 
 				f = open(os.path.join(input_dir,'status'),'w')
 				f.write('INITIALISING')
