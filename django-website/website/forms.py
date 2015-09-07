@@ -3,9 +3,8 @@ from django.forms import widgets
 from django.core.exceptions import ValidationError
 from django.conf import settings
 import os
-from ost.io import SequenceFromString, LoadPDB
-from ost.seq import CreateSequence
-import ost
+from ost.seq import CreateSequenceList, CreateSequence
+from ost.io import SequenceListFromString, LoadPDB
 
 class UploadForm(forms.Form):
 	structureUploaded = forms.CharField()
@@ -25,6 +24,14 @@ class UploadForm(forms.Form):
 				field.widget.attrs['class'] = 'form-control'
 
 
+	def clean(self):
+		cleaned_data = super(UploadForm, self).clean()
+		structures = cleaned_data.get('structureUploaded')
+		sequence = cleaned_data.get('sequence')
+		print "We need to check sequences and structures here"
+		print structures, sequence
+	
+
 	def clean_project_name(self):
 		data = self.cleaned_data['project_name']
 		data = ' '.join(data.splitlines())
@@ -43,43 +50,33 @@ class UploadForm(forms.Form):
 				removed = True
 			if not removed:
 				try:
-					model = ost.io.LoadPDB(os.path.join(str(settings.TMP_DIR),str(d)))
-
-					seq_list = self.cleaned_data['sequence']
-
-					print "yes, i have the seq list"
-					
+					model = LoadPDB(os.path.join(str(settings.TMP_DIR),str(d)))
 				except Exception, e:
-					print e
-					
 					data.remove(d)
-				
 
 		if len(data)<1:
 			raise ValidationError('Uploaded file no longer in session!!')
-
                 
 		return data
 
 	def clean_sequence(self):
 		data = str(self.cleaned_data['sequence'])
-		seq = ost.seq.CreateSequenceList()
+		seq_list = CreateSequenceList()
 		try:
-			seq = ost.io.SequenceListFromString(data,'fasta')
-		except Exception, e:
+			seq_list = SequenceListFromString(data,'fasta')
+		except:
 			try:
-				seq = ost.io.SequenceListFromString(data,'clustal')
-			except Exception, e:
+				seq_list = SequenceListFromString(data,'clustal')
+			except:
 				try:
-					ost.seq.AddSequence(ost.seq.CreateSequence("unnamed",data))
-				except Exception, e:
-					print e
+					seq_list.AddSequence(CreateSequence("unnamed",data))
+				except:
+					pass
 
-
-		for s in seq:
+		for s in seq_list:
 			s.SetName(s.GetName().strip())
 
-		if len(seq) == 0:
+		if len(seq_list) == 0:
 			raise ValidationError('Sequence input could not be read!!')
 		
-		return seq
+		return seq_list

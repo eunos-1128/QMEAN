@@ -4,8 +4,8 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from .forms import UploadForm
 import io, os, json, tempfile, tarfile, random, re, traceback, codecs
-from ost.io import SequenceFromString, LoadPDB
-from ost.seq import CreateSequence
+from ost.seq import CreateSequenceList, CreateSequence
+from ost.io import LoadPDB, SequenceListFromString 
 
 def home(request):
 	project_creation_error = False
@@ -84,23 +84,22 @@ def sequence_upload(request):
 	try:
 		if request.FILES:
 			uploaded = {"files":[] }
-			seq = None
+			seq_list = CreateSequenceList()
 			for key in request.FILES:
 				f = request.FILES[key]
-				content = f.read()
-				seq = None
+				content = str(f.read())
 				try:
-					seq = SequenceFromString(content,'fasta')
-				except Exception, e:
-					try:
-						seq = SequenceFromString(content, 'clustal')
-					except Exception, e:
-						try:
-							seq = CreateSequence('unnamed',content)
-						except Exception, e:
-							print e
-			
-			if seq is not None:
+                        		seq_list = SequenceListFromString(content,'fasta')
+                		except:
+                        		try:
+                                		seq_list = SequenceListFromString(content,'clustal')
+                        		except:
+                                		try:
+                                        		seq_list.AddSequence(CreateSequence("unnamed",''.join(content.splitlines())))
+                                		except Exception, e:
+                                        		print e
+
+			if len(seq_list) > 0:
 				uploaded['files'].append({"name":f.name,"content":content})
 			else:
 				uploaded['files'].append({"name":f.name,"error":"Could not load sequence from file"})
@@ -109,7 +108,7 @@ def sequence_upload(request):
 	except Exception, e:
 		print e
 		print traceback.print_exc()
-		ret_obj['error'] = e
+		ret_obj['error'] = 'Sorry, can only read FASTA, Clustal or raw sequence format.'
 	
 	return HttpResponse(json.dumps(ret_obj), content_type='application/json') 
 
