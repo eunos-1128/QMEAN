@@ -13,3 +13,4 @@ qmean.creator*
 qmean.include*
 qmean.creator.user*
 qmean.files*
+local_settings.py
