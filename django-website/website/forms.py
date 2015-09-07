@@ -1,6 +1,8 @@
 from django import forms
 from django.forms import widgets
 from django.core.exceptions import ValidationError
+from django.conf import settings
+import os
 
 class UploadForm(forms.Form):
 	structureUploaded = forms.CharField()
@@ -28,9 +30,15 @@ class UploadForm(forms.Form):
 	def clean_structureUploaded(self):
 		data = self.cleaned_data['structureUploaded']
 		data = data.split(',')
-		for d in data:
+		for d in data[:]:
+			if not os.path.exists(os.path.join(settings.TMP_DIR,d)):
+				print d,'does not exist'
+				data.remove(d)
 			if not self.request.session.get('uploaded_'+d, False):
-				raise ValidationError('Uploaded file no longer in session!!')
+				data.remove(d)
+
+		if len(data)<1:
+			raise ValidationError('Uploaded file no longer in session!!')
 		return data
 
 	def clean_sequence(self):
