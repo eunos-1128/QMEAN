@@ -33,7 +33,11 @@
                     </td>
                 </tr>
         		<tr id="sequenceDropZone" style="border:1px dashed #CCC"><td>{{ form.sequence.label }}</td>
-        			<td{% if form.sequence.errors %} class="error"{% endif %}>{{ form.sequence }}
+        			<td{% if form.sequence.errors %} class="error"{% endif %}>
+				<div id="sequenceErrorMessage" class="alert alert-warning alert-dismissible" style="display:none;margin-bottom:0px">
+  					<strong>Sequence Upload Error!</strong> Sorry, can only parse FASTA or Clustal format sequence files.
+					</div>
+					{{ form.sequence }}
                     <input style="display:none;" id="sequenceFile" type="file" name="sequenceFile">
                 </td></tr>
 
@@ -81,7 +85,8 @@ $('#sequenceFile').fileupload({
             {
                 if(file.error)
                 {
-                                
+                  $('#sequenceErrorMessage').slideDown();
+		  setTimeout(function(){$('#sequenceErrorMessage').slideUp();},2500);              
                 }
                 else
                    $('#id_sequence').val(file.content); 

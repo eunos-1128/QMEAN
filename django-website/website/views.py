@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from .forms import UploadForm
 import io, os, json, tempfile, tarfile, random, re, traceback, codecs
+from ost.io import SequenceFromString, LoadPDB
+from ost.seq import CreateSequence
 
 def home(request):
 	project_creation_error = False
@@ -77,14 +79,37 @@ def create_project(request, form):
 
 
 def sequence_upload(request):
-	if request.FILES:
-		uploaded = {"files":[] }
-		for key in request.FILES:
-			f = request.FILES[key]
-			uploaded['files'].append({"name":f.name,
-									  "size":f.size,
-									  "content":f.read()})
-		ret_obj = uploaded
+	ret_obj = {}
+	try:
+		if request.FILES:
+			uploaded = {"files":[] }
+			seq = None
+			for key in request.FILES:
+				f = request.FILES[key]
+				content = f.read()
+				seq = None
+				try:
+					seq = SequenceFromString(content,'fasta')
+				except Exception, e:
+					try:
+						seq = SequenceFromString(content, 'clustal')
+					except Exception, e:
+						try:
+							seq = CreateSequence('unnamed',content)
+						except Exception, e:
+							print e
+			
+			if seq is not None:
+				uploaded['files'].append({"name":f.name,"content":content})
+			else:
+				uploaded['files'].append({"name":f.name,"error":"Could not load sequence from file"})
+			ret_obj = uploaded
+			
+	except Exception, e:
+		print e
+		print traceback.print_exc()
+		ret_obj['error'] = e
+	
 	return HttpResponse(json.dumps(ret_obj), content_type='application/json') 
 
 
@@ -142,8 +167,7 @@ def is_valid_structure_file(request,original_name,tmp_path):
 		#This is where we will determine if the uploaded file
 		#is a valid structure. If it is, we add the tmp file path
 		#to the session, which ties in the users name for the file
-		f = open(tmp_path,'r')
-		f.close()
+		LoadPDB(tmp_path)
 		request.session['uploaded_'+basename] = original_name
 	except Exception, e:
 		try:
@@ -167,4 +191,5 @@ def references(request):
 
 def contact(request):
 	return render(request, 'contact.html')
+
 

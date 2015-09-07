@@ -3,6 +3,8 @@ from django.forms import widgets
 from django.core.exceptions import ValidationError
 from django.conf import settings
 import os
+from ost.io import SequenceFromString
+from ost.seq import CreateSequence
 
 class UploadForm(forms.Form):
 	structureUploaded = forms.CharField()
@@ -32,7 +34,6 @@ class UploadForm(forms.Form):
 		data = data.split(',')
 		for d in data[:]:
 			if not os.path.exists(os.path.join(settings.TMP_DIR,d)):
-				print d,'does not exist'
 				data.remove(d)
 			if not self.request.session.get('uploaded_'+d, False):
 				data.remove(d)
@@ -43,6 +44,19 @@ class UploadForm(forms.Form):
 
 	def clean_sequence(self):
 		data = self.cleaned_data['sequence']
-		#Check this is readble by OST
-		#raise ValidationError('Sequence input could not be read!!')
-		return data
+		seq = None
+		try:
+			seq = SequenceFromString(content,'fasta')
+		except Exception, e:
+			try:
+				seq = SequenceFromString(content, 'clustal')
+			except Exception, e:
+				try:
+					seq = CreateSequence('unnamed',content)
+				except Exception, e:
+					print e
+
+		if seq is None:
+			raise ValidationError('Sequence input could not be read!!')
+		
+		return seq
