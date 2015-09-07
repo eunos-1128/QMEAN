@@ -43,7 +43,7 @@ def create_project(request, form):
 				data = {
 						'meta':{},
 						'options':{},
-						'sequence':[],
+						'sequences':[],
 						'models':[]
 				}
 				data['options']['qmeandisco'] = (True if form.cleaned_data['QMEANDisCo'] else False)
@@ -59,13 +59,14 @@ def create_project(request, form):
 					os.rename(os.path.join(settings.TMP_DIR,tmpname), os.path.join(input_dir,model_id) )
 					data['models'].append({model_id:request.session['uploaded_'+tmpname]})
 				
-				data['sequence'].append( form.cleaned_data['sequence'] )
+				for seq in form.cleaned_data['sequence']:
+					data['sequences'].append( {'name':seq.GetName(), 'sequence':seq.GetString() } )
 
 				with io.open(os.path.join(input_dir,'project.json'), 'w', encoding='utf8') as json_file:
 					data = json.dumps(data, ensure_ascii=False, encoding='utf8',indent=4, separators=(',', ': '))
 					json_file.write(unicode(data))
 
-				f = open(os.path.join(input_dir,'status'),'w')
+				f = open(os.path.join(new_proj_dir,'status'),'w')
 				f.write('INITIALISING')
 				f.close()
 

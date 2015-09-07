@@ -3,8 +3,9 @@ from django.forms import widgets
 from django.core.exceptions import ValidationError
 from django.conf import settings
 import os
-from ost.io import SequenceFromString
+from ost.io import SequenceFromString, LoadPDB
 from ost.seq import CreateSequence
+import ost
 
 class UploadForm(forms.Form):
 	structureUploaded = forms.CharField()
@@ -33,30 +34,52 @@ class UploadForm(forms.Form):
 		data = self.cleaned_data['structureUploaded']
 		data = data.split(',')
 		for d in data[:]:
-			if not os.path.exists(os.path.join(settings.TMP_DIR,d)):
+			removed = False			
+			if not os.path.exists(os.path.join(str(settings.TMP_DIR),str(d))):
 				data.remove(d)
+				removed = True
 			if not self.request.session.get('uploaded_'+d, False):
 				data.remove(d)
+				removed = True
+			if not removed:
+				try:
+					model = ost.io.LoadPDB(os.path.join(str(settings.TMP_DIR),str(d)))
+
+					seq_list = self.cleaned_data['sequence']
+
+					print "yes, i have the seq list"
+					
+				except Exception, e:
+					print e
+					
+					data.remove(d)
+				
 
 		if len(data)<1:
 			raise ValidationError('Uploaded file no longer in session!!')
+
+                
 		return data
 
 	def clean_sequence(self):
-		data = self.cleaned_data['sequence']
-		seq = None
+		data = str(self.cleaned_data['sequence'])
+		seq = ost.seq.CreateSequenceList()
 		try:
-			seq = SequenceFromString(content,'fasta')
+			seq = ost.io.SequenceListFromString(data,'fasta')
 		except Exception, e:
 			try:
-				seq = SequenceFromString(content, 'clustal')
+				seq = ost.io.SequenceListFromString(data,'clustal')
 			except Exception, e:
 				try:
-					seq = CreateSequence('unnamed',content)
+					ost.seq.AddSequence(ost.seq.CreateSequence("unnamed",data))
 				except Exception, e:
 					print e
 
-		if seq is None:
+
+		for s in seq:
+			s.SetName(s.GetName().strip())
+
+		if len(seq) == 0:
 			raise ValidationError('Sequence input could not be read!!')
 		
 		return seq
