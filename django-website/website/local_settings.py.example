@@ -1,0 +1,11 @@
+DEBUG = True
+
+TMP_DIR = '/path/to/my/django/website/projects'
+PROJECT_DIR = '/path/to/my/django/website/projects'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
