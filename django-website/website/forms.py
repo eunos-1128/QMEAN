@@ -38,7 +38,7 @@ class UploadForm(forms.Form):
 		#        chain models or homo-oligomers allowed
 		elif len(sequence) == 1:
 			for s in structures:
-				model = LoadPDB(os.path.join(settings.TMP_DIR,str(s))).Select("peptide=true")
+				model = s['model'].Select("peptide=true")
 				for ch in model.chains:
 					try:
 						aln = AlignToSEQRES(ch,sequence[0].GetString())
@@ -49,7 +49,7 @@ class UploadForm(forms.Form):
 		#        sequence based on chain/sequence name
 		else:
 			for s in structures:
-				model =  LoadPDB(os.path.join(settings.TMP_DIR,str(s))).Select("peptide=true")
+				model = s['model'].Select("peptide=true")
 				for ch in model.chains:
 					found_sequence = False
 					for seq_handle in sequence:
@@ -74,24 +74,23 @@ class UploadForm(forms.Form):
 	def clean_structureUploaded(self):
 		data = self.cleaned_data['structureUploaded']
 		data = data.split(',')
-		for d in data[:]:
-			removed = False			
-			if not os.path.exists(os.path.join(str(settings.TMP_DIR),str(d))):
-				data.remove(d)
-				removed = True
+		models = []
+		for d in data:			
+			tmppath = str(os.path.join(settings.TMP_DIR,d))
+			if not os.path.exists(tmppath):
+				continue
 			if not self.request.session.get('uploaded_'+d, False):
-				data.remove(d)
-				removed = True
-			if not removed:
-				try:
-					model = LoadPDB(os.path.join(str(settings.TMP_DIR),str(d)))
-				except Exception, e:
-					data.remove(d)
+				continue
+			try:
+				model = LoadPDB(tmppath)
+				models.append({'tmpname':d,'tmppath':tmppath,'model':model})
+			except Exception, e:
+				print e
 
-		if len(data)<1:
+		if len(models)<1:
 			raise ValidationError('Uploaded file no longer in session!!')
                 
-		return data
+		return models
 
 	def clean_sequence(self):
 		data = str(self.cleaned_data['sequence'])

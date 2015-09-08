@@ -11,14 +11,20 @@
 </div>
 <script>setTimeout(function(){ $('#errorMessage').slideUp();},3000);</script>
 {% endif %}
-{{ form.errors }}
 <div class="jumbotron">
-        <h2>QMEAN <small>Estimating the quality of protein structure models .</small></h2>
-        <form method="POST" enctype="multipart/form-data">
+        <h2>QMEAN <small>Estimating the quality of protein structure models.</small></h2>
+        <form method="POST" enctype="multipart/form-data" onsubmit="return $('#id_sequence').val().length>0 && $('#id_structureUploaded').val().length>0;">
         	{% csrf_token %}
             <input type="hidden" name="whatsthis">
         	<table class="table ">
-                <tr id="structureDropZone" {% if form.structureUploaded.errors %} class="error"{% else %}style="border:1px dashed #CCC"{% endif %} ><td>
+                {% if form.errors %}
+		<tr><td colspan=2>
+		 <div class="alert alert-danger alert-dismissible">
+  			<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  			<strong>Problem with submitted data - </strong>
+				{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div></td></tr>
+		{% endif %}
+		<tr id="structureDropZone" {% if form.structureUploaded.errors %} class="error"{% else %}style="border:1px dashed #CCC"{% endif %} ><td>
                         <span class="btn btn-success fileinput-button">
                             <i class="glyphicon glyphicon-plus"></i>
                             <span>Select PDB File...</span>
@@ -76,6 +82,10 @@ $.ajaxSetup({
     }
 });
 
+$('#id_sequence').bind('input propertychange', function() {
+	enableSubmit(true);      
+});
+
 $('#sequenceFile').fileupload({
         dropZone: $('#sequenceDropZone'),
         url: '{% url 'sequence_upload' %}',
@@ -100,6 +110,7 @@ $('#structureFile').fileupload({
         url: '{% url 'structure_upload' %}',
         dataType: 'json',
         drop: function(){
+	    enableSubmit(false);
             $('#structureDropZone').removeClass('error');
             $('#progressBar')
                         .removeClass('progress-bar-danger')
@@ -127,7 +138,7 @@ $('#structureFile').fileupload({
                             $('#id_structureUploaded').val()
                             +($('#id_structureUploaded').val().length>0?',':'')
                             +file.file_id );
-                    $('#submitButton').prop('disabled','');
+                    enableSubmit(true);
                 }
 
                 setTimeout(function()
@@ -146,5 +157,15 @@ $('#structureFile').fileupload({
         }
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
+
+  function enableSubmit(enable)
+  {
+	if(enable && $('#id_sequence').val().length>0 && $('#id_structureUploaded').val().length>0)
+	{
+		$('#submitButton').prop('disabled','');
+	}
+	else
+		$('#submitButton').prop('disabled','disabled');
+  }
 </script>
 {% endblock %}
