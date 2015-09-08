@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 import os
 from ost.seq import CreateSequenceList, CreateSequence
+from ost.seq.alg import AlignToSEQRES
 from ost.io import SequenceListFromString, LoadPDB
 
 class UploadForm(forms.Form):
@@ -28,9 +29,42 @@ class UploadForm(forms.Form):
 		cleaned_data = super(UploadForm, self).clean()
 		structures = cleaned_data.get('structureUploaded')
 		sequence = cleaned_data.get('sequence')
-		print "We need to check sequences and structures here"
-		print structures, sequence
+
+		#case 1: There is no sequence... Raise an error!
+		if len(sequence) == 0:
+			raise ValidationError("Sequence input results in 0 read sequences. Please use proper FASTA format an provide at least one sequence!")
+
+		#case 2: There is only one sequence... either there are single
+		#        chain models or homo-oligomers allowed
+		elif len(sequence) == 1:
+			for s in structures:
+				model = LoadPDB(os.path.join(settings.TMP_DIR,str(s))).Select("peptide=true")
+				for ch in model.chains:
+					try:
+						aln = AlignToSEQRES(ch,sequence[0].GetString())
+					except Exception, e:
+						raise ValidationError("Could not align structural data to provided sequence!")
+
+		#case 3: There is more than one sequence... For every chain we try to find a matching
+		#        sequence based on chain/sequence name
+		else:
+			for s in structures:
+				model =  LoadPDB(os.path.join(settings.TMP_DIR,str(s))).Select("peptide=true")
+				for ch in model.chains:
+					found_sequence = False
+					for seq_handle in sequence:
+						print ch.GetName(),seq_handle.GetName()
+						if ch.GetName().upper() == seq_handle.GetName().upper().strip():
+							found_sequence = True
+							try:
+								aln = AlignToSEQRES(ch,seq_handle.GetString())
+								break
+							except Exception, e:
+								raise ValidationError("Could not align structural data to provided sequence!")
+					if not found_sequence:
+						raise ValidationError("Could not find an appropriate sequence for every chain!")
 	
+
 
 	def clean_project_name(self):
 		data = self.cleaned_data['project_name']
