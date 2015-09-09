@@ -28,17 +28,14 @@ def create_project(request, form):
 
 	for attempt in range(10):
 		project_id = ''.join([random.choice('abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789') for x in range(6)]) 
-		project_path = project_path(project_id)
+		new_project_path = project_path(project_id)
 
-		if not os.path.exists(project_path):
+		if not os.path.exists(new_project_path):
 			try:
-				new_proj_dir = settings.PROJECT_DIR
-				for p in split_path:
-					new_proj_dir = os.path.join(new_proj_dir,p)
-					os.makedirs(new_proj_dir)
-				input_dir = os.path.join(new_proj_dir,'input')
+				os.makedirs(new_project_path)
+				input_dir = os.path.join(new_project_path,'input')
 				os.makedirs(input_dir)
-				os.makedirs(os.path.join(new_proj_dir,'output'))
+				os.makedirs(os.path.join(new_project_path,'output'))
 
 				data = {
 						'meta':{},
@@ -47,7 +44,6 @@ def create_project(request, form):
 						'models':[]
 				}
 				data['options']['qmeandisco'] = (True if form.cleaned_data['QMEANDisCo'] else False)
-				data['options']['qmeanbrane'] = (True if form.cleaned_data['QMEANBrane'] else False)
 				if form.cleaned_data['email']:
 					data['meta']['email'] = form.cleaned_data['email']
 				if form.cleaned_data['project_name']:
@@ -66,14 +62,14 @@ def create_project(request, form):
 					data = json.dumps(data, ensure_ascii=False, encoding='utf8',indent=4, separators=(',', ': '))
 					json_file.write(unicode(data))
 
-				f = open(os.path.join(new_proj_dir,'status'),'w')
+				f = open(os.path.join(new_project_path,'status'),'w')
 				f.write('INITIALISING')
 				f.close()
 
 				return project_id
 
 			except Exception, e:
-				print 'Failed to make new project directory %s' % project_path
+				print 'Failed to make new project directory %s' % new_project_path
 				print traceback.print_exc()
 				return None
 			break
@@ -98,8 +94,7 @@ def sequence_upload(request):
                                         		seq_list.AddSequence(CreateSequence("unnamed",''.join(content.splitlines())))
                                 		except Exception, e:
                                         		print e
-
-			if len(seq_list) > 0:
+			if len(seq_list) == 0:
 				uploaded['files'].append({"name":f.name,"content":content})
 			else:
 				uploaded['files'].append({"name":f.name,"error":"Could not load sequence from file"})

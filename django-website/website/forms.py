@@ -30,13 +30,9 @@ class UploadForm(forms.Form):
 		structures = cleaned_data.get('structureUploaded')
 		sequence = cleaned_data.get('sequence')
 
-		#case 1: There is no sequence... Raise an error!
-		if len(sequence) == 0:
-			raise ValidationError("Sequence input results in 0 read sequences. Please use proper FASTA format an provide at least one sequence!")
-
-		#case 2: There is only one sequence... either there are single
+		#case 1: There is only one sequence... either there are single
 		#        chain models or homo-oligomers allowed
-		elif len(sequence) == 1:
+		if len(sequence) == 1:
 			for s in structures:
 				model = s['model'].Select("peptide=true")
 				for ch in model.chains:
@@ -45,7 +41,7 @@ class UploadForm(forms.Form):
 					except Exception, e:
 						raise ValidationError("Could not align structural data to provided sequence!")
 
-		#case 3: There is more than one sequence... For every chain we try to find a matching
+		#case 2: There is more than one sequence... For every chain we try to find a matching
 		#        sequence based on chain/sequence name
 		else:
 			for s in structures:
@@ -110,6 +106,7 @@ class UploadForm(forms.Form):
 			s.SetName(s.GetName().strip())
 
 		if len(seq_list) == 0:
-			raise ValidationError('Sequence input could not be read!!')
+			raise ValidationError("Sequence input results in 0 read sequences. Please use proper FASTA format an provide at least one sequence!")
+
 		
 		return seq_list

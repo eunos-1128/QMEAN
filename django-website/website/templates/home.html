@@ -96,10 +96,13 @@ $('#sequenceFile').fileupload({
                 if(file.error)
                 {
                   $('#sequenceErrorMessage').slideDown();
-		  setTimeout(function(){$('#sequenceErrorMessage').slideUp();},2500);              
+		          setTimeout(function(){$('#sequenceErrorMessage').slideUp();},2500);              
                 }
                 else
-                   $('#id_sequence').val(file.content); 
+                {
+                  $('#id_sequence').val(file.content);
+                  enableSubmit(true);
+                } 
             });
         }
     }).prop('disabled', !$.support.fileInput)
