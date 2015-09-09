@@ -180,8 +180,52 @@ def is_valid_structure_file(request,original_name,tmp_path):
 	return {"original_name":original_name,"file_name":basename,"error":err}
 
 
-def results(request, jobid):
-	return render(request, 'results.html')
+def results(request, projectid):
+	status = get_project_status(projectid)
+	input_data = get_project_input(projectid)
+	if status in ['INITIALISING','QUEUING','RUNNING']:
+		return render(request, 'results_running.html',{'projectid':projectid,
+														'input_data':input_data,
+														'status':status})
+	return render(request,
+		 			'results_completed.html' if status=='COMPLETED' else 'results_failed.html',
+		 			{'projectid':projectid,
+		 			'input_data':input_data,
+		 			'status':status})
+
+
+def get_project_input(projectid):
+	try:
+		f = open(os.path.join(project_path(projectid),'input','project.json'))
+		data = json.load(f)
+		f.close()
+		return data
+	except Exception, e:
+		print e
+
+def get_project_status_json(request,projectid):
+	return HttpResponse(json.dumps({'status':get_project_status(projectid)}), content_type='application/json') 
+	
+
+def get_project_status(projectid):
+	try:
+		f = open(os.path.join(project_path(projectid),'status'))
+		status = f.read().strip()
+		f.close()
+		return 'RUNNING'
+		if status in ['INITIALISING','QUEUING','RUNNING','COMPLETED','FAILED']:
+			return status
+	except Exception, e:
+		print e
+
+def uploaded_structure(request, projectid, modelid):
+	pdbfile=open(os.path.join(project_path(projectid),'input',modelid), 'r')
+	return HttpResponse(pdbfile, content_type='text/plain;')
+
+
+def project_path(projectid):
+	split_path = os.path.sep.join(re.findall('..',projectid))+'.qm'
+	return os.path.join(settings.PROJECT_DIR, split_path)
 
 def help(request):
 	return render(request, 'help.html')

@@ -44,3 +44,10 @@ form label{
 .uploadFail{
 	color:#B55;
 }
+.sequence{
+	font-family:monospace;
+	font-size:.9em;
+}
+.subtle{
+	opacity:.7;
+}

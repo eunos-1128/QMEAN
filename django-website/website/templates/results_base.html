@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% load tags %}
+{% block main-content %}
+
+<dl class="dl-horizontal" style="border: 1px solid #ddd; border-radius: 10px;padding-bottom:16px">
+	<dd><h2>{{ input_data.meta.project_name|default:"Untitled Project" }}</h2>
+	</dd>
+{% for model in input_data.models %}
+<dt>Uploaded Structure:</dt><dd>{% for k,v in model.items %}<a target="_blank" href="{% url 'uploaded_structure' projectid=projectid modelid=k %}">{{ v }} <i class="glyphicon glyphicon-file"></i></a>{% endfor %}</dd>
+{% endfor %}
+<dt>Options:</dt>
+<dd>
+QMEANBrane <i class="subtle glyphicon glyphicon-{% if input_data.options.qmeanbrane %}ok{% else %}remove{% endif %}"></i>
+QMEANDisCo <i class="subtle glyphicon glyphicon-{% if input_data.options.qmeandisco %}ok{% else %}remove{% endif %}"></i>
+</dd>
+<dt>SeqRes:</dt>
+<dd>{% for seq in input_data.sequences %}<div class="sequence">
+>{{ seq.name }}<br>
+{{ seq.sequence|split_text:"65"|linebreaksbr }}
+</div>
+{% endfor %}
+</dd>
+{% if input_data.meta.email %}
+<dt>Email:</dt><dd>{{ input_data.meta.email }}</dd>
+{% endif %}
+</dl>
+{% block results_block %}{% endblock %}
+{% endblock %}
