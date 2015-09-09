@@ -394,7 +394,7 @@ class Scores:
   def GetACCAgreement(self):
     if self.accpro!=None:
       acc_agreement = []
-      for c,a in in zip(self.target.chains, self.accpro):
+      for c,a in zip(self.target.chains, self.accpro):
         acc_agreement += a.GetACCAgreementFromChain(c, dssp_assigned=True)
       self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:

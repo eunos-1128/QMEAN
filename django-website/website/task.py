@@ -23,10 +23,12 @@ class Task:
     job_id=-1
     if self.task_type == 'SGE':
       try:
+        print "start to create sge job"
         task_mem = self.CalculateMemConsumption()
         self.job=sge.SGEJob(self.command, submit=submit, inherit_env=True,
                             stdout=stdout, stderr=stderr, cpu=cpu, queue=queue,
                             name=task_name, memory=task_mem)
+        print "finished sge job creation"
         if submit:
           job_id = self.job.job_id
 
