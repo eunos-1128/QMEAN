@@ -1,5 +1,78 @@
-{% extends 'results_base.html' %}
-
+{% extends 'results_base.html' %}{% load static %}
 {% block results_block %}
-Yes, it worked!
+<div class="row" style="margin-bottom:32px;">
+<div class="col-sm-6">
+
+{% for model in input_data.models %}
+	<dl class="dl-horizontal" style="border: 1px solid #ddd; border-radius: 10px;padding-top:16px;padding-bottom:16px">
+		<dt>Model Name:</dt>
+		<dd>{% for modelid,modelname in model.items %}{{ modelname }}{% endfor %}</dd>
+		<dt>QMEAN Value:</dt><dd>?</dd>
+		<dt>Zscores:</dt><dd>?</dd>
+		<dt>Absolute Quality:</dt><dd>?</dd>
+		<dt>Residue Error:</dt><dd>?</dd>
+
+	</dl>
+{% endfor %}
+</div>
+
+<div class="col-sm-6">
+	<div id="viewerWrapper" style="border: 1px solid #DDD; border-radius: 10px; padding:7px; margin-bottom:4px; height:300px; width:100%" >
+        <div id="pv" style="width:100%;height:100%;position:relative">
+            <div id="pv_status" ></div>
+        </div>
+	</div>
+	<div style="float:right" >
+          <label style="margin-left:4px;padding: 5px 2px 5px 2px;" class="label label-primary">&nbsp;<a target="_blank" href="http://biasmv.github.io/pv/" style="color:#FFF">pv<i style="opacity:0.8; ont-size:.6em; margin-left:2px" class="glyphicon glyphicon-new-window"></i></a>&nbsp;</label>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block js %}
+<script type='text/javascript' src="{% static 'js/bio-pv.min.js' %}"></script>
+<script>
+var pv_viewer = pv.Viewer(document.getElementById('pv'), {
+          width: 300,
+          height: 300,
+          antialias: true,
+          quality : 'high'
+        });
+
+$(document).ready(
+	function()
+	{
+		$('#viewerWrapper').height( $('#viewerWrapper').width() );
+      	$('#pv').height( $('#viewerWrapper').width() );
+      	$(window).resize(function() {
+          $('#viewerWrapper').height( $('#viewerWrapper').width() );
+          $('#pv').height( $('#viewerWrapper').width() );
+          pv_viewer.fitParent();
+        });
+
+		{% for modelid,modelname in input_data.models.0.items %}	
+		$.get('{% url 'uploaded_structure' projectid=projectid modelid=modelid %}',
+	        function(data,s)
+	        {
+	            var pv_structure = pv.io.pdb(data);
+	            var tube = pv_viewer.tube('{{ modelname }}', pv_structure.select('protein') );
+	            /*tube.colorBy( pv.color.byAtomProp('tempFactor',
+	                        pv.color.gradient(['blue','white','red'])
+	                        ,[-0.2,1]
+	                        ) );*/
+				tube.colorBy( pv.color.rainbow() );
+
+	            pv_viewer.ballsAndSticks('{{ modelname }}.ligands',pv_structure.select({'chain':'_'}));
+	            var dna = pv_structure.select('ligand').select({'rnames':['A','C','T','G','U','DA','DC','DG','DT']});
+	            if(dna.residueCount()>0)
+	              pv_viewer.lines('{{ modelname }}.dna',dna);
+
+	            pv_viewer.fitParent();
+	            pv_viewer.autoZoom();
+	        });
+		{% endfor %}
+	});
+
+
+
+</script>
 {% endblock %}
