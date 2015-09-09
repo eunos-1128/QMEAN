@@ -1,7 +1,7 @@
 DEBUG = True
 
-TMP_DIR = '/path/to/my/django/website/projects'
-PROJECT_DIR = '/path/to/my/django/website/projects'
+TMP_DIR = '/import/bc2/home/schwede/studga00/prog/qmean_web/django-website/tmp'
+PROJECT_DIR = '/import/bc2/home/schwede/studga00/prog/qmean_web/django-website/projects'
 
 DATABASES = {
     'default': {

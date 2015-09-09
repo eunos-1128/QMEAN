@@ -6,6 +6,7 @@ from .forms import UploadForm
 import io, os, json, tempfile, tarfile, random, re, traceback, codecs
 from ost.seq import CreateSequenceList, CreateSequence
 from ost.io import LoadPDB, SequenceListFromString 
+from run_qmean_task import RunQMEAN
 
 def home(request):
 	project_creation_error = False
@@ -14,6 +15,11 @@ def home(request):
 		if form.is_valid():
 			project_id = create_project(request, form)
 			if project_id:
+				split_path = re.findall('..',project_id)
+				split_path[-1] += '.qm'
+				project_path = os.path.join(settings.PROJECT_DIR,os.path.sep.join(split_path))
+				print "project path: ",project_path	
+				qm_runner = RunQMEAN(project_path)
 				return HttpResponseRedirect(reverse('results',args=[project_id]))
 			else:
 				project_creation_error = 'Failed to create a new project'
