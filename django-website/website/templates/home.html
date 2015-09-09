@@ -12,7 +12,6 @@
 <script>setTimeout(function(){ $('#errorMessage').slideUp();},3000);</script>
 {% endif %}
 <div class="jumbotron">
-        <h2>QMEAN <small>Estimating the quality of protein structure models.</small></h2>
         <form method="POST" enctype="multipart/form-data" onsubmit="return $('#id_sequence').val().length>0 && $('#id_structureUploaded').val().length>0;">
         	{% csrf_token %}
             <input type="hidden" name="whatsthis">

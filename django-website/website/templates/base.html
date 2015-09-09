@@ -22,6 +22,7 @@
       <div class="header clearfix">
         <nav>
           <ul class="nav nav-pills pull-right">
+            <li role="presentation"><a href="{% url 'home' %}" class="navbar-brand">QMEAN</a></li>
             <li role="presentation"{% block homeActive %}{% endblock %}><a href="{% url 'home' %}">Submit New</a></li>
             <li role="presentation"{% block helpActive %}{% endblock %}><a href="{% url 'help' %}">Help</a></li>
             <li role="presentation"{% block refActive %}{% endblock %}><a href="{% url 'references' %}">References</a></li>
