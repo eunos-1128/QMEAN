@@ -15,11 +15,7 @@ def home(request):
 		if form.is_valid():
 			project_id = create_project(request, form)
 			if project_id:
-				split_path = re.findall('..',project_id)
-				split_path[-1] += '.qm'
-				project_path = os.path.join(settings.PROJECT_DIR,os.path.sep.join(split_path))
-				print "project path: ",project_path	
-				qm_runner = RunQMEAN(project_path)
+				qm_runner = RunQMEAN(project_path(project_id))
 				return HttpResponseRedirect(reverse('results',args=[project_id]))
 			else:
 				project_creation_error = 'Failed to create a new project'
@@ -32,9 +28,7 @@ def create_project(request, form):
 
 	for attempt in range(10):
 		project_id = ''.join([random.choice('abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789') for x in range(6)]) 
-		split_path = re.findall('..',project_id)
-		split_path[-1] += '.qm'
-		project_path = os.path.join(settings.PROJECT_DIR,os.path.sep.join(split_path))
+		project_path = project_path(project_id)
 
 		if not os.path.exists(project_path):
 			try:
