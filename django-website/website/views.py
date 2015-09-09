@@ -178,7 +178,7 @@ def is_valid_structure_file(request,original_name,tmp_path):
 def results(request, projectid):
 	status = get_project_status(projectid)
 	input_data = get_project_input(projectid)
-	if status in ['INITIALISING','QUEUING','RUNNING']:
+	if status in ['INITIALISING','QUEUEING','RUNNING']:
 		return render(request, 'results_running.html',{'projectid':projectid,
 														'input_data':input_data,
 														'status':status})
@@ -205,9 +205,9 @@ def get_project_status_json(request,projectid):
 def get_project_status(projectid):
 	try:
 		f = open(os.path.join(project_path(projectid),'status'))
-		status = f.read().strip()
+		status = f.read().strip().split()[-1]
 		f.close()
-		if status in ['INITIALISING','QUEUING','RUNNING','COMPLETED','FAILED']:
+		if status in ['INITIALISING','QUEUEING','RUNNING','COMPLETED','FAILED']:
 			return status
 	except Exception, e:
 		print e
