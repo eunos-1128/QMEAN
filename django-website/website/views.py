@@ -218,7 +218,6 @@ def get_project_status(projectid):
 		f = open(os.path.join(project_path(projectid),'status'))
 		status = f.read().strip()
 		f.close()
-		return 'RUNNING'
 		if status in ['INITIALISING','QUEUING','RUNNING','COMPLETED','FAILED']:
 			return status
 	except Exception, e:
