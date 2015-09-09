@@ -94,7 +94,7 @@ def sequence_upload(request):
                                         		seq_list.AddSequence(CreateSequence("unnamed",''.join(content.splitlines())))
                                 		except Exception, e:
                                         		print e
-			if len(seq_list) == 0:
+			if len(seq_list) > 0:
 				uploaded['files'].append({"name":f.name,"content":content})
 			else:
 				uploaded['files'].append({"name":f.name,"error":"Could not load sequence from file"})
