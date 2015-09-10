@@ -209,7 +209,6 @@ class SGEJob(object):
     self.memory=memory
     self._sge_info = None
     if submit:
-      print "do the submission"
       self.job_id=self.Submit()
     else:
       self.job_id=None
@@ -230,9 +229,6 @@ class SGEJob(object):
     escaping, we put the arguments into a list that can then directly be passed
     to subprocess.Popen.
     '''
-    print self.command
-    print "start to assemble qsub command"
-
     qsub = [config.QSUB_BIN, '-b', 'y', '-S', '/bin/tcsh', '-N', self.name]
     if self.inherit_env:
       qsub.extend(['-V'])
@@ -242,7 +238,6 @@ class SGEJob(object):
       qsub.append('-hold_jid')
       qsub.append(self.hold_jid)
     m_l_param = ['-l']
-    print "look at the memory"
     if self.memory:
       # We just take memory for the WHOLE job but 'membycore' requires memory
       # per core. So we divide...
@@ -253,7 +248,6 @@ class SGEJob(object):
       else:
           membycore = self.memory[0]
       m_l_param.append('membycore=%.3f%s' % (membycore, self.memory[1]))
-    print "look at stdout stuff"
     if len(m_l_param) > 1:
       qsub.extend(m_l_param)
     if self.stdout:
@@ -261,19 +255,15 @@ class SGEJob(object):
         qsub+=['-o', str(self.stdout), '-j', 'y']
       else:
         qsub+=['-o', str(self.stdout), '-e', str(self.stderr)]
-    print "look at cpus"
     if self.cpu and self.cpu > 1:
       queue_name=self.queue.split('@@')[0]
       qsub+=['-pe', SGEJob.MT_ENVS[queue_name], str(self.cpu)]
     qsub+=['-q', self.queue]
-    print "look whether its stringlike"
-    print self.command
     if _IsStringLike(self.command):
       qsub+=shlex.split(self.command)
     else:
       qsub+=self.command
 
-    print "returning the crap"
     return qsub
 
   def Submit(self):
@@ -282,10 +272,8 @@ class SGEJob(object):
     '''
     qsub=self._AssembleQSubCommand()
 
-    print "open subprocess"
     qsub_ps = subprocess.Popen(qsub, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
-    print "did it"
     pipe = Queue.Queue()
     # time is in seconds
     qsub_deadline = threading.Timer(300, _QsubTimeout, [qsub_ps, ' '.join(qsub),
@@ -316,7 +304,6 @@ class SGEJob(object):
     if not jobid:
       raise RuntimeError('Could not fetch job id for qsub command "%s"' % \
                          ' '.join(qsub))
-    print "finished submission"
 
     return jobid
 
