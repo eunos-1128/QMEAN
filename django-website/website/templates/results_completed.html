@@ -7,8 +7,11 @@
 
 <div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;">
 	<table class="table table-condensed">
-		<tr><th nowrap="nowrap">Model Name:</th>
-		<td>{{ model.name }}</td></tr>
+		<tr><th  width="160">Model Files:</th>
+		<td><a href="{% url 'model_structure' projectid=projectid modelid=model.modelid %}">{{ model.name }} <i class="glyphicon glyphicon-file"></i></a>
+
+		<a href="{% url 'archive' projectid=projectid modelid=model.modelid %}">Model Results Archive <i class="glyphicon glyphicon-file"></i></a>
+		</td></tr>
 		<tr><th>QMEAN Value:</th><td>{{ model.global_scores.qmean4.zscore|floatformat:"2" }}</td></tr>
 		<tr><th>Zscores:</th>
 			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"></td>

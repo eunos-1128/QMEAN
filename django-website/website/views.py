@@ -2,8 +2,10 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.core.servers.basehttp import FileWrapper
 from .forms import UploadForm
-import io, os, json, tempfile, tarfile, random, re, traceback, codecs
+import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob
+from datetime import datetime
 from ost.seq import CreateSequenceList, CreateSequence
 from ost.io import LoadPDB, SequenceListFromString 
 from run_qmean_task import RunQMEAN
@@ -228,9 +230,89 @@ def get_project_status(projectid):
 	except Exception, e:
 		print e
 
+def model_structure(request, projectid, modelid):
+	pdbfile=open(os.path.join(project_path(projectid),'output',modelid+'.pdb'), 'r')
+	return HttpResponse(pdbfile, content_type='text/plain;')
+
 def uploaded_structure(request, projectid, modelid):
 	pdbfile=open(os.path.join(project_path(projectid),'input',modelid+'.pdb'), 'r')
 	return HttpResponse(pdbfile, content_type='text/plain;')
+
+def archive(request, projectid, modelid=None):
+
+	if get_project_status(projectid)!='COMPLETED' and get_project_status(projectid)!='FAILED':
+		return HttpResponse('Please wait until template search has completed!<br><br><a href="#" onclick="window.close()">Close this window</a>')
+
+	ppath = project_path(projectid)
+
+	if modelid is None:
+		archive_path = os.path.join(ppath,'archive.zip')
+	else:
+		archive_path = os.path.join(ppath,'output',modelid,'archive.zip')
+
+	# if project status or config have not been updated since the archive was created, 
+	# just return here.    
+	if os.path.isfile('@'+archive_path):
+		print 'we made it once, nothing changed so return here'
+		archive_file = open(archive_path,'r')
+		wrapper = FileWrapper(archive_file)
+		response = HttpResponse(wrapper, content_type='application/zip')
+		response['Content-Disposition'] = 'attachment; filename=%s.zip' %(archivename)
+		response['Content-Length'] = archive_file.tell()
+		archive_file.seek(0)
+		return response
+
+
+	input_data = get_project_input(projectid)	
+		
+	if 'project_name' in input_data['meta'].keys():
+		archivename = input_data['meta']['project_name'] 
+	else:
+		archivename = 'QMEAN_Project'
+
+	archivename += '_'+datetime.fromtimestamp( os.path.getmtime(ppath) ).strftime("%Y-%m-%d")
+
+	safearchivename = []
+	for c in archivename:
+		if re.match('[\da-zA-Z _|]',c):
+			safearchivename.append(c)
+	archivename = ''.join(safearchivename)
+	archivename = archivename.replace(' ','_')
+
+	archive_file = open(archive_path,'w')
+	archive = zipfile.ZipFile(archive_file, 'w')#, zipfile.ZIP_DEFLATED)    
+	    
+	for m in input_data['models']:
+		if modelid is not None and modelid!=m['modelid']:
+			continue
+		mdl_dir = os.path.join(project_path(projectid), 'output', m['modelid']) 
+
+		safemodelname = []
+		for c in str(m['name']).split('.pdb')[0]:
+			if re.match('[\da-zA-Z _|]',c):
+				safemodelname.append(c)
+		safemodelname = ''.join(safemodelname)
+
+		for f in ['global_scores.txt','local_scores.txt']:
+			if os.path.exists(os.path.join(mdl_dir,f)):
+				archive.write( os.path.join(mdl_dir,f), safemodelname+os.path.sep+f)
+  
+		for f in glob.iglob(os.path.join(mdl_dir,'plots','*')):
+			if os.path.isfile(f):
+				archive.write( f, safemodelname+"/plots/%s" % os.path.basename(f))
+
+
+	archive.close()
+	archive_file.close()
+
+	archive_file = open(archive_path,'r')
+	wrapper = FileWrapper(archive_file)
+	response = HttpResponse(wrapper, content_type='application/zip')
+	response['Content-Disposition'] = 'attachment; filename=%s.zip' %(archivename)
+	response['Content-Length'] = archive_file.tell()
+	archive_file.seek(0)
+	return response
+
 
 def qmean_pix(request, projectid, modelid, name):
 
