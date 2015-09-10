@@ -55,12 +55,9 @@ form label{
 	border:none;
 	width:100%;
 	font-family:monospace;
-	font-size:.9em;
+	font-size:.8em;
 }
-.sequence{
-	font-family:monospace;
-	font-size:.9em;
-}
+
 #pv_status {
     font-weight:bold;
     font:helvetica;
@@ -74,4 +71,10 @@ form label{
 }
 .table tbody > tr:first-child td, .table tbody > tr:first-child th{
 	border-top:none;
+}
+.table{
+	margin-bottom:0px;
+}
+.qmean{
+	width:100%;
 }

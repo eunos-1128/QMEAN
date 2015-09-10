@@ -4,15 +4,18 @@
 <div class="col-sm-6">
 
 {% for model in input_data.models %}
-<div style="border: 1px solid #ddd; border-radius: 10px;padding-top:16px;padding-bottom:16px">
+
+<div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;">
 	<table class="table table-condensed">
-		
-		<tr><th>Model Name:</th>
-		<td>{% for modelid,modelname in model.items %}{{ modelname }}{% endfor %}</td></tr>
-		<tr><th>QMEAN Value:</th><td>?</td></tr>
-		<tr><th>Zscores:</th><td>?</td></tr>
-		<tr><th>Absolute Quality:</th><td>?</td></tr>
-		<tr><th>Residue Error:</th><td>?</td></tr>
+		<tr><th nowrap="nowrap">Model Name:</th>
+		<td>{{ model.name }}</td></tr>
+		<tr><th>QMEAN Value:</th><td>{{ model.global_scores.qmean4.zscore|floatformat:"2" }}</td></tr>
+		<tr><th>Zscores:</th>
+			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"></td>
+		<tr><th nowrap="nowrap">Absolute Quality:</th>
+			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}"></td>
+		<tr><th>Residue Error:</th>
+			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}"></td></tr>
 	</table>
 </div>
 {% endfor %}
@@ -51,20 +54,18 @@ $(document).ready(
           $('#pv').height( $('#viewerWrapper').width() );
           pv_viewer.fitParent();
         });
-
-		{% for modelid,modelname in input_data.models.0.items %}	
-		$.get('{% url 'uploaded_structure' projectid=projectid modelid=modelid %}',
+	
+		$.get('{% url 'uploaded_structure' projectid=projectid modelid=input_data.models.0.modelid %}',
 	        function(data,s)
 	        {
 	            var pv_structure = pv.io.pdb(data);
-	            var tube = pv_viewer.tube('{{ modelname }}', pv_structure.select('protein') );
-	            /*tube.colorBy( pv.color.byAtomProp('tempFactor',
+	            var tube = pv_viewer.tube('{{ input_data.models.0.model.name }}', pv_structure.select('protein') );
+	            tube.colorBy( pv.color.byAtomProp('tempFactor',
 	                        pv.color.gradient(['blue','white','red'])
 	                        ,[-0.2,1]
-	                        ) );*/
-				tube.colorBy( pv.color.rainbow() );
+	                        ) );
 
-	            pv_viewer.ballsAndSticks('{{ modelname }}.ligands',pv_structure.select({'chain':'_'}));
+	            pv_viewer.ballsAndSticks('{{ model.name }}.ligands',pv_structure.select({'chain':'_'}));
 	            var dna = pv_structure.select('ligand').select({'rnames':['A','C','T','G','U','DA','DC','DG','DT']});
 	            if(dna.residueCount()>0)
 	              pv_viewer.lines('{{ modelname }}.dna',dna);
@@ -72,7 +73,6 @@ $(document).ready(
 	            pv_viewer.fitParent();
 	            pv_viewer.autoZoom();
 	        });
-		{% endfor %}
 	});
 
 

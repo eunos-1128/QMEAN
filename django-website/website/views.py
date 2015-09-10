@@ -51,9 +51,9 @@ def create_project(request, form):
 
 				data['models'] = []
 				for i,model in enumerate(form.cleaned_data['structureUploaded']):
-					model_id = 'model_%03d.pdb' % (i+1)
-					os.rename(model['tmppath'], os.path.join(input_dir,model_id) )
-					data['models'].append({model_id:request.session['uploaded_'+model['tmpname']]})
+					modelid = 'model_%03d.pdb' % (i+1)
+					os.rename(model['tmppath'], os.path.join(input_dir,modelid) )
+					data['models'].append({'modelid':modelid,'name':request.session['uploaded_'+model['tmpname']]})
 				
 				for seq in form.cleaned_data['sequence']:
 					data['sequences'].append( {'name':seq.GetName(), 'sequence':seq.GetString() } )
@@ -182,6 +182,22 @@ def results(request, projectid):
 		return render(request, 'results_running.html',{'projectid':projectid,
 														'input_data':input_data,
 														'status':status})
+
+	for model in input_data['models']:
+		try:
+			global_scores = {}
+			f = open(os.path.join(project_path(projectid),'output',model['modelid'],'global_scores.txt'))
+			lines = f.readlines()
+			f.close()
+			for line in lines:
+				if line.startswith('#') or line.startswith('name'):
+					continue
+				scores = line.split()
+				global_scores[scores[0]] = {'norm':scores[1],'zscore':scores[2]}
+			model['global_scores'] = global_scores
+
+		except Exception, e:
+			print e
 	return render(request,
 		 			'results_completed.html' if status=='COMPLETED' else 'results_failed.html',
 		 			{'projectid':projectid,
@@ -213,8 +229,20 @@ def get_project_status(projectid):
 		print e
 
 def uploaded_structure(request, projectid, modelid):
-	pdbfile=open(os.path.join(project_path(projectid),'input',modelid), 'r')
+	pdbfile=open(os.path.join(project_path(projectid),'input',modelid+'.pdb'), 'r')
 	return HttpResponse(pdbfile, content_type='text/plain;')
+
+def qmean_pix(request, projectid, modelid, name):
+
+	img_filename = os.path.join(project_path(projectid),
+								'output',
+								modelid,
+								'plots',
+								name)
+
+	image_data = open(img_filename, "rb").read()  
+	return HttpResponse(image_data, content_type="image/png")
+
 
 
 def project_path(projectid):

@@ -6,7 +6,7 @@
 <small>The job is currently</small> <span class="job_status">{{ status|upper }}.</span>
 </div>
 {% endblock %}
-{% block js %}
+{% block js %}{{ block.super }}
 <script>
 
 $(document).ready( 
