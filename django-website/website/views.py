@@ -40,7 +40,7 @@ def create_project(request, form):
 				os.makedirs(os.path.join(new_project_path,'output'))
 
 				data = {
-						'meta':{},
+						'meta':{'created':str(datetime.now())},
 						'options':{},
 						'sequences':[],
 						'models':[]
@@ -172,7 +172,6 @@ def is_valid_structure_file(request,original_name,tmp_path):
 		except e2:
 			print e2
 		err = str(e)
-		tmpname=""
 
 	return {"original_name":original_name,"file_name":basename,"error":err}
 
@@ -180,6 +179,8 @@ def is_valid_structure_file(request,original_name,tmp_path):
 def results(request, projectid):
 	status = get_project_status(projectid)
 	input_data = get_project_input(projectid)
+	if 'created' in input_data['meta'].keys():
+		input_data['meta']['created'] = datetime.strptime(input_data['meta']['created'],"%Y-%m-%d %H:%M:%S.%f")
 	if status in ['INITIALISING','QUEUEING','RUNNING']:
 		return render(request, 'results_running.html',{'projectid':projectid,
 														'input_data':input_data,

@@ -1,13 +1,15 @@
-{% extends 'base.html' %}{% load tags %}
+{% extends 'base.html' %}{% load tags %}{% load humanize %}
 {% block main-content %}
 
 <div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;">
 <table class="table table-condensed" >
-	<tr><td width="160"></td>
-	<td style="border-top:none"><h2>{{ input_data.meta.project_name|default:"Untitled Project" }}{% block extra_title %}{% endblock %}</h2>
+	<tr>
+	<td style="border-top:none" colspan="2" class="text-center"><h2>{{ input_data.meta.project_name|default:"Untitled Project" }}
+		{% if input_data.meta.created %}<small style="font-size:16px">(Created: {{ input_data.meta.created|naturaltime }})</small>{% endif %}
+		{% block extra_title %}{% endblock %}</h2>
 	</td></tr>
 
-<tr><th>Uploaded Structure:</th><td>{% for model in input_data.models %}<a target="_blank" href="{% url 'uploaded_structure' projectid=projectid modelid=model.modelid %}">{{ model.name }} <i class="glyphicon glyphicon-file"></i></a>{% if not forloop.last %}; {% endif %}{% endfor %}</td></tr>
+<tr><th width="160">Uploaded Structure:</th><td>{% for model in input_data.models %}<a target="_blank" href="{% url 'uploaded_structure' projectid=projectid modelid=model.modelid %}">{{ model.name }} <i class="glyphicon glyphicon-file"></i></a>{% if not forloop.last %}; {% endif %}{% endfor %}</td></tr>
 
 <tr><th>Options:</th><td>
 QMEANBrane <i class="subtle glyphicon glyphicon-{% if input_data.options.qmeanbrane %}ok{% else %}remove{% endif %}"></i>
