@@ -20,15 +20,17 @@ import views
 
 urlpatterns = [
 	url(r'^/?$', views.home, name='home'),
-	url(r'^structure_upload/$', views.structure_upload, name='structure_upload'),
-	url(r'^sequence_upload/$', views.sequence_upload, name='sequence_upload'),
-    url(r'^uploaded_structure/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3}).pdb$', views.uploaded_structure, name='uploaded_structure'),
-    url(r'^model_structure/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3}).pdb$', views.model_structure, name='model_structure'),
-    url(r'^results/(?P<projectid>\w{6}).zip$', views.archive, name='archive'),
-    url(r'^results/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3}).zip$', views.archive, name='archive'),
-	url(r'^results/(?P<projectid>\w{6})/$', views.results, name='results'),
-    url(r'^project_status/(?P<projectid>\w{6})/$', views.get_project_status_json, name='project_status'),
-    url(r'^qmean_pix/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3})/(?P<name>[\w\._]+)$', views.qmean_pix, name='qmean_pix'),
+	url(r'^validate/structure/$', views.structure_upload, name='structure_upload'),
+	url(r'^validate/sequence/$', views.sequence_upload, name='sequence_upload'),
+
+    url(r'^project/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3})/input.pdb$', views.uploaded_structure, name='uploaded_structure'),
+    url(r'^project/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3}).pdb$', views.model_structure, name='model_structure'),
+    url(r'^project/(?P<projectid>\w{6}).zip$', views.archive, name='archive'),
+    url(r'^project/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3}).zip$', views.archive, name='archive'),
+	url(r'^project/(?P<projectid>\w{6})/$', views.results, name='results'),
+    url(r'^project/(?P<projectid>\w{6})/status/$', views.get_project_status_json, name='project_status'),
+    url(r'^project/(?P<projectid>\w{6})/(?P<modelid>model_[\d]{3})/plots/(?P<name>[\w\._]+)$', views.qmean_pix, name='qmean_pix'),
+    
     url(r'^help/?', views.help, name='help'),
     url(r'^references/?', views.references, name='references'),
     url(r'^contact/?', views.contact, name='contact'),

@@ -209,6 +209,7 @@ def results(request, projectid):
 
 def get_project_input(projectid):
 	try:
+		print os.path.join(project_path(projectid),'input','project.json')
 		f = open(os.path.join(project_path(projectid),'input','project.json'))
 		data = json.load(f)
 		f.close()
@@ -231,7 +232,7 @@ def get_project_status(projectid):
 		print e
 
 def model_structure(request, projectid, modelid):
-	pdbfile=open(os.path.join(project_path(projectid),'output',modelid+'.pdb'), 'r')
+	pdbfile=open(os.path.join(project_path(projectid),'output',modelid,'model.pdb'), 'r')
 	return HttpResponse(pdbfile, content_type='text/plain;')
 
 def uploaded_structure(request, projectid, modelid):
@@ -252,7 +253,9 @@ def archive(request, projectid, modelid=None):
 
 	# if project status or config have not been updated since the archive was created, 
 	# just return here.    
-	if os.path.isfile('@'+archive_path):
+	if os.path.isfile(archive_path):
+		os.remove(archive_path)
+		"""
 		print 'we made it once, nothing changed so return here'
 		archive_file = open(archive_path,'r')
 		wrapper = FileWrapper(archive_file)
@@ -260,7 +263,7 @@ def archive(request, projectid, modelid=None):
 		response['Content-Disposition'] = 'attachment; filename=%s.zip' %(archivename)
 		response['Content-Length'] = archive_file.tell()
 		archive_file.seek(0)
-		return response
+		return response"""
 
 
 	input_data = get_project_input(projectid)	

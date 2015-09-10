@@ -1,4 +1,7 @@
 {% extends 'results_base.html' %}{% load static %}
+{% block extra_title %}
+<small><a href="{% url 'archive' projectid=projectid %}">All Model Results Archive <i class="glyphicon glyphicon-file"></i></a></small>
+{% endblock %}
 {% block results_block %}
 <div class="row" style="margin-top:16px;">
 <div class="col-sm-6">
@@ -58,7 +61,7 @@ $(document).ready(
           pv_viewer.fitParent();
         });
 	
-		$.get('{% url 'uploaded_structure' projectid=projectid modelid=input_data.models.0.modelid %}',
+		$.get('{% url 'model_structure' projectid=projectid modelid=input_data.models.0.modelid %}',
 	        function(data,s)
 	        {
 	            var pv_structure = pv.io.pdb(data);
