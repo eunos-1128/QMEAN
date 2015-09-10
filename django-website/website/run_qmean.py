@@ -4,6 +4,7 @@ from qmean import mqa_result_membrane
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from ost.io import LoadPDB
+from ost.io import SavePDB
 
 USAGE = "usage: ost run_qmean.py <INPUT_DIR> <OUTPUT_DIR>"
 
@@ -38,4 +39,6 @@ for f in model_files:
                                 psipred = psipred_handler,
                                 accpro = accpro_handler,
                                 dssp_path = "/import/bc2/apps/dssp/2003-May-30-goolf-1.4.10/bin/dssp")
+
+  SavePDB(model,os.path.join(out_path,"model.pdb"))
 
