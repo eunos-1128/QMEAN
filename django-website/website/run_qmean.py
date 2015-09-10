@@ -4,6 +4,7 @@ from qmean import mqa_result_membrane
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from ost.io import LoadPDB
+from ost.io import SavePDB
 
 USAGE = "usage: ost run_qmean.py <INPUT_DIR> <OUTPUT_DIR>"
 
@@ -13,6 +14,18 @@ if len(sys.argv) < 3:
 
 in_dir = sys.argv[1]
 out_dir = sys.argv[2]
+
+#we only use the SGE module for submission, the run_qmean script takes
+#now the responsibility over the status file
+status_path = os.path.abspath(os.path.join(os.path.join(in_dir,os.pardir),"status"))
+status_jobid = open(status_path,'r').readlines()[0].split()[0]
+
+#let's change status to running
+status_file = open(status_path,'w')
+status_file.write(status_jobid)
+status_file.write(" ")
+status_file.write("RUNNING")
+status_file.close()
 
 #at this point we would read the json file with all required input
 
@@ -39,3 +52,12 @@ for f in model_files:
                                 accpro = accpro_handler,
                                 dssp_path = "/import/bc2/apps/dssp/2003-May-30-goolf-1.4.10/bin/dssp")
 
+  SavePDB(model,os.path.join(out_path,"model.pdb"))
+
+
+#let's change the status to completed
+status_file = open(status_path,'w')
+status_file.write(status_jobid)
+status_file.write(" ")
+status_file.write("COMPLETED")
+status_file.close()
