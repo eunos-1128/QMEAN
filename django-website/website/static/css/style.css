@@ -49,10 +49,29 @@ form label{
 .uploadFail{
 	color:#B55;
 }
+.seqTextarea{
+	overflow:hidden;
+	resize:none;
+	border:none;
+	width:100%;
+	font-family:monospace;
+	font-size:.9em;
+}
 .sequence{
 	font-family:monospace;
 	font-size:.9em;
 }
+#pv_status {
+    font-weight:bold;
+    font:helvetica;
+    font-size:.8em;
+    position:absolute;
+    bottom:0;
+    right:0;
+}
 .subtle{
 	opacity:.7;
+}
+.table tbody > tr:first-child td, .table tbody > tr:first-child th{
+	border-top:none;
 }
