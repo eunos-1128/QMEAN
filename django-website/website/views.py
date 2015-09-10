@@ -51,8 +51,8 @@ def create_project(request, form):
 
 				data['models'] = []
 				for i,model in enumerate(form.cleaned_data['structureUploaded']):
-					modelid = 'model_%03d.pdb' % (i+1)
-					os.rename(model['tmppath'], os.path.join(input_dir,modelid) )
+					modelid = 'model_%03d' % (i+1)
+					os.rename(model['tmppath'], os.path.join(input_dir,modelid+'.pdb') )
 					data['models'].append({'modelid':modelid,'name':request.session['uploaded_'+model['tmpname']]})
 				
 				for seq in form.cleaned_data['sequence']:

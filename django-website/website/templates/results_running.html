@@ -3,7 +3,7 @@
 {% block results_block %}
 
 <div class="alert alert-success text-center" role="alert" style="font-size:1.4em">
-<small>The job is currently</small> <span class="job_status">{{ status|upper }}.</span>
+<small>The job is currently</small> <span class="job_status" id="job_status">{{ status|upper }}.</span>
 </div>
 {% endblock %}
 {% block js %}{{ block.super }}
@@ -32,9 +32,9 @@ function checkStatus()
       success: function(data) {
       	if(data.status=='COMPLETED' || data.status=='FAILED')
       		location.reload();
+	$('#job_status').text(data.status.toUpperCase());
       },
       error: function(error) {
-         console.info(error)
       }
    });
 	setTimeout(function(){ checkStatus(); },5000);
