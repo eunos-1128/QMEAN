@@ -216,7 +216,7 @@ def results(request, projectid):
 		except Exception, e:
 			print e
 
-	input_data['models'].sort( key=lambda x: x['global_scores']['qmean4'] )
+	input_data['models'].sort( key=lambda x: 'global_scores' in x.keys() and x['global_scores']['qmean4'] )
 
 	return render(request,
 		 			'results_completed.html' if status=='COMPLETED' else 'results_failed.html',
