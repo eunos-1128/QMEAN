@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.core.servers.basehttp import FileWrapper
 from .forms import UploadForm
-import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob, zlib
+import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob
 from datetime import datetime
 try:
 	from ost.seq import CreateSequenceList, CreateSequence
@@ -300,7 +300,9 @@ def archive(request, projectid, modelid=None):
 	archivename = archivename.replace(' ','_')
 
 	archive_file = open(archive_path,'w')
-	archive = zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED)    
+	archive = zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED) 
+
+	archive.write( os.path.join(project_path(projectid), 'input', 'project.json'), 'project.json')   
 	    
 	for m in input_data['models']:
 		if modelid is not None and modelid!=m['modelid']:
@@ -312,9 +314,6 @@ def archive(request, projectid, modelid=None):
 			if re.match('[\da-zA-Z _|]',c):
 				safemodelname.append(c)
 		safemodelname = ''.join(safemodelname)
-
-		archive.write( os.path.join(project_path(projectid), 'input', 'project.json'),
-						 safemodelname+os.path.sep+'project.json')
 
 		archive.write( os.path.join(project_path(projectid), 'input', m['modelid']+'.pdb'),
 						 safemodelname+os.path.sep+m['name'])
