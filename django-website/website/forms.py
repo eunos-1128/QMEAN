@@ -52,6 +52,7 @@ class UploadForm(forms.Form):
 				for ch in model.chains:
 					found_sequence = False
 					for seq_handle in sequence:
+						#WHY IS THIS TO UPPER, LOWERCASE MAY BE IMPORTANT??
 						if ch.GetName().upper() == seq_handle.GetName().upper().strip():
 							found_sequence = True
 							try:

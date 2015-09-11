@@ -4,7 +4,7 @@
 <div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;">
 <table class="table table-condensed" >
 	<tr>
-	<td style="border-top:none" colspan="2" class="text-center"><h2>{{ input_data.meta.project_name|default:"Untitled Project" }}
+	<td style="border-top:none" colspan="2" class="text-center"><h2>{{ input_data.meta.project_name }}
 		{% if input_data.meta.created %}<small style="font-size:16px">(Created: {{ input_data.meta.created|naturaltime }})</small>{% endif %}
 		{% block extra_title %}{% endblock %}</h2>
 	</td></tr>
