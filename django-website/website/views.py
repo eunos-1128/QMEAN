@@ -263,41 +263,35 @@ def archive(request, projectid, modelid=None):
 
 	ppath = project_path(projectid)
 
-	if modelid is None:
-		archive_path = os.path.join(ppath,'archive.zip')
-	else:
-		archive_path = os.path.join(ppath,'output',modelid,'archive.zip')
-
-	# if project status or config have not been updated since the archive was created, 
-	# just return here.    
-	if os.path.isfile(archive_path):
-		os.remove(archive_path)
-		"""
-		print 'we made it once, nothing changed so return here'
-		archive_file = open(archive_path,'r')
-		wrapper = FileWrapper(archive_file)
-		response = HttpResponse(wrapper, content_type='application/zip')
-		response['Content-Disposition'] = 'attachment; filename=%s.zip' %(archivename)
-		response['Content-Length'] = archive_file.tell()
-		archive_file.seek(0)
-		return response"""
-
-
 	input_data = get_project_input(projectid)	
-		
 	if 'project_name' in input_data['meta'].keys():
 		archivename = input_data['meta']['project_name'] 
 	else:
 		archivename = 'QMEAN_Project'
 
-	archivename += '_'+datetime.fromtimestamp( os.path.getmtime(ppath) ).strftime("%Y-%m-%d")
-
+	archivename += '_'+ input_data['meta']['created'].split()[0] 
 	safearchivename = []
 	for c in archivename:
 		if re.match('[\da-zA-Z _|]',c):
 			safearchivename.append(c)
 	archivename = ''.join(safearchivename)
 	archivename = archivename.replace(' ','_')
+
+	if modelid is None:
+		archive_path = os.path.join(ppath,'archive.zip')
+	else:
+		archive_path = os.path.join(ppath,'output',modelid,'archive.zip')
+
+	# if archive file has been created, just return here.    
+	if os.path.isfile(archive_path):
+		archive_file = open(archive_path,'r')
+		wrapper = FileWrapper(archive_file)
+		response = HttpResponse(wrapper, content_type='application/zip')
+		response['Content-Disposition'] = 'attachment; filename=%s.zip' %(archivename)
+		response['Content-Length'] = archive_file.tell()
+		archive_file.seek(0)
+		return response
+
 
 	archive_file = open(archive_path,'w')
 	archive = zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED) 
