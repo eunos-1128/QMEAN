@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.core.servers.basehttp import FileWrapper
 from .forms import UploadForm
-import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob
+import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob, zlib
 from datetime import datetime
 try:
 	from ost.seq import CreateSequenceList, CreateSequence
