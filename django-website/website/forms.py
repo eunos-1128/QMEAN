@@ -3,10 +3,13 @@ from django.forms import widgets
 from django.core.exceptions import ValidationError
 from django.conf import settings
 import os
-from ost.seq import CreateSequenceList, CreateSequence
-from ost.seq.alg import AlignToSEQRES
-from ost.io import SequenceListFromString, LoadPDB
-
+try:
+	from ost.seq import CreateSequenceList, CreateSequence
+	from ost.seq.alg import AlignToSEQRES
+	from ost.io import SequenceListFromString, LoadPDB
+except:
+	print 'OST not in path'
+	
 class UploadForm(forms.Form):
 	structureUploaded = forms.CharField()
 	project_name = forms.CharField(label='Project Name (Optional)', max_length=100, required=False)

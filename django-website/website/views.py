@@ -6,9 +6,12 @@ from django.core.servers.basehttp import FileWrapper
 from .forms import UploadForm
 import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob
 from datetime import datetime
-from ost.seq import CreateSequenceList, CreateSequence
-from ost.io import LoadPDB, SequenceListFromString 
-from run_qmean_task import RunQMEAN
+try:
+	from ost.seq import CreateSequenceList, CreateSequence
+	from ost.io import LoadPDB, SequenceListFromString 
+	from run_qmean_task import RunQMEAN
+except:
+	print 'OST not in path'
 
 def home(request):
 	project_creation_error = False
@@ -189,7 +192,8 @@ def results(request, projectid):
 	for model in input_data['models']:
 		try:
 			global_scores = {}
-			f = open(os.path.join(project_path(projectid),'output',model['modelid'],'global_scores.txt'))
+			mdl_dir = os.path.join(project_path(projectid),'output',model['modelid'])
+			f = open(os.path.join(mdl_dir,'global_scores.txt'))
 			lines = f.readlines()
 			f.close()
 			for line in lines:
@@ -199,8 +203,21 @@ def results(request, projectid):
 				global_scores[scores[0]] = {'norm':scores[1],'zscore':scores[2]}
 			model['global_scores'] = global_scores
 
+			model['local_quality_plots'] = []
+			for f in glob.iglob(os.path.join(mdl_dir,'plots','local_quality_estimate_*')):
+				if os.path.isfile(f):
+					f = f.split(os.path.sep)[-1]
+					m = re.search('_([\w])\.png',f)
+					if m:
+						model['local_quality_plots'].append(f)
+
+
+
 		except Exception, e:
 			print e
+
+	input_data['models'].sort( key=lambda x: x['global_scores']['qmean4'] )
+
 	return render(request,
 		 			'results_completed.html' if status=='COMPLETED' else 'results_failed.html',
 		 			{'projectid':projectid,

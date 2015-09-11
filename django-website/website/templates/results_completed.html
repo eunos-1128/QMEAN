@@ -1,33 +1,54 @@
 {% extends 'results_base.html' %}{% load static %}
+{% block css %}<link rel="stylesheet" href="{% static 'css/fancybox/jquery.fancybox.css?v=2.1.5' %}" type="text/css" media="screen" />{% endblock %}
 {% block extra_title %}
 <a style="font-size:16px" target="_blank" href="{% url 'archive' projectid=projectid %}">Project Archive <i class="glyphicon glyphicon-download-alt"></i></a>
 {% endblock %}
 {% block results_block %}
 <div class="row" style="margin-top:16px;">
-<div class="col-sm-6">
+<div class="col-sm-7">
 
 {% for model in input_data.models %}
 
-<div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;">
-	<table class="table table-condensed">
-		<tr><th  width="160">Model Files:</th>
-		<td><a target="_blank" href="{% url 'model_structure' projectid=projectid modelid=model.modelid %}">processed_{{ model.name }} <i class="glyphicon glyphicon-file"></i></a>
-
-		<a target="_blank" href="{% url 'archive' projectid=projectid modelid=model.modelid %}">Model Results Archive <i class="glyphicon glyphicon-download-alt"></i></a>
+<div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;margin-bottom:8px;">
+	<table class="table table-condensed notop">
+		<tr><th width="160">QMEAN Value:</th><td>{{ model.global_scores.qmean4.zscore|floatformat:"2" }}
+			<div class="pull-right"><label>Display 3D <input class="line" type="checkbox"></label></div>
 		</td></tr>
-		<tr><th>QMEAN Value:</th><td>{{ model.global_scores.qmean4.zscore|floatformat:"2" }}</td></tr>
-		<tr><th>Z-scores:</th>
-			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"></td>
-		<tr><th nowrap="nowrap">Absolute Quality:</th>
-			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}"></td>
-		<tr><th>Reference Comparison:</th>
-			<td><img class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}"></td></tr>
 	</table>
+	<table class="table table-condensed notop">
+		<tr><th  width="160">Model Files:</th>
+		<td><a target="_blank" href="{% url 'model_structure' projectid=projectid modelid=model.modelid %}">processed_{{ model.name }} <i class="glyphicon glyphicon-file" style="margin-right:8px;"></i></a>
+		<a target="_blank" href="{% url 'archive' projectid=projectid modelid=model.modelid %}">Model Results Archive <i class="glyphicon glyphicon-download-alt"></i></a>
+		</td></tr>		
+	</table>
+	<table class="table table-condensed notop">
+		<tr>
+			<td style="vertical-align:middle">
+
+				<a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}">
+				<img title="Z-scores" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"> 
+				</a>
+		</td>
+		<td>
+			<a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}">
+				<img title="Absolute Quality" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}">
+			</a>
+			<div style="display:none">{% for plot in model.local_quality_plots %}
+				<a class="fancybox" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name=plot %}">
+				<img title="Absolute Quality" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name=plot %}">
+			</a>{% endfor %}
+			</div>
+		</td>
+		<td><a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}">
+				<img title="Reference Comparison" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}"></a>
+		</td></tr>
+	</table>
+
 </div>
 {% endfor %}
 </div>
 
-<div class="col-sm-6">
+<div class="col-sm-5">
 	<div id="viewerWrapper" style="border: 1px solid #DDD; border-radius: 10px; padding:7px; margin-bottom:4px; height:300px;  width:100%">
 	    <div id="pv" style="width:100%;height:100%;position:relative;">
 	     	<div id="pv_status"></div>
@@ -41,6 +62,12 @@
 <div class="clearfix">&nbsp;</div>
 {% endblock %}
 {% block js %}{{ block.super }}
+
+
+<script type="text/javascript" src="{% static 'js/jquery.mousewheel-3.0.6.pack.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/jquery.fancybox.pack.js' %}"></script>
+
+
 <script type='text/javascript' src="{% static 'js/bio-pv.min.js' %}"></script>
 <script>
 var pv_viewer = pv.Viewer(document.getElementById('pv'), {
@@ -53,6 +80,8 @@ var pv_viewer = pv.Viewer(document.getElementById('pv'), {
 $(document).ready(
 	function()
 	{
+		$(".fancybox").fancybox();
+
 		$('#viewerWrapper').height( $('#viewerWrapper').width() );
       	$('#pv').height( $('#viewerWrapper').width() );
       	$(window).resize(function() {
@@ -67,9 +96,13 @@ $(document).ready(
 	            var pv_structure = pv.io.pdb(data);
 	            var tube = pv_viewer.tube('{{ input_data.models.0.model.name }}', pv_structure.select('protein') );
 	            tube.colorBy( pv.color.byAtomProp('tempFactor',
-	                        pv.color.gradient(['blue','white','red'])
-	                        ,[-0.2,1]
+	                        pv.color.gradient(['#F33','#33F'])
+	                        ,[.3,1]
 	                        ) );
+
+	            	  	  var r,g,b;
+
+
 
 	            pv_viewer.ballsAndSticks('{{ model.name }}.ligands',pv_structure.select({'chain':'_'}));
 	            var dna = pv_structure.select('ligand').select({'rnames':['A','C','T','G','U','DA','DC','DG','DT']});

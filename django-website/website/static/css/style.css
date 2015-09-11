@@ -69,7 +69,7 @@ form label{
 .subtle{
 	opacity:.7;
 }
-.table tbody > tr:first-child td, .table tbody > tr:first-child th{
+.notop tbody > tr:first-child td, .table tbody > tr:first-child th{
 	border-top:none;
 }
 .table{
@@ -77,4 +77,5 @@ form label{
 }
 .qmean{
 	width:100%;
+	max-height:150px;
 }
