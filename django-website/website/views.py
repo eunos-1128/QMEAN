@@ -227,7 +227,6 @@ def results(request, projectid):
 
 def get_project_input(projectid):
 	try:
-		print os.path.join(project_path(projectid),'input','project.json')
 		f = open(os.path.join(project_path(projectid),'input','project.json'))
 		data = json.load(f)
 		f.close()
@@ -301,7 +300,7 @@ def archive(request, projectid, modelid=None):
 	archivename = archivename.replace(' ','_')
 
 	archive_file = open(archive_path,'w')
-	archive = zipfile.ZipFile(archive_file, 'w')#, zipfile.ZIP_DEFLATED)    
+	archive = zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED)    
 	    
 	for m in input_data['models']:
 		if modelid is not None and modelid!=m['modelid']:
@@ -314,7 +313,14 @@ def archive(request, projectid, modelid=None):
 				safemodelname.append(c)
 		safemodelname = ''.join(safemodelname)
 
-		for f in ['global_scores.txt','local_scores.txt']:
+		archive.write( os.path.join(project_path(projectid), 'input', 'project.json'),
+						 safemodelname+os.path.sep+'project.json')
+
+		archive.write( os.path.join(project_path(projectid), 'input', m['modelid']+'.pdb'),
+						 safemodelname+os.path.sep+m['name']+'.pdb')
+
+
+		for f in ['model.pdb','global_scores.txt','local_scores.txt']:
 			if os.path.exists(os.path.join(mdl_dir,f)):
 				archive.write( os.path.join(mdl_dir,f), safemodelname+os.path.sep+f)
   

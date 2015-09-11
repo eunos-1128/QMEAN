@@ -8,11 +8,10 @@
 <div class="col-sm-7">
 
 {% for model in input_data.models %}
-
 <div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;margin-bottom:8px;">
 	<table class="table table-condensed notop">
 		<tr><th width="160">QMEAN Value:</th><td>{{ model.global_scores.qmean4.zscore|floatformat:"2" }}
-			<div class="pull-right"><label>Display 3D <input class="line" type="checkbox"></label></div>
+			<div class="pull-right"><label>Display 3D <input modelid="{{ model.modelid }}" autocomplete="off" type="checkbox" {% if forloop.first %}checked="checked"{% endif %}></label></div>
 		</td></tr>
 	</table>
 	<table class="table table-condensed notop">
@@ -24,24 +23,18 @@
 	<table class="table table-condensed notop">
 		<tr>
 			<td style="vertical-align:middle">
-
-				<a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}">
-				<img title="Z-scores" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"> 
-				</a>
-		</td>
-		<td>
-			<a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}">
-				<img title="Absolute Quality" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}">
-			</a>
-			<div style="display:none">{% for plot in model.local_quality_plots %}
-				<a class="fancybox" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name=plot %}">
-				<img title="Absolute Quality" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name=plot %}">
-			</a>{% endfor %}
-			</div>
-		</td>
-		<td><a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}">
+				<a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"><img title="Z-scores" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='qmean4.png' %}"></a>
+			</td>
+			<td>
+				<a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}"><img title="Absolute Quality" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='local_quality_estimate.png' %}"></a>
+				<div style="display:none">{% for plot in model.local_quality_plots %}
+					<a class="fancybox" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name=plot %}"><img title="Absolute Quality" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name=plot %}"></a>{% endfor %}
+				</div>
+			</td>
+			<td><a class="fancybox thumbnail" rel="{{ model.modelid }}" href="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}">
 				<img title="Reference Comparison" class="qmean" src="{% url 'qmean_pix' projectid=projectid modelid=model.modelid name='reference_set.png' %}"></a>
-		</td></tr>
+			</td>
+		</tr>
 	</table>
 
 </div>
@@ -62,12 +55,8 @@
 <div class="clearfix">&nbsp;</div>
 {% endblock %}
 {% block js %}{{ block.super }}
-
-
 <script type="text/javascript" src="{% static 'js/jquery.mousewheel-3.0.6.pack.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/jquery.fancybox.pack.js' %}"></script>
-
-
 <script type='text/javascript' src="{% static 'js/bio-pv.min.js' %}"></script>
 <script>
 var pv_viewer = pv.Viewer(document.getElementById('pv'), {
@@ -79,9 +68,8 @@ var pv_viewer = pv.Viewer(document.getElementById('pv'), {
 
 $(document).ready(
 	function()
-	{
+	{	
 		$(".fancybox").fancybox();
-
 		$('#viewerWrapper').height( $('#viewerWrapper').width() );
       	$('#pv').height( $('#viewerWrapper').width() );
       	$(window).resize(function() {
@@ -90,31 +78,57 @@ $(document).ready(
           pv_viewer.fitParent();
         });
 	
-		$.get('{% url 'model_structure' projectid=projectid modelid=input_data.models.0.modelid %}',
+		$('input[modelid]').on('click',function(){
+			showModel($(this).attr('modelid'),$(this).prop('checked'));
+		});
+
+		loadModel('{{ input_data.models.0.modelid }}');
+	});
+
+function showModel(modelid, show)
+{
+	if(!show)
+		pv_viewer.hide(modelid+'*');
+	else
+	{
+		var loaded = false;
+		pv_viewer.forEach(
+			function(v)
+			{
+				if(v.name().indexOf(modelid)==0)
+				{
+					v.show();
+					loaded = true;
+				}
+			});
+		if(!loaded)
+		{
+			console.info('load it')
+			loadModel(modelid);
+		}
+	}
+	pv_viewer.autoZoom();
+	pv_viewer.requestRedraw();
+}
+function loadModel(modelid)
+{
+	$.get('{% url 'model_structure' projectid=projectid modelid='model_000' %}'.replace('model_000',modelid),
 	        function(data,s)
 	        {
 	            var pv_structure = pv.io.pdb(data);
-	            var tube = pv_viewer.tube('{{ input_data.models.0.model.name }}', pv_structure.select('protein') );
+	            var tube = pv_viewer.tube(modelid, pv_structure.select('protein') );
 	            tube.colorBy( pv.color.byAtomProp('tempFactor',
 	                        pv.color.gradient(['#F33','#33F'])
 	                        ,[.3,1]
 	                        ) );
-
-	            	  	  var r,g,b;
-
-
-
-	            pv_viewer.ballsAndSticks('{{ model.name }}.ligands',pv_structure.select({'chain':'_'}));
+	            pv_viewer.ballsAndSticks(modelid+'.ligands',pv_structure.select({'chain':'_'}));
 	            var dna = pv_structure.select('ligand').select({'rnames':['A','C','T','G','U','DA','DC','DG','DT']});
 	            if(dna.residueCount()>0)
-	              pv_viewer.lines('{{ modelname }}.dna',dna);
+	              pv_viewer.lines(modelid+'.dna',dna);
 
 	            pv_viewer.fitParent();
 	            pv_viewer.autoZoom();
 	        });
-	});
-
-
-
+}
 </script>
 {% endblock %}
