@@ -63,7 +63,8 @@ var pv_viewer = pv.Viewer(document.getElementById('pv'), {
           width: 300,
           height: 300,
           antialias: true,
-          quality : 'high'
+          quality : 'high',
+          outline : false
         });
 
 $(document).ready(
@@ -116,8 +117,9 @@ function loadModel(modelid)
 	        function(data,s)
 	        {
 	            var pv_structure = pv.io.pdb(data);
-	            var tube = pv_viewer.tube(modelid, pv_structure.select('protein') );
-	            tube.colorBy( pv.color.byAtomProp('tempFactor',
+	            pv.mol.assignHelixSheet(pv_structure);
+	            var c = pv_viewer.cartoon(modelid, pv_structure.select('protein') );
+	            c.colorBy( pv.color.byAtomProp('tempFactor',
 	                        pv.color.gradient(['#F33','#33F'])
 	                        ,[.3,1]
 	                        ) );
