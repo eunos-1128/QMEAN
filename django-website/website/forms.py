@@ -32,6 +32,8 @@ class UploadForm(forms.Form):
 		cleaned_data = super(UploadForm, self).clean()
 		structures = cleaned_data.get('structureUploaded')
 		sequence = cleaned_data.get('sequence')
+	
+		validated_structures = []
 
 		#case 1: There is only one sequence... either there are single
 		#        chain models or homo-oligomers allowed
@@ -41,8 +43,10 @@ class UploadForm(forms.Form):
 				for ch in model.chains:
 					try:
 						aln = AlignToSEQRES(ch,sequence[0].GetString())
+						validated_structures.append(s)
 					except Exception, e:
-						raise ValidationError("Could not align structural data to provided sequence!")
+						print 'Thats not nice'
+						print e #onError("Could not align structural data to provided sequence!")
 
 		#case 2: There is more than one sequence... For every chain we try to find a matching
 		#        sequence based on chain/sequence name
@@ -57,12 +61,22 @@ class UploadForm(forms.Form):
 							found_sequence = True
 							try:
 								aln = AlignToSEQRES(ch,seq_handle.GetString())
+								validated_structures.append(s)
 								break
 							except Exception, e:
-								raise ValidationError("Could not align structural data to provided sequence!")
+								print 'noooot nice'
+								print e
+								##raise ValidationError("Could not align structural data to provided sequence!")
 					if not found_sequence:
-						raise ValidationError("Could not find an appropriate sequence for every chain!")
-	
+						##
+						print 'no seq found'
+						#raise ValidationError("Could not find an appropriate sequence for every chain!")
+
+		if len(validated_structures)==0:
+			raise ValidationError("Thats really not on")
+
+		self.cleaned_data['structureUploaded'] = validated_structures	
+
 
 
 	def clean_project_name(self):
@@ -78,13 +92,19 @@ class UploadForm(forms.Form):
 			tmppath = str(os.path.join(settings.TMP_DIR,d))
 			if not os.path.exists(tmppath):
 				continue
-			if not self.request.session.get('uploaded_'+d, False):
+			original_name = self.request.session.get('uploaded_'+d, False)
+			if not original_name:
 				continue
 			try:
 				model = LoadPDB(tmppath)
-				models.append({'tmpname':d,'tmppath':tmppath,'model':model})
+				models.append({'tmpname':d,'tmppath':tmppath,'model':model,'original_name':original_name})
 			except Exception, e:
 				print e
+				try:
+					os.remove(os.path.join(settings.TMP_DIR,tmp_path))
+				except e2:
+					print e2
+
 
 		if len(models)<1:
 			raise ValidationError('Uploaded file no longer in session!!')

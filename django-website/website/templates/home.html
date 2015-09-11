@@ -34,7 +34,7 @@
                     <td><div id="progress" class="progress" style="margin-bottom:4px;">
                             <div id="progressBar" class="progress-bar progress-bar-success"></div>
                         </div>
-                        <div id="files" class="files"></div>
+                        <div id="files" class="files">{% for f in form.cleaned_data.structureUploaded %}<div class="uploadSuccess">{{ f.original_name }}<i class="glyphicon glyphicon-ok"></i></div>{% endfor %}</div>
                     </td>
                 </tr>
         		<tr id="sequenceDropZone" style="border:1px dashed #CCC"><td>{{ form.sequence.label }}</td>
