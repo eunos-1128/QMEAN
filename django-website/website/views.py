@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.core.servers.basehttp import FileWrapper
+from django.contrib.staticfiles.finders import find
 from .forms import UploadForm
 import io, os, json, tempfile, tarfile, random, re, traceback, codecs, zipfile, glob
 from datetime import datetime
@@ -341,6 +342,8 @@ def qmean_pix(request, projectid, modelid, name):
 								modelid,
 								'plots',
 								name)
+	if not os.path.exists(img_filename):
+		img_filename = find('img/failed.jpg')
 
 	image_data = open(img_filename, "rb").read()  
 	return HttpResponse(image_data, content_type="image/png")
