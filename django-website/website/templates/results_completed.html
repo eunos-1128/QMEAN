@@ -11,7 +11,7 @@
 <div style="border: 1px solid #ddd; border-radius: 10px;padding:16px;margin-bottom:8px;">
 	<table class="table table-condensed notop">
 		<tr><th width="160">QMEAN Value:</th><td>{{ model.global_scores.qmean4.zscore|floatformat:"2" }}
-			<div class="pull-right"><label>Display 3D <input modelid="{{ model.modelid }}" autocomplete="off" type="checkbox" {% if forloop.first %}checked="checked"{% endif %}></label></div>
+			{% if input_data.models|length > 1 %}<div class="pull-right"><label>Display 3D <input modelid="{{ model.modelid }}" autocomplete="off" type="checkbox" {% if forloop.first %}checked="checked"{% endif %}></label></div>{% endif %}
 		</td></tr>
 	</table>
 	<table class="table table-condensed notop">
@@ -63,7 +63,6 @@ var pv_viewer = pv.Viewer(document.getElementById('pv'), {
           width: 300,
           height: 300,
           antialias: true,
-          quality : 'high',
           outline : false
         });
 
@@ -103,10 +102,7 @@ function showModel(modelid, show)
 				}
 			});
 		if(!loaded)
-		{
-			console.info('load it')
 			loadModel(modelid);
-		}
 	}
 	pv_viewer.autoZoom();
 	pv_viewer.requestRedraw();
