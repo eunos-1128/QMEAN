@@ -317,7 +317,7 @@ def archive(request, projectid, modelid=None):
 						 safemodelname+os.path.sep+'project.json')
 
 		archive.write( os.path.join(project_path(projectid), 'input', m['modelid']+'.pdb'),
-						 safemodelname+os.path.sep+m['name']+'.pdb')
+						 safemodelname+os.path.sep+m['name'])
 
 
 		for f in ['model.pdb','global_scores.txt','local_scores.txt']:
