@@ -1,7 +1,10 @@
+import os
+
 DEBUG = True
 
-TMP_DIR = '/import/bc2/home/schwede/studga00/prog/qmean_web/django-website/tmp'
-PROJECT_DIR = '/import/bc2/home/schwede/studga00/prog/qmean_web/django-website/projects'
+BASE_DIR = '/scicore/home/schwede/studga00/prog/qmean2_web/django-website'
+TMP_DIR = '/scicore/home/schwede/studga00/prog/qmean2_web/django-website/tmp'
+PROJECT_DIR = '/scicore/home/schwede/studga00/prog/qmean2_web/django-website/projects'
 
 DATABASES = {
     'default': {
