@@ -1,5 +1,5 @@
 import subprocess, shlex, threading, Queue
-import qmean_server_config as config
+from sm import config
 import time, re, os, fcntl
 import socket
 

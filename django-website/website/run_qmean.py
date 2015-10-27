@@ -5,8 +5,9 @@ from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from ost.io import LoadPDB
 from ost.io import SavePDB
+from sm import config
 
-USAGE = "usage: ost run_qmean.py <INPUT_DIR> <OUTPUT_DIR>"
+USAGE = "usage: sm run_qmean.py <INPUT_DIR> <OUTPUT_DIR>"
 
 if len(sys.argv) < 3:
   print USAGE
@@ -50,7 +51,7 @@ for f in model_files:
                                 output_dir = out_path, 
                                 psipred = psipred_handler,
                                 accpro = accpro_handler,
-                                dssp_path = "/import/bc2/apps/dssp/2003-May-30-goolf-1.4.10/bin/dssp")
+                                dssp_path = config.DSSP_BIN)
 
   SavePDB(model,os.path.join(out_path,"model.pdb"))
 

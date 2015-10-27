@@ -1,6 +1,7 @@
 import task
 import os
-import qmean_server_config as config
+from sm import config
+from django.conf import settings
 
 class RunQMEAN(task.Task):
   def __init__(self,project_dir):
@@ -11,8 +12,8 @@ class RunQMEAN(task.Task):
                              'run_qmean')
 
   def AssembleCommand(self):
-    cmd = [config.OST_BIN, 
-           os.path.join(config.QMEAN_SERVER_BASEDIR,"run_qmean.py"), 
+    cmd = [os.path.join(config.SM_ROOT_DIR,"bin","sm"), 
+           os.path.join(settings.BASEDIR,"run_qmean.py"), 
            os.path.join(self.project_dir,"input"),
            os.path.join(self.project_dir,"output")]
     return cmd
