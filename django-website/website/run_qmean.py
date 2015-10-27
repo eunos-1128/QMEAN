@@ -1,4 +1,6 @@
 import os, sys
+import matplotlib
+matplotlib.use("Agg")
 from qmean import mqa_result
 from qmean import mqa_result_membrane
 from qmean.predicted_sequence_features import PSIPREDHandler
