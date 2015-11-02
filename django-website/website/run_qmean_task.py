@@ -15,7 +15,9 @@ class RunQMEAN(task.Task):
     cmd = [os.path.join(config.SM_ROOT_DIR,"bin","sm"), 
            os.path.join(settings.BASE_DIR,"website","run_qmean.py"), 
            os.path.join(self.project_dir,"input"),
-           os.path.join(self.project_dir,"output")]
+           os.path.join(self.project_dir,"output"),
+           settings.CACHE_DIR]
+           
     return cmd
 
   def CalculateMemConsumption(self):
