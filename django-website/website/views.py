@@ -11,7 +11,8 @@ try:
 	from ost.seq import CreateSequenceList, CreateSequence
 	from ost.io import LoadPDB, SequenceListFromString 
 	from run_qmean_task import RunQMEAN
-except:
+except Exception, e:
+	print e
 	print 'OST not in path'
 
 def home(request):
@@ -50,6 +51,7 @@ def create_project(request, form):
 						'models':[]
 				}
 				data['options']['qmeandisco'] = (True if form.cleaned_data['QMEANDisCo'] else False)
+				data['options']['qmeanbrane'] = (True if form.cleaned_data['QMEANBrane'] else False)
 				if form.cleaned_data['email']:
 					data['meta']['email'] = form.cleaned_data['email']
 				if form.cleaned_data['project_name']:
