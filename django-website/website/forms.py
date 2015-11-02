@@ -7,7 +7,8 @@ try:
 	from ost.seq import CreateSequenceList, CreateSequence
 	from ost.seq.alg import AlignToSEQRES
 	from ost.io import SequenceListFromString, LoadPDB
-except:
+except Exception, e:
+	print e
 	print 'OST not in path'
 	
 class UploadForm(forms.Form):
@@ -43,10 +44,10 @@ class UploadForm(forms.Form):
 				for ch in model.chains:
 					try:
 						aln = AlignToSEQRES(ch,sequence[0].GetString())
-						validated_structures.append(s)
 					except Exception, e:
 						print 'Thats not nice'
 						print e #onError("Could not align structural data to provided sequence!")
+				validated_structures.append(s)
 
 		#case 2: There is more than one sequence... For every chain we try to find a matching
 		#        sequence based on chain/sequence name
@@ -61,7 +62,6 @@ class UploadForm(forms.Form):
 							found_sequence = True
 							try:
 								aln = AlignToSEQRES(ch,seq_handle.GetString())
-								validated_structures.append(s)
 								break
 							except Exception, e:
 								print 'noooot nice'
@@ -71,6 +71,8 @@ class UploadForm(forms.Form):
 						##
 						print 'no seq found'
 						#raise ValidationError("Could not find an appropriate sequence for every chain!")
+				validated_structures.append(s)
+
 
 		if len(validated_structures)==0:
 			raise ValidationError("Thats really not on")
