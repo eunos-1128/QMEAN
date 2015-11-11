@@ -10,11 +10,14 @@ from qmean import mqa_result
 from qmean import mqa_result_membrane
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
+from qmean import FindMembrane
 from ost.io import LoadPDB
 from ost.io import SavePDB
 from ost.io import LoadSequence
 from ost.io import SaveSequence
 from ost.bindings import hhblits
+from ost.bindings import naccess
+from ost.bindings import msms
 from ost.seq import CreateSequence
 from sm import config
 from sm.smtl import structanno
@@ -92,23 +95,26 @@ def GetSequencePredictions(sequences, hhblits_cache, accpro_cache, out_dir):
     profiles.append(hhblits.ParseA3M(content))
 
   #fire ACCPRO...
+  accpro_failed = False
   for s,h,p in zip(sequences,sequence_hashes,profiles):
-    accpro_file = os.path.join(out_dir,s.GetName()+".acc")
-    if CopyFromCache(accpro_cache,h,accpro_file):
+    try:
+      accpro_file = os.path.join(out_dir,s.GetName()+".acc")
+      if CopyFromCache(accpro_cache,h,accpro_file):
+        acc_files.append(accpro_file)
+        continue
+      target_fasta_path = os.path.join(out_dir,"accpro_target.fasta") 
+      SaveSequence(s, target_fasta_path)
+      aln_filename = structanno._PrepareSS_ACCPro(p['msa'])
+      _, accpro = structanno._GetSS_ACCproAnnotation(target_fasta_path,
+                                                     aln_filename,
+                                                     len(s))
+      accpro = "".join(accpro)
+      seq_to_save = CreateSequence("accpro",accpro)
+      SaveSequence(seq_to_save,accpro_file,format="fasta")
       acc_files.append(accpro_file)
-      continue
-    target_fasta_path = os.path.join(out_dir,"accpro_target.fasta") 
-    SaveSequence(s, target_fasta_path)
-    aln_filename = structanno._PrepareSS_ACCPro(p['msa'])
-    _, accpro = structanno._GetSS_ACCproAnnotation(os.path.join(out_dir,"accpro_target.fasta"),
-                                                 aln_filename,
-                                                 s.GetLength())
-    os.remove(target_fasta_path)
-    accpro = "".join(accpro)
-    seq_to_save = CreateSequence("accpro",accpro)
-    SaveSequence(seq_to_save,accpro_file,format="fasta")
-    acc_files.append(accpro_file)
-    CopyToCache(accpro_cache,h,accpro_file)
+      CopyToCache(accpro_cache,h,accpro_file)
+    except:
+      accpro_failed = True
 
   #lets gather the final predictions
   psipred_pred = list()
@@ -118,8 +124,9 @@ def GetSequencePredictions(sequences, hhblits_cache, accpro_cache, out_dir):
   for i,p in enumerate(profiles):
     psipred_pred.append("".join([item for item in p["ss_pred"]]))
     psipred_conf.append("".join([str(item) for item in p["ss_conf"]]))
-    acc_seq = LoadSequence(acc_files[i], format = "fasta")
-    accpro_pred.append(acc_seq.GetString())
+    if not accpro_failed:
+      acc_seq = LoadSequence(acc_files[i], format = "fasta")
+      accpro_pred.append(acc_seq.GetString())
 
   return (psipred_pred, psipred_conf, accpro_pred, a3m_files, acc_files)
 
@@ -127,10 +134,23 @@ def GetSequencePredictions(sequences, hhblits_cache, accpro_cache, out_dir):
 def GetDistanceConstraints(sequences, a3m_files):
   return list()
 
+def GetMemParam(model):
+
+  membrane_finder_input = model.Select('ele!=H')
+  surf = msms.CalculateSurface(membrane_finder_input,radius=1.4,msms_exe=config.MSMS_BIN)[0]
+  naccess.CalculateSurfaceArea(membrane_finder_input,naccess_exe=config.NACCESS_BIN)
+  asa = list()
+  for a in membrane_finder_input.atoms:
+    if a.HasProp('asaAtom'):
+      asa.append(a.GetFloatProp('asaAtom'))
+    else:
+      asa.append(0.0)
+  mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
+  return mem_param
+
 def MatchSeqPredictionsWithModel(sequences, model, psipred_pred,
                                  psipred_conf, accpro_pred):
   
-
   psipred_handler = list()
   accpro_handler = list()
 
@@ -143,36 +163,68 @@ def MatchSeqPredictionsWithModel(sequences, model, psipred_pred,
   #if there is one sequence, the model either has one chain or
   #the model is a homo-oligomer
   elif len(sequences) == 1:
-    data = dict()
-    data["seq"] = sequences[0].GetString()
-    data["ss"] = psipred_pred[0]
-    data["conf"] = psipred_conf[0]
-    data["acc"] = accpro_pred[0]
-    for c in model.chains:
-      pp = PSIPREDHandler(data)
-      acc = ACCPROHandler(data)
-      psipred_handler.append(pp)
-      accpro_handler.append(acc)
+    if len(psipred_pred) > 0:
+      data = dict()
+      data["seq"] = sequences[0].GetString()
+      data["ss"] = psipred_pred[0]
+      data["conf"] = psipred_conf[0]
+      for c in model.chains:
+        print "SEQRES: ",data["seq"]
+        print "ATOMSEQ: ",''.join([r.one_letter_code for r in c.residues])
+      
+        pp = PSIPREDHandler(data)
+        psipred_handler.append(pp)
+    else:
+      psipred_handler = None
+
+    if len(accpro_pred) > 0:
+      data = dict()
+      data["seq"] = sequences[0].GetString()
+      data["acc"] = accpro_pred[0]
+      for c in model.chains:
+        acc = ACCPROHandler(data)
+        accpro_handler.append(acc)
+    else:
+      accpro_handler = None
+
   #if there is more than one sequence, we match the chain/sequence names
   else:
-    for c in model.chains:
-      c_name = c.GetName()
-      found_seq = False
-      for i,s in enumerate(sequences):
-        if s.GetName() == c_name:
-          data = dict()
-          data["seq"] = s.GetString()
-          data["ss"] = psipred_pred[i]
-          data["conf"] = psipred_conf[i]
-          data["acc"] = accpro_pred[i]
-          pp = PSIPREDHandler(data)
-          acc = ACCPROHandler(data)
-          psipred_handler.append(pp)
-          accpro_handler.append(acc)
-          found_seq = True
-          break
-      if not found_seq:
-        raise RuntimeError("Could not find matching sequence for chain of name "+c_name)
+    if len(psipred_pred) > 0:
+      for c in model.chains:
+        c_name = c.GetName()
+        found_seq = False
+        for i,s in enumerate(sequences):
+          if s.GetName() == c_name:
+            data = dict()
+            data["seq"] = s.GetString()
+            data["ss"] = psipred_pred[i]
+            data["conf"] = psipred_conf[i]
+            pp = PSIPREDHandler(data)
+            psipred_handler.append(pp)
+            found_seq = True
+            break
+        if not found_seq:
+          raise RuntimeError("Could not find matching sequence for chain of name "+c_name)
+    else:
+      psipred_handler = None
+
+    if len(accpro_pred) > 0:
+      for c in model.chains:
+        c_name = c.GetName()
+        found_seq = False
+        for i,s in enumerate(sequences):
+          if s.GetName() == c_name:
+            data = dict()
+            data["seq"] = s.GetString()
+            data["acc"] = accpro_pred[i]
+            acc = ACCPROHandler(data)
+            accpro_handler.append(acc)
+            found_seq = True
+            break
+        if not found_seq:
+          raise RuntimeError("Could not find matching sequence for chain of name "+c_name)
+    else:
+      accpro_handler = None
 
   return (psipred_handler, accpro_handler)
 
@@ -243,7 +295,9 @@ psipred_pred, psipred_conf, accpro_pred, a3m_files, accpro_files = GetSequencePr
                                                                                           accpro_cache, 
                                                                                           out_dir)
 
-db_list = list()
+
+#get the distance constraints, if flag is set...
+dc_list = list()
 if use_qmeandisco:
   dc_list = GetDistanceConstraints(sequences, a3m_files)
 
@@ -263,12 +317,29 @@ for f in model_files:
   else:
     dc = None
 
+
+  do_local_assessment = True
+  do_global_assessment = True
   out_path = os.path.join(out_dir,f.split('.')[0])
-  mqa_result.AssessModelQuality(model, 
+
+  if use_qmeanbrane:
+    mem_p = GetMemParam(model) 
+    mqa_result_membrane.AssessModelQuality(model,
+                                           mem_param = mem_p,
+                                           output_dir = out_path,
+                                           psipred = psipred_handler,
+                                           accpro = accpro_handler,
+                                           dssp_path = config.DSSP_BIN)
+    do_local_assessment = False
+
+  mqa_result.AssessModelQuality(model,
+                                local_scores = do_local_assessment,
+                                global_scores = do_global_assessment, 
                                 output_dir = out_path, 
                                 psipred = psipred_handler,
                                 accpro = accpro_handler,
                                 dssp_path = config.DSSP_BIN)
+
 
   SavePDB(model,os.path.join(out_path,"model.pdb"))
 
