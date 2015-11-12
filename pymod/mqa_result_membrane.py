@@ -64,46 +64,56 @@ class LocalMembraneResult:
 
   def PlotlDDTProfile(self, chain=None):
 
-    chain_score_table = self.score_table
-    if chain != None and chain !='':
-      chain_score_table = self.score_table.Filter(chain=chain)
+    from matplotlib import pyplot
+    pyplot.clf()
+    pyplot.figure(figsize=[8,6],dpi=80)
+    pyplot.ylim((-0.1,1.1))
+    pyplot.xlabel('Residue Number',size='large')
+    pyplot.ylabel('Predicted Local Similarity to Target',size='large')
 
-    rnums = list()
-    scores = list()
-    rnum_idx = chain_score_table.GetColIndex('rnum')
-    score_idx = chain_score_table.GetColIndex('lDDT')
-    for r in chain_score_table.rows:
-      rnums.append(r[rnum_idx])
-      scores.append(r[score_idx])
+#    color_scheme = ['#D55E00','#0072B2','#F0E442','#009E73','#56B4E9','#E69F00','#999999','#000000']
+    color_scheme = ['#ff420e','#004586','#ffd320','#578d1c','#7e0021']
 
-    rnum_slices = list()
-    score_slices = list()
-    current_rnum_slice = list()
-    current_score_slice = list()
+    chain_idx = self.score_table.GetColIndex('chain')
+    rnum_idx = self.score_table.GetColIndex('rnum')
+    lddt_idx = self.score_table.GetColIndex('lDDT')
 
-    previous_rnum = rnums[0]-1
+    chains = list()
+    chains.append(self.score_table.rows[0][chain_idx])
 
-    for i in range(len(rnums)):
-      if rnums[i] != previous_rnum + 1:
-        rnum_slices.append(current_rnum_slice)
-        score_slices.append(current_score_slice)
-        current_rnum_slice = list()
-        current_score_slice = list()
-      current_rnum_slice.append(rnums[i])
-      current_score_slice.append(scores[i])
-      previous_rnum = rnums[i]
+    for r in self.score_table.rows:
+      if r[chain_idx] != chains[-1]:
+        chains.append(r[chain_idx])
 
-    score_slices.append(current_score_slice)
-    rnum_slices.append(current_rnum_slice)
 
-    plt.clf()
-    for s,r in zip(score_slices, rnum_slices):
-      plt.plot(r,s,color='r',linewidth=2.0)
+    if chain == None:
 
-    plt.ylim([0,1])
-    plt.xlim([min(rnums),max(rnums)])
-    
-    return plt
+      pyplot.title('Local Quality Estimate',size='x-large')
+
+      for i,ch in enumerate(chains):
+        chain_tab = self.score_table.Filter(chain=ch)  
+        res_num = list()
+        lddt = list()
+        for r in chain_tab.rows:
+          res_num.append(r[rnum_idx])
+          lddt.append(r[lddt_idx])
+        pyplot.plot(res_num,lddt,color=color_scheme[i%len(color_scheme)],linewidth=2.0)
+      return pyplot
+         
+    else:
+
+      pyplot.title('Local Quality Estimate: Chain %s'%(chain),size='x-large')
+      chain_tab = self.score_table.Filter(chain=chain)
+      res_num = list()
+      lddt = list()
+      for r in chain_tab.rows:
+        res_num.append(r[rnum_idx])
+        lddt.append(r[lddt_idx])
+      color_idx = chains.index(chain)
+      pyplot.plot(res_num,lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
+
+
+      return pyplot
 
   def _PlotMembraneProfile(self, p):
     
@@ -141,7 +151,7 @@ class LocalMembraneResult:
     return p
 
   @staticmethod
-  def Create(model, settings, membrane_query = None, interface_query = None, mem_param = None, psipred=None, accpro=None):
+  def Create(model, settings, assign_bfactors, membrane_query = None, interface_query = None, mem_param = None, psipred=None, accpro=None):
 
     pot_membrane = PotentialContainer.Load(settings.local_potentials_membrane)
     pot_soluble = PotentialContainer.Load(settings.local_potentials_soluble)
@@ -177,7 +187,7 @@ class LocalMembraneResult:
           ss = 'extended'
         else:
           ss = 'coil'
-        scores.append(scorer_soluble.GetLocalScore(ss, r.one_letter_code, residue_data))
+        scores.append(min(max(scorer_soluble.GetLocalScore(ss, r.one_letter_code, residue_data),0.0),1.0))
 
       else:
         residue_data=dict()
@@ -186,13 +196,21 @@ class LocalMembraneResult:
             continue
           residue_data[f] = data[f][i]
         if membrane_states[i] == 1:
-          scores.append(scorer_membrane.GetLocalScore('membrane', r.one_letter_code, residue_data))
+          scores.append(min(max(scorer_membrane.GetLocalScore('membrane', r.one_letter_code, residue_data),0.0),1.0))
         elif membrane_states[i] == 2:
-          scores.append(scorer_membrane.GetLocalScore('interface', r.one_letter_code, residue_data))
+          scores.append(min(max(scorer_membrane.GetLocalScore('interface', r.one_letter_code, residue_data),0.0),1.0))
         else:
           raise RuntimeError("Invalid membrane state encountered")
 
     data['lDDT'] = scores
+
+
+    if assign_bfactors:
+      for r,s in zip(model.residues,data['lDDT']):
+        for a in r.atoms:
+          a.b_factor = s
+
+
     #check whether ss_agreement and acc_agreement are set, otherwise we just
     #add NaN values
     if 'ss_agreement' not in features:
@@ -226,7 +244,7 @@ class LocalMembraneResult:
 
 def AssessModelQuality(model, membrane_query=None, interface_query=None, mem_param = None, output_dir='.', plots=True,
                        table_format='ost', psipred=None, accpro=None,settings=conf.MembraneSettings(), 
-                       dssp_path=None):
+                       dssp_path=None, assign_bfactors=True):
   #hack, that torsion handles get assigned
   processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,assign_torsions=True)
   processor.Process(model.handle,False)
@@ -239,16 +257,15 @@ def AssessModelQuality(model, membrane_query=None, interface_query=None, mem_par
   if plots:
     if not os.path.exists(plot_dir):
       os.makedirs(plot_dir)
-  local_result=LocalMembraneResult.Create(model,settings,membrane_query,interface_query,mem_param,psipred=psipred,accpro=accpro)
+  local_result=LocalMembraneResult.Create(model,settings,assign_bfactors,membrane_query,interface_query,mem_param,psipred=psipred,accpro=accpro)
   tab=local_result.score_table
   tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
   if plots:
     for ch in model.chains:
       p=local_result.PlotlDDTProfile(chain=ch.name)
-      p.savefig(os.path.join(plot_dir,'local_lDDT_%s.png' % (ch.name)))
+      p.savefig(os.path.join(plot_dir,'local_quality_estimate_%s.png' % (ch.name)))
+    p=local_result.PlotlDDTProfile()
+    p.savefig(os.path.join(plot_dir,'local_quality_estimate.png'))
+
   return local_result
-
-
-
-
 
