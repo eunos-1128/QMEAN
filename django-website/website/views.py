@@ -47,25 +47,29 @@ def create_project(request, form):
 				data = {
 						'meta':{'created':str(datetime.now())},
 						'options':{},
-						'sequences':[],
 						'models':[]
 				}
-				data['options']['qmeandisco'] = (True if form.cleaned_data['QMEANDisCo'] else False)
-				data['options']['qmeanbrane'] = (True if form.cleaned_data['QMEANBrane'] else False)
+				data['options']['qmeandisco'] = (True if form.cleaned_data['qmeandisco'] else False)
+				data['options']['qmeanbrane'] = (True if form.cleaned_data['qmeanbrane'] else False)
 				if form.cleaned_data['email']:
 					data['meta']['email'] = form.cleaned_data['email']
 				if form.cleaned_data['project_name']:
 					data['meta']['project_name'] = form.cleaned_data['project_name']
+				if form.cleaned_data['sequence']:
+					data['meta']['seqres_uploaded'] = True
+				else:
+					data['meta']['seqres_uploaded'] = False
 
 				data['models'] = []
 				for i,model in enumerate(form.cleaned_data['structureUploaded']):
 					modelid = 'model_%03d' % (i+1)
 					os.rename(model['tmppath'], os.path.join(input_dir,modelid+'.pdb') )
-					data['models'].append({'modelid':modelid,'name':request.session['uploaded_'+model['tmpname']]})
+					data['models'].append(
+						{'modelid':modelid,
+						 'name':request.session['uploaded_'+model['tmpname']],
+						 'seqres':model['seqres']
+						 })
 				
-				for seq in form.cleaned_data['sequence']:
-					data['sequences'].append( {'name':seq.GetName(), 'sequence':seq.GetString() } )
-
 				with io.open(os.path.join(input_dir,'project.json'), 'w', encoding='utf8') as json_file:
 					data = json.dumps(data, ensure_ascii=False, encoding='utf8',indent=4, separators=(',', ': '))
 					json_file.write(unicode(data))

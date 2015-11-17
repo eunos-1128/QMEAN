@@ -4,7 +4,6 @@
 {% block homeActive %} class="active"{% endblock %}
 
 {% block main-content %}
-
 {% if project_creation_error %}
 <div id="errorMessage" class="alert alert-danger" role="alert">
   <h1><i class="glyphicon glyphicon-exclamation-sign" style="top:4px;"></i> {{ project_creation_error }}</h1>
@@ -12,7 +11,9 @@
 <script>setTimeout(function(){ $('#errorMessage').slideUp();},3000);</script>
 {% endif %}
 <div class="jumbotron">
-        <form method="POST" enctype="multipart/form-data" onsubmit="return $('#id_sequence').val().length>0 && $('#id_structureUploaded').val().length>0;">
+
+    {{ form.errors }}
+        <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
         	{% csrf_token %}
             <input type="hidden" name="whatsthis">
         	<table class="table ">
@@ -37,21 +38,28 @@
                         <div id="files" class="files">{% for f in form.cleaned_data.structureUploaded %}<div class="uploadSuccess">{{ f.original_name }}<i class="glyphicon glyphicon-ok"></i></div>{% endfor %}</div>
                     </td>
                 </tr>
-        		<tr id="sequenceDropZone" style="border:1px dashed #CCC"><td>{{ form.sequence.label }}</td>
+        		<tr><td></td>
         			<td{% if form.sequence.errors %} class="error"{% endif %}>
-				<div id="sequenceErrorMessage" class="alert alert-warning alert-dismissible" style="display:none;margin-bottom:0px">
-  					<strong>Sequence Upload Error!</strong> Sorry, can only parse FASTA or Clustal format sequence files.
-					</div>
+        				<div id="sequenceErrorMessage" class="alert alert-danger alert-dismissible" style="{% if not form.sequence.errors %}display:none;{% endif %}margin-bottom:0px">
+          					<strong>Sequence Upload Error!</strong> Sorry, can only parse FASTA or Clustal format sequence files.
+        				</div>
+                        <a href="#" onclick="$('.seqToggle').toggle();$('#sequenceDropZone').slideToggle('medium');return false;">
+                            <i>For optimum performance, please add the SeqRes of your model here 
+                                <i class="seqToggle glyphicon glyphicon-chevron-down"></i>
+                                <i style="display:none" class="seqToggle glyphicon glyphicon-chevron-up"></i>
+                            </i>
+                        </a>
+                        <div id="sequenceDropZone" {% if not form.sequence.errors %}style="display:none"{% endif %}>
 					{{ form.sequence }}
                     <input style="display:none;" id="sequenceFile" type="file" name="sequenceFile">
                 </td></tr>
 
                 <tr><td>Options</td>
-                    <td><div class="col-xs-6"><label>{{ form.QMEANDisCo.label }}
-                            {{ form.QMEANDisCo }}</label></div>
+                    <td><div class="col-xs-6"><label>{{ form.qmeandisco.label }}
+                            {{ form.qmeandisco }}</label></div>
                         <div class="col-xs-6">
-                        <label>{{ form.QMEANBrane.label }}
-                            {{ form.QMEANBrane }}</label></div>
+                        <label>{{ form.qmeanbrane.label }}
+                            {{ form.qmeanbrane }}</label></div>
                         </td></tr>
                 
                 <tr><td width="180">{{ form.project_name.label }}</td>
@@ -59,7 +67,9 @@
                 <tr><td>{{ form.email.label }}</td>
                     <td{% if form.email.errors %} class="error"{% endif %}>{{ form.email }}</td></tr>
         	</table>
-        	<button id="submitButton" type="submit" class="btn btn-lg btn-success" disabled="disabled">Submit</button>
+            <div class="text-center" style="margin-top:24px;">
+        	   <button id="submitButton" type="submit" class="btn btn-lg btn-success" disabled="disabled">Submit</button>
+            </div>
         </form>
 
 </div>
@@ -81,9 +91,7 @@ $.ajaxSetup({
     }
 });
 
-$('#id_sequence').bind('input propertychange', function() {
-	enableSubmit(true);      
-});
+$('#id_sequence').bind('input propertychange', function(){enableSubmit(true);} );
 
 $('#sequenceFile').fileupload({
         dropZone: $('#sequenceDropZone'),
@@ -162,12 +170,17 @@ $('#structureFile').fileupload({
 
   function enableSubmit(enable)
   {
-	if(enable && $('#id_sequence').val().length>0 && $('#id_structureUploaded').val().length>0)
+	if(enable && validateForm() )
 	{
 		$('#submitButton').prop('disabled','');
 	}
 	else
 		$('#submitButton').prop('disabled','disabled');
+  }
+
+  function validateForm()
+  {
+    return $('#id_structureUploaded').val().length>0 ;
   }
 </script>
 {% endblock %}
