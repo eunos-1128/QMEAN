@@ -10,9 +10,8 @@
 </div>
 <script>setTimeout(function(){ $('#errorMessage').slideUp();},3000);</script>
 {% endif %}
-<div class="jumbotron">
 
-    {{ form.errors }}
+<div class="jumbotron">
         <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
         	{% csrf_token %}
             <input type="hidden" name="whatsthis">
@@ -24,7 +23,7 @@
   			<strong>Problem with submitted data - </strong>
 				{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div></td></tr>
 		{% endif %}
-		<tr id="structureDropZone" {% if form.structureUploaded.errors %} class="error"{% else %}style="border:1px dashed #CCC"{% endif %} ><td>
+		<tr id="structureDropZone" {% if form.structureUploaded.errors %} class="error"{% else %}style="border:1px dashed #AAA"{% endif %} ><td>
                         <span class="btn btn-success fileinput-button">
                             <i class="glyphicon glyphicon-plus"></i>
                             <span>Select PDB File...</span>
@@ -39,17 +38,17 @@
                     </td>
                 </tr>
         		<tr><td></td>
-        			<td{% if form.sequence.errors %} class="error"{% endif %}>
+        			<td{% if form.sequence.value %} class="error"{% endif %}>
         				<div id="sequenceErrorMessage" class="alert alert-danger alert-dismissible" style="{% if not form.sequence.errors %}display:none;{% endif %}margin-bottom:0px">
           					<strong>Sequence Upload Error!</strong> Sorry, can only parse FASTA or Clustal format sequence files.
         				</div>
                         <a href="#" onclick="$('.seqToggle').toggle();$('#sequenceDropZone').slideToggle('medium');return false;">
                             <i>For optimum performance, please add the SeqRes of your model here 
-                                <i class="seqToggle glyphicon glyphicon-chevron-down"></i>
+                                <i class="seqToggle glyphicon glyphicon-chevron-{% if form.sequence.value %}up{% else %}down{% endif %}"></i>
                                 <i style="display:none" class="seqToggle glyphicon glyphicon-chevron-up"></i>
                             </i>
                         </a>
-                        <div id="sequenceDropZone" {% if not form.sequence.errors %}style="display:none"{% endif %}>
+                        <div id="sequenceDropZone" {% if form.sequence.value %}class="error"{% else %}style="display:none"{% endif %}>
 					{{ form.sequence }}
                     <input style="display:none;" id="sequenceFile" type="file" name="sequenceFile">
                 </td></tr>
@@ -62,7 +61,7 @@
                             {{ form.qmeanbrane }}</label></div>
                         </td></tr>
                 
-                <tr><td width="180">{{ form.project_name.label }}</td>
+                <tr><td width="180" >{{ form.project_name.label }}</td>
                     <td{% if form.project_name.errors %} class="error"{% endif %}>{{ form.project_name }}</td></tr>
                 <tr><td>{{ form.email.label }}</td>
                     <td{% if form.email.errors %} class="error"{% endif %}>{{ form.email }}</td></tr>
@@ -71,7 +70,6 @@
         	   <button id="submitButton" type="submit" class="btn btn-lg btn-success" disabled="disabled">Submit</button>
             </div>
         </form>
-
 </div>
 {% endblock %}
 {% block js %}
@@ -135,9 +133,12 @@ $('#structureFile').fileupload({
             		$('#progressBar')
             				.removeClass('progress-bar-success')
             				.addClass('progress-bar-danger');
-            		 $('<div class="uploadFail">'+file.name+' '+file.error
-                        +' <i class="glyphicon glyphicon-remove"></i>'
-                        +'</div>').appendTo('#files');         	
+            		 $('<div style="margin-bottom: 0px;" class="alert alert-danger alert-dismissible" role="alert">'
+                        +'<button type="button" class="close" data-dismiss="alert">'
+                        +'<span aria-hidden="true">&times;</span></button>'
+                        +'<strong>'+file.name+'</strong> '                      
+                        +file.error+'</div>')
+                            .appendTo('#files');         	
             	}
             	else
             	{

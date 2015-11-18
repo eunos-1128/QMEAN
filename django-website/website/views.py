@@ -177,11 +177,12 @@ def is_valid_structure_file(request,original_name,tmp_path):
 		LoadPDB(tmp_path)
 		request.session['uploaded_'+basename] = original_name
 	except Exception, e:
+		print 'is_valid_structure_file: ',e
 		try:
 			os.remove(os.path.join(settings.TMP_DIR,tmp_path))
 		except e2:
 			print e2
-		err = str(e)
+		err = 'Could not find any valid structures in the uploaded file.'
 
 	return {"original_name":original_name,"file_name":basename,"error":err}
 
