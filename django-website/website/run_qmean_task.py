@@ -16,7 +16,8 @@ class RunQMEAN(task.Task):
            os.path.join(settings.BASE_DIR,"website","run_qmean.py"), 
            os.path.join(self.project_dir,"input"),
            os.path.join(self.project_dir,"output"),
-           settings.CACHE_DIR]
+           settings.CACHE_DIR,
+           settings.TMP_DIR]
            
     return cmd
 

@@ -19,6 +19,7 @@ from ost.bindings import hhblits
 from ost.bindings import naccess
 from ost.bindings import msms
 from ost.seq import CreateSequence
+from ost.seq import CreateSequenceList
 from sm import config
 from sm.smtl import structanno
 
@@ -61,8 +62,121 @@ def CopyToCache(cache_dir,hash,path):
       except:
         pass
 
+def CreateMembraneRepresentation(ent, mem_param = None, membrane_margin = 15, delta = 2.0):
 
-def GetSequencePredictions(sequences, hhblits_cache, accpro_cache, out_dir):
+  if mem_param == None:
+    #let's calculate the transmembrane part of the structure
+    membrane_finder_input = ent.Select("peptide=true and ele!=H")
+    surf = msms.CalculateSurface(membrane_finder_input,radius=1.4)[0]
+    naccess.CalculateSurfaceArea(membrane_finder_input)
+    asa = list()
+    for a in membrane_finder_input.atoms:
+      if a.HasProp('asaAtom'):
+        asa.append(a.GetFloatProp('asaAtom'))
+      else:
+        asa.append(0.0)
+    mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
+
+  membrane_axis = geom.Normalize(mem_param.membrane_axis)
+  membrane_pos = mem_param.pos
+  membrane_width = mem_param.width
+
+  #define planes, that define the membrane
+  top = membrane_pos * membrane_axis + membrane_axis * membrane_width/2
+  bottom = membrane_pos * membrane_axis - membrane_axis * membrane_width/2
+  plane_one = geom.Plane(top, membrane_axis)
+  plane_two = geom.Plane(bottom, membrane_axis)
+
+  #find residues close to those planes to find the actual membrane location
+  for r in ent.residues:
+    ca = r.FindAtom("CA")
+    if not ca.IsValid():
+      continue
+    dist_one = abs(geom.Distance(plane_one,ca.GetPos()))
+    dist_two = abs(geom.Distance(plane_two,ca.GetPos()))
+
+    if dist_one < 3:
+      r.SetIntProp("close_plane",1)
+      continue
+
+    if dist_two < 3:
+      r.SetIntProp("close_plane",1)
+
+  close_to_plane_selection = ent.Select("grclose_plane:0=1")
+  membrane_center = close_to_plane_selection.GetGeometricCenter()
+
+  #find the residue being most away from the center of the membrane
+  max_dist_to_membrane_center = 0.0
+  center_line = geom.Line3(membrane_center,membrane_center+membrane_axis)
+  for r in close_to_plane_selection.residues:
+    ca = r.FindAtom("CA")
+    if not ca.IsValid():
+      continue
+    actual_dist = geom.Distance(center_line,ca.GetPos())
+    max_dist_to_membrane_center = max(max_dist_to_membrane_center, actual_dist)
+
+
+  #reassign the top and bottom positions, that have been only arbitrary points on the membrane planes
+  top = geom.IntersectionPoint(center_line,plane_one)
+  bottom = geom.IntersectionPoint(center_line,plane_two)
+
+
+  #find a pair of perpendicular vectors, that are on the plane
+  arbitrary_vec = geom.Vec3()
+  if abs(membrane_axis[0]) <= abs(membrane_axis[1]) and abs(membrane_axis[0]) <= abs(membrane_axis[2]):
+    arbitrary_vec = geom.Vec3(1,0,0)
+  elif abs(membrane_axis[1]) <= abs(membrane_axis[0]) and abs(membrane_axis[1]) <= abs(membrane_axis[2]): 
+    arbitrary_vec = geom.Vec3(0,1,0)
+  else:
+    arbitrary_vec = geom.Vec3(0,0,1)
+  plane_x = geom.Normalize(geom.Cross(membrane_axis, arbitrary_vec))
+  plane_y = geom.Normalize(geom.Cross(membrane_axis, plane_x))
+
+
+  #Find the dummy atom positions
+  radius = max_dist_to_membrane_center + membrane_margin
+  num_sampling_points = int(round(2*radius/delta))
+  mem_positions = list()
+
+  #do plane one
+  origin = top - delta * num_sampling_points / 2 * plane_x - delta * num_sampling_points / 2 * plane_y
+  for i in range(num_sampling_points):
+    for j in range(num_sampling_points):
+      pos = origin + i * delta * plane_x + j * delta * plane_y
+      if geom.Distance(pos,top) > radius:
+        continue
+      if len(ent.FindWithin(pos,4.0)) > 0:
+        continue
+      mem_positions.append(pos)
+
+  #do plane two
+  origin = bottom - delta * num_sampling_points / 2 * plane_x - delta * num_sampling_points / 2 * plane_y
+  for i in range(num_sampling_points):
+    for j in range(num_sampling_points):
+      pos = origin + i * delta * plane_x + j * delta * plane_y
+      if geom.Distance(pos,bottom) > radius:
+        continue
+      if len(ent.FindWithin(pos,4.0)) > 0:
+        continue
+      mem_positions.append(pos)
+
+  if len(mem_positions) >= 9999:
+    raise RuntimeError("Need more fancy implementation to get a dummy membrane entity, that can be saved down to disk")
+
+  #fill positions into the entity
+  mem_entity = mol.CreateEntity()
+  ed = mem_entity.EditXCS()
+  chain = ed.InsertChain("M")
+
+  for p in mem_positions:
+    res = ed.AppendResidue(chain,"MEM")
+    ed.InsertAtom(res,"MEM",p)
+      
+  return mem_entity
+
+
+
+def GetSequenceFeatures(sequences, hhblits_cache, accpro_cache, out_dir):
 
   a3m_files = list()
   acc_files = list()
@@ -128,17 +242,37 @@ def GetSequencePredictions(sequences, hhblits_cache, accpro_cache, out_dir):
       acc_seq = LoadSequence(acc_files[i], format = "fasta")
       accpro_pred.append(acc_seq.GetString())
 
-  return (psipred_pred, psipred_conf, accpro_pred, a3m_files, acc_files)
+  #and generate the QMEAN PSIPREDHandler/ACCPROHandler
+  psipred_handler = list()
+  for s,p,c in zip(sequences,psipred_pred,psipred_conf):
+    data = dict()
+    data["seq"] = s.GetString()
+    data["ss"] = p
+    data["conf"] = c
+    pp = PSIPREDHandler(data)
+    psipred_handler.append(pp)
+
+  accpro_handler = None
+  if not accpro_failed:
+    accpro_handler = list()
+    for s,a in zip(sequences,accpro_pred):
+      data = dict()
+      data["seq"] = s.GetString()
+      data["acc"] = a
+      acc = ACCPROHandler(data)
+      accpro_handler.append(acc)
+
+  return (psipred_handler, accpro_handler)
 
 
-def GetDistanceConstraints(sequences, a3m_files):
-  return list()
+def GetDistanceConstraints(sequences, hhblits_cache):
+  return None
 
-def GetMemParam(model):
+def GetMemParam(model,working_dir):
 
   membrane_finder_input = model.Select('ele!=H')
   surf = msms.CalculateSurface(membrane_finder_input,radius=1.4,msms_exe=config.MSMS_BIN)[0]
-  naccess.CalculateSurfaceArea(membrane_finder_input,naccess_exe=config.NACCESS_BIN)
+  naccess.CalculateSurfaceArea(membrane_finder_input, scratch_dir = working_dir, naccess_exe=config.NACCESS_BIN)
   asa = list()
   for a in membrane_finder_input.atoms:
     if a.HasProp('asaAtom'):
@@ -148,100 +282,17 @@ def GetMemParam(model):
   mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
   return mem_param
 
-def MatchSeqPredictionsWithModel(sequences, model, psipred_pred,
-                                 psipred_conf, accpro_pred):
-  
-  psipred_handler = list()
-  accpro_handler = list()
 
-  #The input data has been checked... so we assume that the sequences
-  #match with the chains given one of the three following scenarios:
+USAGE = "usage: sm run_qmean.py <INPUT_DIR> <OUTPUT_DIR> <CACHE_DIR> <TMP_DIR>"
 
-  #If there is no sequence, there won't be any sequence prediction...
-  if len(sequences) == 0:
-    return None, None
-  #if there is one sequence, the model either has one chain or
-  #the model is a homo-oligomer
-  elif len(sequences) == 1:
-    if len(psipred_pred) > 0:
-      data = dict()
-      data["seq"] = sequences[0].GetString()
-      data["ss"] = psipred_pred[0]
-      data["conf"] = psipred_conf[0]
-      for c in model.chains:
-        print "SEQRES: ",data["seq"]
-        print "ATOMSEQ: ",''.join([r.one_letter_code for r in c.residues])
-      
-        pp = PSIPREDHandler(data)
-        psipred_handler.append(pp)
-    else:
-      psipred_handler = None
-
-    if len(accpro_pred) > 0:
-      data = dict()
-      data["seq"] = sequences[0].GetString()
-      data["acc"] = accpro_pred[0]
-      for c in model.chains:
-        acc = ACCPROHandler(data)
-        accpro_handler.append(acc)
-    else:
-      accpro_handler = None
-
-  #if there is more than one sequence, we match the chain/sequence names
-  else:
-    if len(psipred_pred) > 0:
-      for c in model.chains:
-        c_name = c.GetName()
-        found_seq = False
-        for i,s in enumerate(sequences):
-          if s.GetName() == c_name:
-            data = dict()
-            data["seq"] = s.GetString()
-            data["ss"] = psipred_pred[i]
-            data["conf"] = psipred_conf[i]
-            pp = PSIPREDHandler(data)
-            psipred_handler.append(pp)
-            found_seq = True
-            break
-        if not found_seq:
-          raise RuntimeError("Could not find matching sequence for chain of name "+c_name)
-    else:
-      psipred_handler = None
-
-    if len(accpro_pred) > 0:
-      for c in model.chains:
-        c_name = c.GetName()
-        found_seq = False
-        for i,s in enumerate(sequences):
-          if s.GetName() == c_name:
-            data = dict()
-            data["seq"] = s.GetString()
-            data["acc"] = accpro_pred[i]
-            acc = ACCPROHandler(data)
-            accpro_handler.append(acc)
-            found_seq = True
-            break
-        if not found_seq:
-          raise RuntimeError("Could not find matching sequence for chain of name "+c_name)
-    else:
-      accpro_handler = None
-
-  return (psipred_handler, accpro_handler)
-
-
-def MatchDCWithModel(sequences,model,dc_list):
-  return None
-
-
-USAGE = "usage: sm run_qmean.py <INPUT_DIR> <OUTPUT_DIR> <CACHE_DIR>"
-
-if len(sys.argv) < 4:
+if len(sys.argv) < 5:
   print USAGE
   sys.exit(-1)
 
 in_dir = sys.argv[1]
 out_dir = sys.argv[2]
 cache_dir = sys.argv[3]
+tmp_dir = sys.argv[4]
 
 if not os.path.exists(in_dir):
   raise ValueError("Provided input directory does not exist!")
@@ -279,51 +330,39 @@ infile.close()
 use_qmeandisco = project_data["options"]["qmeandisco"]
 use_qmeanbrane = project_data["options"]["qmeanbrane"]
 
-#lets extract the names of the models
+#lets extract the names of the models and the sequences
 model_files = list()
+sequences = list()
 for item in project_data["models"]:
   model_files.append(str(item["modelid"])+".pdb")
+  seq_list = CreateSequenceList()
+  for s in item["seqres"]:
+    seq_list.AddSequence(ost.seq.CreateSequence(str(s["name"]),str(s["sequence"])))
+  sequences.append(seq_list)
 
-#let's extract all sequences
-sequences = list()
-for item in project_data["sequences"]:
-  sequences.append(ost.seq.CreateSequence(str(item["name"]),str(item["sequence"])))
-
-#Let's get all stuff we predict only with the sequence
-psipred_pred, psipred_conf, accpro_pred, a3m_files, accpro_files = GetSequencePredictions(sequences, 
-                                                                                          hhblits_cache, 
-                                                                                          accpro_cache, 
-                                                                                          out_dir)
-
-
-#get the distance constraints, if flag is set...
-dc_list = list()
-if use_qmeandisco:
-  dc_list = GetDistanceConstraints(sequences, a3m_files)
-
-
-for f in model_files:
-
-  model = LoadPDB(os.path.join(in_dir,f)).Select("peptide=true")
-
-  psipred_handler, accpro_handler = MatchSeqPredictionsWithModel(sequences, 
-                                                                 model, 
-                                                                 psipred_pred,
-                                                                 psipred_conf, 
-                                                                 accpro_pred)
-
-  if use_qmeandisco:
-    dc = MatchDCWithModel(sequences, model, dc_list)
-  else:
-    dc = None
-
+#iterate over all models and do the quality assessment
+for i,f in enumerate(model_files):
 
   do_local_assessment = True
   do_global_assessment = True
   out_path = os.path.join(out_dir,f.split('.')[0])
+  model = LoadPDB(os.path.join(in_dir,f)).Select("peptide=true")
 
+  #Let's get all stuff we predict only with the sequence
+  psipred_handler, accpro_handler = GetSequenceFeatures(sequences[i], 
+                                                        hhblits_cache, 
+                                                        accpro_cache, 
+                                                        out_path)
+
+
+  dc = None
+  if use_qmeandisco:
+    dc = GetDistanceConstraints(sequences,hhblits_cache)
+
+  membrane_representation = None
   if use_qmeanbrane:
-    mem_p = GetMemParam(model) 
+    mem_p = GetMemParam(model,tmp_dir) 
+    membrane_representation = CreateMembraneRepresentation(model, mem_param = mem_p)
     mqa_result_membrane.AssessModelQuality(model,
                                            mem_param = mem_p,
                                            output_dir = out_path,
@@ -331,6 +370,7 @@ for f in model_files:
                                            accpro = accpro_handler,
                                            dssp_path = config.DSSP_BIN)
     do_local_assessment = False
+    
 
   mqa_result.AssessModelQuality(model,
                                 local_scores = do_local_assessment,
@@ -342,6 +382,8 @@ for f in model_files:
 
 
   SavePDB(model,os.path.join(out_path,"model.pdb"))
+  if membrane_representation != None:
+    SavePDB(membrane_representation, os.path.join(out_path,"dummy_mem.pdb"))
 
 
 #let's change the status to completed
