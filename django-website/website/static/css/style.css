@@ -79,9 +79,7 @@ form label{
 	width:100%;
 	max-height:150px;
 }
-.jumbotron {
-	background-color: rgba(95, 166, 217, 0.46);
-}
+
 .table tbody>tr>td{
 	vertical-align: middle;
 	padding-top:16px;

@@ -43,5 +43,24 @@
   </body>
 <script type='text/javascript' src="{% static 'js/jquery-1.11.3.min.js' %}"></script>
 <script type='text/javascript' src="{% static 'js/bootstrap.min.js' %}"></script>
+<script>
+$(document).ready(
+    function()
+    {
+        $(function (){  $('[data-toggle="popover"]').popover(
+          {
+            html:true,
+            content:function(){
+                var id = $(this).attr('id');
+                var src = id.substring(0,id.length-8);
+                $(this).attr('data-original-title',$('#'+src).attr('title'));
+                return $('#'+src).html();
+              }
+          });
+          });
+    });
+
+</script>
 {% block js %}{% endblock %}
+<div style="display:none">{% include 'help_tips.html' %}</div>
 </html>

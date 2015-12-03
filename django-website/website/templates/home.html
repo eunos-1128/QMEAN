@@ -1,4 +1,4 @@
-{% extends 'base.html' %}{% load static %}
+{% extends 'base.html' %}{% load static %}{% load tags %}
 {% block css %}<link href="{% static 'css/jquery.fileupload.css' %}" rel="stylesheet">
 <link href="{% static 'css/jquery.fileupload-ui.css' %}" rel="stylesheet">{% endblock %}
 {% block homeActive %} class="active"{% endblock %}
@@ -43,7 +43,7 @@
           					<strong>Sequence Upload Error!</strong> Sorry, can only parse FASTA or Clustal format sequence files.
         				</div>
                         <a href="#" onclick="$('.seqToggle').toggle();$('#sequenceDropZone').slideToggle('medium');return false;">
-                            <i>For optimum performance, please add the SeqRes of your model here 
+                            <i>For optimum performance, please add the SeqRes of your model here {% help_tip "seqres_help" %}
                                 <i class="seqToggle glyphicon glyphicon-chevron-{% if form.sequence.value %}up{% else %}down{% endif %}"></i>
                                 <i style="display:none" class="seqToggle glyphicon glyphicon-chevron-up"></i>
                             </i>
@@ -55,10 +55,13 @@
 
                 <tr><td>Options</td>
                     <td><div class="col-xs-6"><label>{{ form.qmeandisco.label }}
-                            {{ form.qmeandisco }}</label></div>
+                            {{ form.qmeandisco }}</label> {% help_tip "QMEANDisCo_help" %}</div>
                         <div class="col-xs-6">
-                        <label>{{ form.qmeanbrane.label }}
-                            {{ form.qmeanbrane }}</label></div>
+                        <label>{{ form.qmeanbrane.label }}</label>
+
+
+                         {% help_tip "QMEANBrane_help" %}
+                         </div>
                         </td></tr>
                 
                 <tr><td width="180" >{{ form.project_name.label }}</td>
@@ -66,7 +69,7 @@
                 <tr><td>{{ form.email.label }}</td>
                     <td{% if form.email.errors %} class="error"{% endif %}>{{ form.email }}</td></tr>
         	</table>
-            <div class="text-center" style="margin-top:24px;">
+            <div class="text-right" style="margin-top:24px;">
         	   <button id="submitButton" type="submit" class="btn btn-lg btn-success" disabled="disabled">Submit</button>
             </div>
         </form>
