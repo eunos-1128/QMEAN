@@ -12,7 +12,7 @@ def AlignChainToSEQRES(chain, seqres):
   """
   try:
     return seq.alg.AlignToSEQRES(chain.Select(''), seqres, 
-                                 try_resnum_first=True)
+                                 try_resnum_first=True,validate=False)
   except Exception, e:
     print e
 

@@ -56,7 +56,7 @@ class UploadForm(forms.Form):
 				for ch in model.chains:
 					seqresIdentical = True
 					try:
-						aln = AlignToSEQRES(ch,seq_list[0].GetString())
+						aln = AlignToSEQRES(ch,seq_list[0].GetString(), validate=False)
 						structure['seqres'].append({'name':ch.GetName(),'sequence':seq_list[0].GetString()})
 					except Exception, e:
 						seqresIdentical = False
@@ -87,7 +87,7 @@ class UploadForm(forms.Form):
 						if ch.GetName() == seq_handle.GetName().strip():
 							found_sequence = True
 							try:
-								aln = AlignToSEQRES(ch,seq_handle.GetString())
+								aln = AlignToSEQRES(ch,seq_handle.GetString(),validate=False)
 								structure['seqres'].append({'name':ch.GetName(),'sequence':seq_handle.GetString()})
 								break
 							except Exception, e:
