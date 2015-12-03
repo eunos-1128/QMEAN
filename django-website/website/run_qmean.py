@@ -22,6 +22,8 @@ from ost.seq import CreateSequence
 from ost.seq import CreateSequenceList
 from sm import config
 from sm.smtl import structanno
+import smtplib
+from email.mime.text import MIMEText
 
 
 def CopyFromCache(cache_dir,hash,path):
@@ -33,6 +35,7 @@ def CopyFromCache(cache_dir,hash,path):
     if os.path.exists(cache_file):
       try:
         shutil.copy(cache_file, path)
+        print "reuse precalculated profile"
         return True
       except:
         pass
@@ -330,6 +333,14 @@ infile.close()
 use_qmeandisco = project_data["options"]["qmeandisco"]
 use_qmeanbrane = project_data["options"]["qmeanbrane"]
 
+email = None
+project_name = None
+
+if "email" in project_data["meta"]:
+  email = project_data["meta"]["email"]
+if "project_name" in project_data["meta"]:
+  project_name = project_data["meta"]["project_name"] 
+
 #lets extract the names of the models and the sequences
 model_files = list()
 sequences = list()
@@ -385,6 +396,18 @@ for i,f in enumerate(model_files):
   if membrane_representation != None:
     SavePDB(membrane_representation, os.path.join(out_path,"dummy_mem.pdb"))
 
+#an email gets sent to the user if an address is provided
+if email != None:
+  text = "Yo, get the results"
+  msg = MIMEText(text)
+  msg["subject"] = "QMEAN Results" 
+  msg["From"] = "gabriel.studer@unibas.ch"
+  msg["To"] = email
+  
+  s = smtplib.SMTP('localhost')
+  s.sendmail("gabriel.studer@unibas.ch", [email], msg.as_string())
+  s.quit()
+  
 
 #let's change the status to completed
 status_file = open(status_path,'w')
