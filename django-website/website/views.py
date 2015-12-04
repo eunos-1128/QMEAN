@@ -16,6 +16,7 @@ except Exception, e:
 	print 'OST not in path'
 
 def home(request):
+
 	project_creation_error = False
 	if request.method == 'POST':
 		form = UploadForm(request, request.POST)
@@ -45,7 +46,10 @@ def create_project(request, form):
 				os.makedirs(os.path.join(new_project_path,'output'))
 
 				data = {
-						'meta':{'created':str(datetime.now())},
+						'meta':{
+							'created':str(datetime.now()),
+							'results_page':request.build_absolute_uri(reverse('results', kwargs={'projectid':project_id})),
+							},
 						'options':{},
 						'models':[]
 				}
