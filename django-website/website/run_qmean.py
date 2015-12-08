@@ -41,7 +41,6 @@ def CopyFromCache(cache_dir,hash,path):
         pass
   return False
 
-
 def CopyToCache(cache_dir,hash,path):
 
   cache_file = os.path.join(cache_dir,hash)
@@ -163,21 +162,28 @@ def CreateMembraneRepresentation(ent, mem_param = None, membrane_margin = 15, de
         continue
       mem_positions.append(pos)
 
-  if len(mem_positions) >= 9999:
-    raise RuntimeError("Need more fancy implementation to get a dummy membrane entity, that can be saved down to disk")
-
   #fill positions into the entity
   mem_entity = mol.CreateEntity()
   ed = mem_entity.EditXCS()
   chain = ed.InsertChain("M")
-
+  res = ed.AppendResidue(chain,"MEM")
+  atom_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  atom_name_idx = 0
+  atom_name_secondary_idx = 0
   for p in mem_positions:
-    res = ed.AppendResidue(chain,"MEM")
-    ed.InsertAtom(res,"MEM",p)
+
+    if atom_name_secondary_idx == len(atom_names):
+      atom_name_idx += 1
+      atom_name_secondary_idx = 0
+    if atom_name_idx == len(atom_names):
+      res = ed.AppendResidue(chain,"MEM")
+      atom_name_idx = 0
+      atom_name_secondary_idx = 0
+    atom_name = atom_names[atom_name_idx] + atom_names[atom_name_secondary_idx]
+    ed.InsertAtom(res,atom_name,p)
+    atom_name_secondary_idx += 1
       
   return mem_entity
-
-
 
 def GetSequenceFeatures(sequences, hhblits_cache, accpro_cache, out_dir):
 
@@ -267,7 +273,6 @@ def GetSequenceFeatures(sequences, hhblits_cache, accpro_cache, out_dir):
 
   return (psipred_handler, accpro_handler)
 
-
 def GetDistanceConstraints(sequences, hhblits_cache):
   return None
 
@@ -284,6 +289,71 @@ def GetMemParam(model,working_dir):
       asa.append(0.0)
   mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
   return mem_param
+
+def SendSuccessMessage(url,project_name):
+
+  if url == None:
+    return
+
+  text = list()
+  text.append("Dear User,\n\nYou can get your results here: %s\n"%results_page)
+  text.append("This url is only valid for 14 days!\n")
+  text.append("Best,\nThe QMEAN Team")
+  msg = MIMEText('\n'.join(text))
+
+  subject = "QMEAN Results"
+  if project_name != None:
+    subject = subject + " " + project_name
+
+  msg["subject"] = subject
+  msg["From"] = "gabriel.studer@unibas.ch"
+  msg["To"] = email
+  
+  s = smtplib.SMTP('localhost')
+  s.sendmail("gabriel.studer@unibas.ch", [email], msg.as_string())
+  s.quit()
+
+def SendErrorMessage(url,project_name):
+
+  if url == None:
+    return
+
+  text = list()
+  text.append("Dear User,\n\nSomething went wrong in the quality estimation process!")
+  text.append("This failure will also be reported to the QMEAN developers.\n")
+  text.append("Best,\nThe QMEAN Team")
+  letter_code = url.strip('/').split('/')[-1]
+  msg = MIMEText('\n'.join(text))
+
+  subject = "QMEAN Error "+letter_code
+  if project_name != None:
+    subject = subject + " " + project_name
+
+  msg["subject"] = subject 
+  msg["From"] = "gabriel.studer@unibas.ch"
+  msg["To"] = email
+  
+  s = smtplib.SMTP('localhost')
+  s.sendmail("gabriel.studer@unibas.ch", [email], msg.as_string())
+  s.quit()
+
+def WriteStatusRun(status_jobid, status_path):
+  status_file = open(status_path,'w')
+  msg = status_jobid + " " + "RUNNING"
+  status_file.write(msg)
+  status_file.close()
+
+def WriteStatusCompleted(status_jobid, status_path):
+  status_file = open(status_path,'w')
+  msg = status_jobid + " " + "COMPLETED"
+  status_file.write(msg)
+  status_file.close()
+
+def WriteStatusFailure(status_jobid, status_path):
+  status_file = open(status_path,'w')
+  msg = status_jobid + " " + "FAILURE"
+  status_file.write(msg)
+  status_file.close()
 
 
 USAGE = "usage: sm run_qmean.py <INPUT_DIR> <OUTPUT_DIR> <CACHE_DIR> <TMP_DIR>"
@@ -320,10 +390,7 @@ status_path = os.path.abspath(os.path.join(os.path.join(in_dir,os.pardir),"statu
 status_jobid = open(status_path,'r').readlines()[0].split()[0]
 
 #let's change status to running
-status_file = open(status_path,'w')
-msg = status_jobid + " " + "RUNNING"
-status_file.write(msg)
-status_file.close()
+WriteStatusRun(status_jobid,status_path)
 
 #lets read the json stuff to get all required information about the project
 infile = open(os.path.join(in_dir,"project.json"))
@@ -335,11 +402,15 @@ use_qmeanbrane = project_data["options"]["qmeanbrane"]
 
 email = None
 project_name = None
+results_page = None
 
 if "email" in project_data["meta"]:
   email = project_data["meta"]["email"]
 if "project_name" in project_data["meta"]:
   project_name = project_data["meta"]["project_name"] 
+if "results_page" in project_data["meta"]:
+  results_page = project_data["meta"]["results_page"]
+
 
 #lets extract the names of the models and the sequences
 model_files = list()
@@ -398,20 +469,8 @@ for i,f in enumerate(model_files):
 
 #an email gets sent to the user if an address is provided
 if email != None:
-  text = "Yo, get the results"
-  msg = MIMEText(text)
-  msg["subject"] = "QMEAN Results" 
-  msg["From"] = "gabriel.studer@unibas.ch"
-  msg["To"] = email
-  
-  s = smtplib.SMTP('localhost')
-  s.sendmail("gabriel.studer@unibas.ch", [email], msg.as_string())
-  s.quit()
-  
+  SendSuccessMessage(results_page,project_name)
 
 #let's change the status to completed
-status_file = open(status_path,'w')
-msg = status_jobid + " " + "COMPLETED"
-status_file.write(msg)
-status_file.close()
+WriteStatusCompleted(status_jobid, status_path)
 
