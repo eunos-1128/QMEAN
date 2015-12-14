@@ -52,6 +52,7 @@ void HBondPotentialImpl::SetEnvironment(const ost::mol::EntityView& env){
   Real h_angle = 2.0420;
   String chain_name;
   int num;
+  bool is_proline;
 
   for(uint i = 0; i < res_list.size(); ++i){
     n = res_list[i].FindAtom("N");
@@ -73,8 +74,10 @@ void HBondPotentialImpl::SetEnvironment(const ost::mol::EntityView& env){
     this->ConstructHPos(h_bond_length,h_angle,phi+M_PI,
                         c_pos, ca_pos, n_pos, h_pos);
 
+    is_proline = res_list[i].GetName() == "PRO";
+
     HBondSpatialOrganizerItem new_item(n_pos,ca_pos, c_pos,
-                                       o_pos,h_pos,states[i],chain_name,num);
+                                       o_pos,h_pos,states[i],chain_name,num,is_proline);
     env_.Add(new_item,ca_pos);
   }
 }
@@ -93,6 +96,7 @@ bool HBondPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
   geom::Vec3 ca_pos = ca.GetPos();
   geom::Vec3 c_pos = c.GetPos();
   geom::Vec3 o_pos = o.GetPos();
+  bool is_proline = res.GetName() == "PRO";
 
   Real phi = -1.0472;
   ost::mol::TorsionHandle phi_torsion = res.GetPhiTorsion();
@@ -130,47 +134,51 @@ bool HBondPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
 
   Real d,alpha,beta,gamma;
   int pairwise_state;
-  std::vector<HBondSpatialOrganizerItem> in_reach = env_.FindWithin(ca_pos, 8.0);
+  std::vector<HBondSpatialOrganizerItem> in_reach = env_.FindWithin(ca_pos, 9.0);
   int num = res.GetNumber().GetNum();
   String chain_name = res.GetChain().GetName();
   int diff;
 
-  //current residue as donor
-  for(std::vector<HBondSpatialOrganizerItem>::iterator i = in_reach.begin();
-      i != in_reach.end(); ++i){
+  if(!is_proline){
+    //current residue as donor
+    for(std::vector<HBondSpatialOrganizerItem>::iterator i = in_reach.begin();
+        i != in_reach.end(); ++i){
 
-    if(unique_bonds_){
-      if(i->num-num<opts_.seq_sep){
-        if(chain_name==i->chain_name){
-          continue;
+      if(unique_bonds_){
+        if(i->num-num<opts_.seq_sep){
+          if(chain_name==i->chain_name){
+            continue;
+          }
         }
       }
-    }
-    else{
-      if(std::abs(i->num-num)<opts_.seq_sep){
-        if(chain_name==i->chain_name){
-          continue;
+      else{
+        if(std::abs(i->num-num)<opts_.seq_sep){
+          if(chain_name==i->chain_name){
+            continue;
+          }
         }
       }
+
+      d = geom::Distance(h_pos,i->o_pos);
+      if(d<opts_.d_min || d>=opts_.d_max) continue;
+      alpha = geom::Angle(n_pos-h_pos,i->o_pos-h_pos);
+      if(alpha<opts_.alpha_min || alpha>=opts_.alpha_max) continue;
+      beta = geom::Angle(h_pos-i->o_pos,i->c_pos-i->o_pos);
+      if(beta<opts_.beta_min || beta>=opts_.beta_max) continue;
+      gamma = geom::DihedralAngle(i->ca_pos,i->c_pos,i->o_pos,h_pos);
+      if(gamma<opts_.gamma_min || gamma>=opts_.gamma_max) continue;
+      pairwise_state = 0;
+      if(state == i->state) pairwise_state = state;
+
+      this->OnInteraction(pairwise_state,d,alpha,beta,gamma);
     }
-
-    d = geom::Distance(h_pos,i->o_pos);
-    if(d<opts_.d_min || d>=opts_.d_max) continue;
-    alpha = geom::Angle(n_pos-h_pos,i->o_pos-h_pos);
-    if(alpha<opts_.alpha_min || alpha>=opts_.alpha_max) continue;
-    beta = geom::Angle(h_pos-i->o_pos,i->c_pos-i->o_pos);
-    if(beta<opts_.beta_min || beta>=opts_.beta_max) continue;
-    gamma = geom::DihedralAngle(i->ca_pos,i->c_pos,i->o_pos,h_pos);
-    if(gamma<opts_.gamma_min || gamma>=opts_.gamma_max) continue;
-    pairwise_state = 0;
-    if(state == i->state) pairwise_state = state;
-
-    this->OnInteraction(pairwise_state,d,alpha,beta,gamma);
   }
 
   //current residue as acceptor
   for(std::vector<HBondSpatialOrganizerItem>::iterator i = in_reach.begin();
       i != in_reach.end(); ++i){
+
+    if(i->is_proline) continue;
 
     if(unique_bonds_){
       if(i->num-num<opts_.seq_sep){

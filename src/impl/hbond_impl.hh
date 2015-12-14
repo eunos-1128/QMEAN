@@ -74,14 +74,15 @@ struct DLLEXPORT_QMEAN HBondSpatialOrganizerItem{
 
   HBondSpatialOrganizerItem(geom::Vec3& n, geom::Vec3& ca, geom::Vec3& c,
                             geom::Vec3& o, geom::Vec3& h, int s,
-                            String c_n, int nu):n_pos(n),
-                                                ca_pos(ca),
-                                                c_pos(c),
-                                                o_pos(o),
-                                                h_pos(h),
-                                                state(s), 
-                                                chain_name(c_n), 
-                                                num(nu) { }
+                            String c_n, int nu, bool ip):n_pos(n),
+                                                         ca_pos(ca),
+                                                         c_pos(c),
+                                                         o_pos(o),
+                                                         h_pos(h),
+                                                         state(s), 
+                                                         chain_name(c_n), 
+                                                         num(nu),
+                                                         is_proline(ip) { }
   geom::Vec3 n_pos;
   geom::Vec3 ca_pos;
   geom::Vec3 c_pos;
@@ -90,6 +91,7 @@ struct DLLEXPORT_QMEAN HBondSpatialOrganizerItem{
   int state;
   String chain_name;
   int num;
+  bool is_proline;
 };
 
 class DLLEXPORT_QMEAN HBondPotentialImpl : public ost::mol::EntityVisitor {
