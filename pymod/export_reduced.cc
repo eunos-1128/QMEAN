@@ -10,10 +10,10 @@ using namespace qmean;
 using namespace boost::python;
 
 Real GetCountaa(ReducedStatisticPtr s, ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two) { return s->GetCount(aa_one, aa_two); }
-Real GetCountaabin(ReducedStatisticPtr s, ost::conop::AminoAcid aa_one,ost::conop::AminoAcid aa_two, int a, int b) { return s->GetCount(aa_one, aa_two, a, b); }
-Real GetCountbin(ReducedStatisticPtr s, int a, int b){ return s->GetCount(a,b); }
+Real GetCountaabin(ReducedStatisticPtr s, ost::conop::AminoAcid aa_one,ost::conop::AminoAcid aa_two, int a, int b, int c, int d) { return s->GetCount(aa_one, aa_two, a, b, c, d); }
+Real GetCountbin(ReducedStatisticPtr s, int a, int b, int c, int d){ return s->GetCount(a,b,c,d); }
 
-Real GetEnergy(ReducedPotentialPtr p, ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two, Real dist, Real ang) { return p->GetEnergy(aa_one, aa_two, dist, ang); }
+Real GetEnergy(ReducedPotentialPtr p, ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two, Real dist, Real alpha, Real beta, Real gamma) { return p->GetEnergy(aa_one, aa_two, dist, alpha, beta, gamma); }
 Real GetEnergyRes(ReducedPotentialPtr p, ost::mol::ResidueView& res, bool normalize) { p->GetEnergy(res, normalize); }
 Real GetEnergyResEnv(ReducedPotentialPtr p, ost::mol::ResidueView& res, ost::mol::EntityView& env, bool normalize) { p->GetEnergy(res, env, normalize); }
 
@@ -29,19 +29,20 @@ void export_Reduced()
   class_<impl::ReducedOpts>("ReducedOpts", no_init)
     .def_readonly("lower_cutoff", &impl::ReducedOpts::lower_cutoff)
     .def_readonly("upper_cutoff", &impl::ReducedOpts::upper_cutoff)
-    .def_readonly("num_angular_bins", &impl::ReducedOpts::num_angular_bins)
+    .def_readonly("num_angle_bins", &impl::ReducedOpts::num_angle_bins)
+    .def_readonly("num_dihedral_bins", &impl::ReducedOpts::num_dihedral_bins)
     .def_readonly("num_dist_bins", &impl::ReducedOpts::num_dist_bins)
     .def_readonly("sequence_sep", &impl::ReducedOpts::sequence_sep)
     .def_readonly("sigma", &impl::ReducedOpts::sigma)
   ;
 
-  class_<ReducedStatistic, bases<StatisticBase> >("ReducedStatistic", init<Real, Real, int, int, int>())
+  class_<ReducedStatistic, bases<StatisticBase> >("ReducedStatistic", init<Real, Real, int, int, int, int>())
     .def("Load", &ReducedStatistic::Load, (arg("filename"))).staticmethod("Load")
     .def("Save", &ReducedStatistic::Save, (arg("filename")))
     .def("Extract", &ReducedStatistic::Extract, (arg("target"), arg("env"), arg("weight")=1.0))
     .def("GetTotalCount", &ReducedStatistic::GetTotalCount)
-    .def("GetCount", &GetCountaabin, (arg("aa_one"),arg("aa_two"),arg("dist_bin"),arg("angle_bin")))
-    .def("GetCount", &GetCountbin, (arg("dist_bin"),arg("angle_bin")))
+    .def("GetCount", &GetCountaabin, (arg("aa_one"),arg("aa_two"),arg("dist_bin"),arg("alpha_bin"),arg("beta_bin"),arg("gamma_bin")))
+    .def("GetCount", &GetCountbin, (arg("dist_bin"),arg("alpha_bin"),arg("beta_bin"),arg("gamma_bin")))
     .def("GetCount", &GetCountaa, (arg("aa_one"),arg("aa_two")))
     .def("GetOptions", &ReducedStatistic::GetOpts, return_value_policy<reference_existing_object>())
   ;
@@ -51,7 +52,7 @@ void export_Reduced()
     .def("Save", &ReducedPotential::Save, (arg("filename")))
     .def("Create", &ReducedPotential::Create, (arg("reduced_statistic"),arg("sigma")=0.02,arg("reference_state")="classic")).staticmethod("Create")
     .def("SetEnvironment", &ReducedPotential::SetEnvironment, args("environment"))
-    .def("GetEnergy", &GetEnergy, (arg("amino_acid_a"),arg("amino_acid_b"), arg("distance"),arg("angle")))
+    .def("GetEnergy", &GetEnergy, (arg("amino_acid_a"),arg("amino_acid_b"), arg("distance"),arg("alpha"),arg("beta"),arg("gamma")))
     .def("GetEnergy", &GetEnergyRes, (arg("target_residue"),arg("normalize")=true))
     .def("GetEnergy", &GetEnergyResEnv, (arg("target_residue"),arg("environment_view"), arg("normalize")=true))
     .def("GetEnergies", &WrapGetEnergies, (arg("target_view"),arg("environment_view"),arg("normalize")=true))

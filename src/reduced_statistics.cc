@@ -3,10 +3,15 @@
 namespace qmean {
 
 ReducedStatistic::ReducedStatistic(Real l_cutoff, Real u_cutoff, int nab,
-                                   int ndb, int ssep):
-    histo_(IntegralClassifier(20,0), IntegralClassifier(20,0), ContinuousClassifier(ndb, l_cutoff, u_cutoff), ContinuousClassifier(nab, 0.0, M_PI)){
+                                   int ndab, int ndb, int ssep):
+    histo_(IntegralClassifier(20,0), 
+           IntegralClassifier(20,0), 
+           ContinuousClassifier(ndb, l_cutoff, u_cutoff), 
+           ContinuousClassifier(nab, 0.0, M_PI),
+           ContinuousClassifier(nab, 0.0, M_PI),
+           ContinuousClassifier(ndab, -M_PI, M_PI)){
 
-    impl::ReducedOpts opts(l_cutoff, u_cutoff, nab, ndb, ssep);
+    impl::ReducedOpts opts(l_cutoff, u_cutoff, nab, ndab, ndb, ssep);
     opts_=opts;
 }
 
@@ -31,8 +36,8 @@ void ReducedStatistic::OnSave(ost::io::BinaryDataSink& ds){
 }
 
 void ReducedStatistic::OnInteraction(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                                                 Real dist, Real angle){ 
-  histo_.Add(weight_, aa_one, aa_two, dist, angle);
+                                     Real dist, Real alpha, Real beta, Real gamma){ 
+  histo_.Add(weight_, aa_one, aa_two, dist, alpha, beta, gamma);
 }
 
 void ReducedStatistic::Extract(ost::mol::EntityView& target, ost::mol::EntityView& env, Real weight){
@@ -48,8 +53,12 @@ Real ReducedStatistic::GetTotalCount(){
   for (size_t i=0; i<ost::conop::XXX; ++i) {
     for (size_t j=0; j<ost::conop::XXX; ++j) {
       for (size_t k=0; k<opts_.num_dist_bins; ++k) {
-        for (size_t l=0; l<opts_.num_angular_bins; ++l) {
-          count+=histo_.Get(Index(i, j, k, l));
+        for (size_t l=0; l<opts_.num_angle_bins; ++l) {
+          for (size_t m=0; m<opts_.num_angle_bins; ++m) {
+            for (size_t n=0; n<opts_.num_dihedral_bins; ++n) {
+              count+=histo_.Get(Index(i, j, k, l, m, n));
+            }
+          }
         }
       }
     }
@@ -62,27 +71,31 @@ Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoA
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;
   for (size_t k=0; k<opts_.num_dist_bins; ++k) {
-    for (size_t l=0; l<opts_.num_angular_bins; ++l) {
-      count+=histo_.Get(Index(aa_one, aa_two, k, l));
+    for (size_t l=0; l<opts_.num_angle_bins; ++l) {
+      for (size_t m=0; m<opts_.num_angle_bins; ++m) {
+        for (size_t n=0; n<opts_.num_dihedral_bins; ++n) {
+          count+=histo_.Get(Index(aa_one, aa_two, k, l, m, n));
+        }
+      }
     }
   }
   return count;
 }
 
 Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-              int dist_bin, int ang_bin){
+                                int dist_bin, int alpha_bin, int beta_bin, int gamma_bin){
 
   return histo_.Get(ReducedHistogram::IndexType(aa_one, aa_two, dist_bin,
-                                                ang_bin));
+                                                alpha_bin, beta_bin, gamma_bin));
 }
 
-Real ReducedStatistic::GetCount(int dist_bin, int ang_bin) {
+Real ReducedStatistic::GetCount(int dist_bin, int alpha_bin, int beta_bin, int gamma_bin) {
 
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;
   for (size_t i=0; i<ost::conop::XXX; ++i) {
     for (size_t j=0; j<ost::conop::XXX; ++j) {
-      count+=histo_.Get(Index(i, j, dist_bin, ang_bin));
+      count+=histo_.Get(Index(i, j, dist_bin, alpha_bin, beta_bin, gamma_bin));
     }
   }
   return count;

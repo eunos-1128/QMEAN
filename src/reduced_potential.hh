@@ -9,7 +9,7 @@ namespace qmean {
 
 class ReducedPotential;
 typedef boost::shared_ptr<ReducedPotential> ReducedPotentialPtr;
-typedef MultiClassifier<float, int, int, float, float> ReducedEnergies;
+typedef MultiClassifier<float, int, int, float, float, float, float> ReducedEnergies;
 
 
 class DLLEXPORT_QMEAN ReducedPotential : public PotentialBase, public impl::ReducedPotentialImpl{
@@ -22,7 +22,7 @@ public:
   virtual void OnSave(io::BinaryDataSink& ds);
 
   virtual void OnInteraction(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                             Real dist, Real angle);
+                             Real dist, Real alpha, Real beta, Real gamma);
 
   static ReducedPotentialPtr Create(ReducedStatisticPtr s, Real sigma, const String& reference_state);
 
@@ -30,7 +30,7 @@ public:
 
   PotentialType GetType() { return Reduced; }
 
-  Real GetEnergy(ost::conop::AminoAcid a, ost::conop::AminoAcid b, Real distance, Real angle);
+  Real GetEnergy(ost::conop::AminoAcid a, ost::conop::AminoAcid b, Real distance, Real alpha, Real beta, Real gamma);
 
   Real GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env, bool normalize);
 

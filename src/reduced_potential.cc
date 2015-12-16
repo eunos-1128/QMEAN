@@ -23,8 +23,9 @@ void ReducedPotential::OnSave(io::BinaryDataSink& ds){
 }
 
 void ReducedPotential::OnInteraction(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                             Real dist, Real angle){
-  energy_+=energies_.Get(aa_one, aa_two, dist, angle);
+                             Real dist, Real alpha, Real beta, Real gamma){
+
+  energy_+=energies_.Get(aa_one, aa_two, dist, alpha, beta, gamma);
   ++count_;
 }
 
@@ -34,12 +35,16 @@ ReducedPotentialPtr ReducedPotential::Create(ReducedStatisticPtr s, Real sigma, 
   p->opts_=s->GetOpts();
   p->opts_.sigma=sigma;
   p->energies_=ReducedEnergies(0.0, IntegralClassifier(20, 0),
-                                 IntegralClassifier(20, 0),
-                                 ContinuousClassifier(p->opts_.num_dist_bins,
-                                                      p->opts_.lower_cutoff,
-                                                      p->opts_.upper_cutoff),
-                                 ContinuousClassifier(p->opts_.num_angular_bins,
-                                                      0.0, M_PI));
+                                    IntegralClassifier(20, 0),
+                                    ContinuousClassifier(p->opts_.num_dist_bins,
+                                                         p->opts_.lower_cutoff,
+                                                         p->opts_.upper_cutoff),
+                                    ContinuousClassifier(p->opts_.num_angle_bins,
+                                                         0.0, M_PI),
+                                    ContinuousClassifier(p->opts_.num_angle_bins,
+                                                         0.0, M_PI),
+                                    ContinuousClassifier(p->opts_.num_dihedral_bins,
+                                                         -M_PI, M_PI));
 
   p->Fill(s, reference_state);
   return p;
@@ -48,14 +53,18 @@ ReducedPotentialPtr ReducedPotential::Create(ReducedStatisticPtr s, Real sigma, 
 void ReducedPotential::Fill(ReducedStatisticPtr stats, const String& reference_state){
 
   typedef ReducedEnergies::IndexType Index;
-  boost::multi_array<Real,2> reference(boost::extents[opts_.num_dist_bins][opts_.num_angular_bins]);
+  boost::multi_array<Real,4> reference(boost::extents[opts_.num_dist_bins][opts_.num_angle_bins][opts_.num_angle_bins][opts_.num_dihedral_bins]);
 
   Real total_count=stats->GetTotalCount();
 
   if(reference_state=="classic"){
     for(int i=0;i<opts_.num_dist_bins;++i){
-      for(int j=0;j<opts_.num_angular_bins;++j){
-        reference[i][j]=stats->GetCount(i,j)/total_count;
+      for(int j=0;j<opts_.num_angle_bins;++j){
+        for(int k=0;k<opts_.num_angle_bins;++k){
+          for(int l=0;l<opts_.num_dihedral_bins;++l){
+            reference[i][j][k][l]=stats->GetCount(i,j,k,l)/total_count;
+          }
+        }
       }
     }
   }
@@ -70,14 +79,18 @@ void ReducedPotential::Fill(ReducedStatisticPtr stats, const String& reference_s
     for (size_t j=0; j<ost::conop::XXX; ++j) {
       Real sequence_count = stats->GetCount(ost::conop::AminoAcid(i), ost::conop::AminoAcid(j));
       for (size_t k=0; k<opts_.num_dist_bins; ++k) {
-        for (size_t l=0; l<opts_.num_angular_bins; ++l) {
-          Real propensity = 0.0;
-          Real sequence_conformation_count = stats->GetCount(ost::conop::AminoAcid(i), ost::conop::AminoAcid(j), k, l);
-          if(sequence_count>0 && reference[k][l]>0){
-            propensity=sequence_conformation_count/sequence_count/reference[k][l];
+        for (size_t l=0; l<opts_.num_angle_bins; ++l) {
+          for (size_t m=0; m<opts_.num_angle_bins; ++m) {
+            for (size_t n=0; n<opts_.num_dihedral_bins; ++n) {
+              Real propensity = 0.0;
+              Real sequence_conformation_count = stats->GetCount(ost::conop::AminoAcid(i), ost::conop::AminoAcid(j), k, l, m, n);
+              if(sequence_count>0 && reference[k][l][m][n]>0){
+                propensity=sequence_conformation_count/sequence_count/reference[k][l][m][n];
+              }
+              Real e=(log(1+opts_.sigma*sequence_count)-log(1+opts_.sigma*sequence_count*propensity));
+              energies_.Set(Index(i, j, k, l, m, n), e);
+            }
           }
-          Real e=(log(1+opts_.sigma*sequence_count)-log(1+opts_.sigma*sequence_count*propensity));
-          energies_.Set(Index(i, j, k, l), e);
         }
       }
     }
@@ -85,17 +98,22 @@ void ReducedPotential::Fill(ReducedStatisticPtr stats, const String& reference_s
 }
 
 Real ReducedPotential::GetEnergy(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                                    Real dist, Real angle){
+                                    Real dist, Real alpha, Real beta, Real gamma){
 
   if(dist<opts_.lower_cutoff || dist>=opts_.upper_cutoff){
     return std::numeric_limits<Real>::quiet_NaN();
   }
 
-  Real a = fmod(angle,M_PI);
-  if(a==M_PI){
-    a-=0.0001;
+  if(alpha >= M_PI || alpha < 0){
+    throw io::IOException("alpha must be within [0,pi[");
   }
-  return energies_.Get(aa_one, aa_two, dist, a);
+  if(beta >= M_PI || beta < 0){
+    throw io::IOException("beta must be within [0,pi[");
+  }
+  if(gamma >= M_PI || gamma < -M_PI){
+    throw io::IOException("gamma must be within [-pi,pi[");
+  }
+  return energies_.Get(aa_one, aa_two, dist, alpha, beta, gamma);
 }
 
 Real ReducedPotential::GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env, bool normalize){

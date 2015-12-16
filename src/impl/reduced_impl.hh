@@ -11,22 +11,22 @@ namespace qmean { namespace impl {
 
   
 struct DLLEXPORT_QMEAN ReducedOpts{
-ReducedOpts(): lower_cutoff(0), upper_cutoff(0), num_angular_bins(0),
-                num_dist_bins(0), sequence_sep(0), sigma(0)
-  { }
+ReducedOpts(): lower_cutoff(0), upper_cutoff(0), num_angle_bins(0), 
+               num_dihedral_bins(0), num_dist_bins(0), sequence_sep(0), 
+               sigma(0) { }
 
-ReducedOpts(Real l_cutoff, Real u_cutoff, int nab,
+ReducedOpts(Real l_cutoff, Real u_cutoff, int nab, int ndab,
              int ndb, int ssep, Real s=0.02):
              lower_cutoff(l_cutoff), upper_cutoff(u_cutoff),
-             num_angular_bins(nab), num_dist_bins(ndb),
-             sequence_sep(ssep), sigma(s)
-  { }
+             num_angle_bins(nab),  num_dihedral_bins(ndab),
+             num_dist_bins(ndb), sequence_sep(ssep), sigma(s) { }
 
 public:
 
   Real lower_cutoff;
   Real upper_cutoff;
-  int num_angular_bins;
+  int num_angle_bins;
+  int num_dihedral_bins;
   int num_dist_bins;
   int sequence_sep;
   Real sigma;
@@ -37,7 +37,8 @@ public:
   {
     ds & lower_cutoff;
     ds & upper_cutoff;
-    ds & num_angular_bins;
+    ds & num_angle_bins;
+    ds & num_dihedral_bins;
     ds & num_dist_bins;
     ds & sequence_sep;
     ds & sigma;
@@ -49,11 +50,11 @@ struct DLLEXPORT_QMEAN ReducedSpatialOrganizerItem{
   ReducedSpatialOrganizerItem() { }
 
   ReducedSpatialOrganizerItem(geom::Vec3 p, geom::Vec3 ax, 
-                       ost::conop::AminoAcid a, int n, const String& c_n):
-                       pos(p), cacb_axis(ax), aa(a), number(n), chain_name(c_n) { }
+                              ost::conop::AminoAcid a, int n, const String& c_n):
+                              pos(p), axis(ax), aa(a), number(n), chain_name(c_n) { }
 
   geom::Vec3 pos;
-  geom::Vec3 cacb_axis;
+  geom::Vec3 axis;
   ost::conop::AminoAcid aa;
   int number;
   String chain_name;
@@ -70,13 +71,13 @@ public:
 
   virtual bool VisitResidue(const ost::mol::ResidueHandle& res);
 
-  static bool GetCAlphaCBetaPos(const ost::mol::ResidueHandle& res,
-                                geom::Vec3& ca_pos,
-                                geom::Vec3& cb_pos);
+  static bool GetAxis(const ost::mol::ResidueHandle& res,
+                       geom::Vec3& axis);
 
   virtual void OnInteraction(ost::conop::AminoAcid aa_one,
                              ost::conop::AminoAcid aa_two,
-                             Real dist, Real angle)=0;
+                             Real dist, Real alpha, Real beta,
+                             Real gamma)=0;
 
   void SetEnvironment(ost::mol::EntityView& env);
 

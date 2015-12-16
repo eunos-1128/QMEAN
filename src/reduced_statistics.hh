@@ -8,7 +8,7 @@ namespace qmean {
 
 class ReducedStatistic;
 typedef boost::shared_ptr<ReducedStatistic> ReducedStatisticPtr;
-typedef FloatHistogram<int,int,float,float> ReducedHistogram;
+typedef FloatHistogram<int,int,float,float,float,float> ReducedHistogram;
 
 // parametrized as first amino acid, second amino acid,
 // calpha-calpha distance, angle
@@ -18,7 +18,7 @@ class DLLEXPORT_QMEAN ReducedStatistic : public StatisticBase, impl::ReducedPote
 public:
   ReducedStatistic() { }
 
-  ReducedStatistic(Real l_cutoff, Real u_cutoff, int nab,
+  ReducedStatistic(Real l_cutoff, Real u_cutoff, int nab, int ndab,
                     int ndb, int ssep);
 
   static ReducedStatisticPtr Load(const String& filename);
@@ -26,20 +26,20 @@ public:
   virtual void OnSave(io::BinaryDataSink& ds);
 
   virtual void OnInteraction(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                             Real dist, Real angle);
+                             Real dist, Real alpha, Real beta, Real gamma);
 
   void Extract(ost::mol::EntityView& target, ost::mol::EntityView& env, Real weight);
 
   Real GetTotalCount();
 
   Real GetCount(ost::conop::AminoAcid aa_one,
-                    ost::conop::AminoAcid aa_two);
+                ost::conop::AminoAcid aa_two);
 
 
   Real GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                int dist_bin, int ang_bin);
+                int dist_bin, int alpha_bin, int beta_bin, int gamma_bin);
 
-  Real GetCount(int dist_bin, int ang_bin);
+  Real GetCount(int dist_bin, int alpha_bin, int beta_bin, int gamma_bin);
 
   impl::ReducedOpts& GetOpts() { return opts_; }
 
