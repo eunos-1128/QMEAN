@@ -55,6 +55,10 @@ Description of columns:
   acc_agreement Agreement score of burial status predicted by accpro, with the
                 the observed burial status in the structure (DSSP).
 
+  dist_const    Score predicting correctness of pairwise residue distances in the model.
+                Distance constraints are obtained from distances between residue pairs
+                in homologous templates.
+
   lddt          Predicted local lDDT value. A value describing the expected local
                 similarity to the target structure with a range of [0,1]. 
 '''
@@ -302,12 +306,12 @@ class LocalResult:
 
 
   @staticmethod
-  def Create(model, settings, assign_bfactors, psipred=None, accpro=None):
+  def Create(model, settings, assign_bfactors, psipred=None, accpro=None,dc=None):
 
     pot = PotentialContainer.Load(settings.local_potentials)
     scorer = score_calculator.LocalScorer.Load(settings.local_scorer)
     local_mqa = mqa.Scores(model, model, pot, smooth_std=5.0, psipred=psipred, 
-                            accpro=accpro, assign_dssp=False)
+                            accpro=accpro, dc=dc, assign_dssp=False)
 
     local_mqa.CalculateScores(['interaction','cbeta','packing','torsion','exposed'])
 
@@ -325,6 +329,13 @@ class LocalResult:
       data['acc_agreement'] = temp['acc_agreement']
     except:
       data['acc_agreement'] = model.residue_count*[float('NaN')]
+    try:
+      local_mqa.CalculateScores(['dist_const'])
+      temp = local_mqa.GetLocalData(['dist_const'])     
+      data['dist_const'] = temp['dist_const']    
+    except:
+      data['dist_const'] = model.residue_count*[float('NaN')]      
+
 
 
     scores = list()
@@ -343,6 +354,9 @@ class LocalResult:
         ss = 'coil'
       scores.append(min(max(scorer.GetLocalScore(ss, r.one_letter_code, residue_data),0.0),1.0))
 
+    if dc:
+      global_result=GlobalResult.Create(model,settings) #TODO no need to compute twice
+      scores = local_mqa.UpdateScores(scores,settings,global_result) 
     data['lDDT'] = scores
 
     if assign_bfactors:
@@ -352,8 +366,8 @@ class LocalResult:
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'all_atom',
                    'cbeta', 'solvation', 'torsion', 'exposed',
-                   'ss_agreement', 'acc_agreement', 'lDDT',],
-                   'siisffffffff')
+                   'ss_agreement', 'acc_agreement', 'dist_const', 'lDDT',],
+                   'siisfffffffff')
 
     for i, res in enumerate(model.residues):
       lscores.AddRow({ 'chain' : res.chain.name,
@@ -367,6 +381,7 @@ class LocalResult:
                       'exposed' : data['exposed'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
+                      'dist_const' :data['dist_const'][i],
                       'lDDT' : data['lDDT'][i]})
 
     lscores.comment=LSCORES_TABLE_HEADER
@@ -376,7 +391,7 @@ class LocalResult:
 
 def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
                        global_scores=True, table_format='ost', psipred=None, 
-                       accpro=None,settings=conf.SwissmodelSettings(), dssp_path=None,
+                       accpro=None,dc=None,settings=conf.SwissmodelSettings(), dssp_path=None,
                        assign_bfactors=True):
   #hack, that torsion handles get assigned
   processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,assign_torsions=True)
@@ -424,7 +439,7 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
           p.savefig(os.path.join(sliders_dir,'%s.png'%(sm_conversions[s.name])))
     results.append(global_result)
   if local_scores:
-    local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro)
+    local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro,dc=dc)
     tab=local_result.score_table
     tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
     if plots:

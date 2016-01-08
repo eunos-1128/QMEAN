@@ -1,4 +1,4 @@
-import os, sys, json, shutil, fcntl
+import os, sys, json, shutil, fcntl, subprocess
 try:
   import hashlib
 except ImportError:
@@ -11,6 +11,7 @@ from qmean import mqa_result_membrane
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from qmean import FindMembrane
+from qmean import FillDCData
 from ost.io import LoadPDB
 from ost.io import SavePDB
 from ost.io import LoadSequence
@@ -21,9 +22,14 @@ from ost.bindings import msms
 from ost.seq import CreateSequence
 from ost.seq import CreateSequenceList
 from sm import config
-from sm.smtl import structanno
+from sm.smtl import structanno, SMTL
+from sm.core.hhblits import ParseHHblitsOutput
+from sm.pipeline.model import HomologyModel
 import smtplib
 from email.mime.text import MIMEText
+from numpy import empty
+from scipy import cluster,spatial,array,split
+from operator import itemgetter
 
 
 def CopyFromCache(cache_dir,hash,path):
@@ -273,8 +279,170 @@ def GetSequenceFeatures(sequences, hhblits_cache, accpro_cache, out_dir):
 
   return (psipred_handler, accpro_handler)
 
-def GetDistanceConstraints(sequences, hhblits_cache):
-  return None
+def Search(a3m_file, database, out_dir, options={}, prefix=''):
+
+  opts = {'cpu' : 1, # no. of cpus used
+          'n'   : 1}   # no. of iterations
+  opts.update(options)
+  o = []
+  f = []
+  for k, v in opts.iteritems():
+    if type(v) == type(True):
+      if v == True:
+        o.append('-%s' % str(k))
+        f.append(str(k))
+    else:
+      o.append('-%s %s' % (str(k), str(v)))
+      f.append('%s%s' % (str(k), str(v)))
+  o = ' '.join(o)
+  f = '_'.join(f)
+  base = os.path.basename(os.path.splitext(a3m_file)[0])
+  hhr_file = '%s%s_%s.hhr' % (prefix, base, f)
+  hhr_file = os.path.join(out_dir,hhr_file)#("self.working_dir", hhr_file)
+  hhblits_bin = os.path.join(config.HHSUITE_ROOT_DIR, 'bin/hhblits')
+  search_cmd='%s %s -e 0.001 -Z 10000 -B 10000 -i %s -o %s -d %s'%(hhblits_bin, 
+                                                            o, a3m_file,
+                                                            hhr_file,
+                                                            database)
+  job = subprocess.Popen(search_cmd, shell=True, cwd=out_dir,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  sout, serr = job.communicate()
+  if job.returncode !=0:
+      lines = sout.splitlines()
+      for l in lines:
+          print l.strip()
+      lines = serr.splitlines()
+      for l in lines:
+          print l.strip()
+      return None   
+  return hhr_file
+
+def HasAtLeastNResidues(aln, threshold=15):
+
+  count = 0 
+  for a in aln: 
+    if a[0] != '-' and a[1] != '-': 
+      count += 1 
+      if count >= threshold: 
+        return True 
+  return False
+
+def StripTerminalTags(aln, tags):
+
+  # Strip off terminal expression and purification tags listed in tags
+  s1=aln.sequences[0].Copy()
+  s2=aln.sequences[1].Copy()
+  removed=0
+  for i, c in enumerate(s2):
+    if c=='-':
+      continue
+    found=False
+    ri=aln.sequences[1].GetResidueIndex(i)
+    for tag in tags:
+      if ri>=tag[0] and ri<tag[1]:
+        s2[i]='-'
+        removed+=1
+        found=True
+        break
+    if not found:
+      break
+  for i in range(len(s2)-1, -1, -1):
+    if s2[i] == '-':
+      continue
+    found = False
+    ri = aln.sequences[1].GetResidueIndex(i)
+    for tag in tags:
+      if ri >= tag[0] and ri<tag[1]:
+        s2[i] = '-'
+        found = True
+    if not found:
+      break
+  s2.offset+=removed
+  return seq.CreateAlignment(s1, s2)
+
+def ClusterTemplates(seqres,aln_dict):
+
+  #Multiple sequence alignment  
+  alns = ost.seq.AlignmentList()
+  tpl_list = list()
+  for k,aln in sorted(aln_dict.items()):
+    alns.append(aln)
+    tpl_list.append(k)  
+  ref_seq = seq.CreateSequence("ref", seqres)
+  msaln = ost.seq.alg.MergePairwiseAlignments(alns,ref_seq)
+  
+  #Cluster templates by Sequence Similarity
+  weight_mat= ost.seq.alg.BLOSUM62
+  sim_mat= empty([msaln.GetCount()-1,msaln.GetCount()-1])
+
+  if msaln.GetCount() == 1:   #no templates
+    cluster_list =  []
+  elif msaln.GetCount() == 2: #only one template
+    cluster_list = [[0]]
+  else:  
+    for i in range(1,msaln.GetCount()):
+      for j in range(i,msaln.GetCount()):
+        actual_sim = seq.alg.SequenceSimilarity(msaln,weight_mat,False,i,j)
+        sim_mat[i-1,j-1] = actual_sim
+        sim_mat[j-1,i-1] = actual_sim
+
+    condensed = spatial.distance.pdist(sim_mat)
+    h_cluster = cluster.hierarchy.linkage(condensed) 
+    f_cluster = cluster.hierarchy.fcluster(h_cluster,2,criterion= 'distance')
+    assignment = array(sorted(zip(list(f_cluster),range(len(tpl_list))),key= itemgetter(0)))
+
+    split_list = list()
+    for i,ele in enumerate(assignment):
+      if ele[0]!=assignment[i-1][0]:
+        split_list.append(i)
+
+    clusters = split(assignment,split_list[1:])
+    cluster_list = list()
+    for cl in clusters:
+      cluster_list.append(cl[:,1].tolist())
+  return msaln, cluster_list, tpl_list 
+
+def GetDistanceConstraints(sequences, hhblits_cache, tmp_dir):
+
+  dc_list = list()
+  tpl_lib = SMTL(config.SMTL_ROOT_DIR)
+  
+  for sequence in sequences:
+    h = hashlib.md5(sequence.GetString()).hexdigest()
+    a3m_file = os.path.join(hhblits_cache,h)
+    aln_dict = dict()
+    hhr_file = Search(a3m_file,database=config.SMTL_HHBLITS_DB_PREFIX, out_dir=tmp_dir)
+    _, hits = ParseHHblitsOutput(open(hhr_file))
+    os.remove(hhr_file)
+    
+    for hit in hits:      
+      start = hit.aln.sequences[0].offset
+      end = start+len(hit.aln.sequences[0].gapless_string)
+      clusters = tpl_lib.cmp_chains_index.GetClusterList(hit.hit_id)
+      for cluster in clusters:
+        tpl_id = cluster[0]
+        new_aln = seq.CreateAlignment(seq.CreateSequence("target", sequence.GetString()),
+                                      seq.CreateSequence(tpl_id, '-'*len(sequence)))
+
+        new_aln[start:end].Replace(hit.aln[:])
+        new_aln.SetSequenceOffset(1, hit.aln.sequences[1].offset)
+        smt_id, assembly_id, chain_name = tpl_id.split('.')
+        bio_unit = tpl_lib.Get(smt_id,int(assembly_id))
+        bio_unit_chain = bio_unit.GetChainByName(chain_name)
+        new_aln = StripTerminalTags(new_aln, bio_unit_chain.expr_tags)
+        offset=new_aln.sequences[1].offset
+        trg_sr_to_tpl_ar_aln = bio_unit_chain.ToAtomSeqAlignment(new_aln)
+        if not HasAtLeastNResidues(trg_sr_to_tpl_ar_aln, 15):
+          continue
+
+        pruned_aln = HomologyModel.PruneAtomSeqAlignment(trg_sr_to_tpl_ar_aln,2)        
+        fn = tpl_lib.FilenameForModel(smt_id,int(assembly_id),chain_name)
+        aln_dict[fn] = pruned_aln
+
+    msaln, cluster_list, tpl_list = ClusterTemplates(sequence.GetString(),aln_dict)   
+    dcdata = FillDCData(msaln,cluster_list,tpl_list,ost.seq.alg.BLOSUM62) 
+    dc_list.append(dcdata) 
+  return dc_list  
 
 def GetMemParam(model,working_dir):
 
@@ -412,6 +580,8 @@ if "results_page" in project_data["meta"]:
   results_page = project_data["meta"]["results_page"]
 
 
+
+
 #lets extract the names of the models and the sequences
 model_files = list()
 sequences = list()
@@ -421,6 +591,9 @@ for item in project_data["models"]:
   for s in item["seqres"]:
     seq_list.AddSequence(ost.seq.CreateSequence(str(s["name"]),str(s["sequence"])))
   sequences.append(seq_list)
+
+print model_files
+print sequences
 
 #iterate over all models and do the quality assessment
 for i,f in enumerate(model_files):
@@ -439,7 +612,7 @@ for i,f in enumerate(model_files):
 
   dc = None
   if use_qmeandisco:
-    dc = GetDistanceConstraints(sequences,hhblits_cache)
+    dc = GetDistanceConstraints(sequences[i],hhblits_cache,tmp_dir)
 
   membrane_representation = None
   if use_qmeanbrane:
@@ -450,6 +623,7 @@ for i,f in enumerate(model_files):
                                            output_dir = out_path,
                                            psipred = psipred_handler,
                                            accpro = accpro_handler,
+                                           dc = dc,
                                            dssp_path = config.DSSP_BIN)
     do_local_assessment = False
     
@@ -460,6 +634,7 @@ for i,f in enumerate(model_files):
                                 output_dir = out_path, 
                                 psipred = psipred_handler,
                                 accpro = accpro_handler,
+                                dc = dc,
                                 dssp_path = config.DSSP_BIN)
 
 

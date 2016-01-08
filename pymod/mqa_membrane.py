@@ -4,11 +4,13 @@ from ost.bindings import dssp
 from ost.bindings import msms
 from ost.bindings import naccess
 from ost import mol
+import pickle
+from predicted_sequence_features import AlignChainToSEQRES
 
 
 class MembraneScores:
 
-  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
+  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, dc=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
     self.data=dict()
 
     #set structural data
@@ -37,6 +39,14 @@ class MembraneScores:
         self.accpro = accpro
       else:
         self.accpro = len(self.target.chains) * [accpro]
+
+    if dc != None:  
+      if isinstance(dc,list):
+        if len(dc) != len(target.chains):
+          raise ValueError("List of provided DCData must have same length as chains in target!")
+        self.dc = dc
+      else:
+        self.dc = len(self.target.chains) * [dc]    
 
     #set all the other parameters
     self.potential_container_soluble=potential_container_soluble
@@ -237,6 +247,11 @@ class MembraneScores:
           return_data['acc_agreement'] = self.data['acc_agreement']
         except:
           raise ValueError("Did not calculate the acc_agreement feature!")
+      elif f == 'dist_const':
+        try:
+          return_data['dist_const'] = self.data['dist_const']
+        except:
+          raise ValueError("Did not calculate the dist_const feature!")        
       elif f == 'fraction_loops':
         try:
           return_data['fraction_loops'] = self.data['fraction_loops']
@@ -351,6 +366,11 @@ class MembraneScores:
           self.GetACCAgreement()
         else:
           raise ValueError("you must provide accpro data for acc_agreement term!")
+      elif f == 'dist_const':
+        if self.dc!=None:
+          self.GetConstraints()
+        else:
+          raise ValueError("you must provide dc data for Distance Constraints term!")     
       elif f == 'fraction_loops':
         self.GetFractionLoops()
       elif f == 'exposed':
@@ -514,6 +534,43 @@ class MembraneScores:
         self.data['acc_agreement']=acc_agreement
     else:
       raise ValueError("Cannot calculate acc_agreement term without accpro information!")
+
+  def GetConstraints(self):
+    if self.dc!=None:
+      dist_const = []
+      for c,d in zip(self.target.chains, self.dc):
+        entity_view =self.target.Select('cname ='+c.name)
+        aln = AlignChainToSEQRES(entity_view, d.seq)
+        aln.AttachView(1, entity_view)
+        dist_const += DCScore(aln,d)
+      self.data['avg_dist_const'] = self.GetAverage(dist_const)
+      self.data['dist_const'] = dist_const   
+    else:   
+      raise ValueError("Cannot calculate dist_const term without DCData information!")
+    
+  def UpdateScores(self,scores,settings):
+    updated_scores = list()
+    disco_tree = pickle.load(open(settings.disco_tree_membrane)) 
+    chain_start_index = 0
+
+    for c,d in zip(self.target.chains, self.dc): 
+      entity_view =self.target.Select('cname ='+c.name)
+      aln = AlignChainToSEQRES(entity_view, d.seq)
+      aln.AttachView(1, entity_view)
+      feature_values = DetermineFeatureValues(aln,d)
+      feature_values = [list(x)  for x in feature_values] #convert to python lists
+      for i in range(len(c.residues)):
+        try:  
+          feature_values[i].extend([scores[i], self.data['dist_const'][i+chain_start_index]])
+          qmean_disco_score = disco_tree.predict([feature_values[i]])[0]
+          updated_scores.append(qmean_disco_score)
+        except:
+          if scores[i+chain_start_index]== scores[i+chain_start_index]:
+            updated_scores.append(scores[i+chain_start_index])
+          else: 
+            updated_scores.append(self.data['dist_const'][i+chain_start_index]) 
+      chain_start_index += len(c.residues)      
+    return updated_scores   
 
   def GetAverage(self, value_list):
     temp = list()
