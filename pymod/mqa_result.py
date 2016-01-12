@@ -167,7 +167,7 @@ class GlobalResult:
 
     tab=Table(['name','norm','z_score'],'sff')
 
-    ref_set = reference_set.ReferenceSet(Table.Load(settings.reference_tab,format='pickle'))
+    ref_set = reference_set.ReferenceSet(Table.Load(settings.reference_tab))
     pot = PotentialContainer.Load(settings.global_potentials)
     scorer = score_calculator.GlobalScorer.Load(settings.global_scorer)
     global_mqa = mqa.Scores(model, model, pot, psipred=psipred, 

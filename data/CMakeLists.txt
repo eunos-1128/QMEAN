@@ -5,7 +5,7 @@ qmean/potentials/membrane_local_potentials.dat
 qmean/potentials/membrane_global_potentials.dat
 )
 set(REFERENCES
-qmean/reference_values/reference_tab_promod_scorer.dat
+qmean/reference_values/reference_tab_promod_scorer.txt
 )
 set(SCORER
 qmean/scorer/promod_local_scorer.dat
