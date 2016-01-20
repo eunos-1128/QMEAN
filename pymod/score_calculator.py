@@ -19,7 +19,7 @@ class Scorer():
     self.weights=None
     self.trained_features=None
 
-  def TrainWeights(self, table, feature_names, method='robust'):
+  def TrainWeights(self, table, feature_names, method='leastsqr'):
 
     data=list()
     target=list()
