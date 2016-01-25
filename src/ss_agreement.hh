@@ -41,7 +41,7 @@ public:
     if(psiconf<0 || psiconf>9){
       throw std::invalid_argument("confidence value must be in [0,9]");
     }
-    return dsspcondP_[DSSPToIndex(d)][PsiPredToIndex(psipred)][psiconf];
+    return overallP_[DSSPToIndex(d)][PsiPredToIndex(psipred)][psiconf];
   }
 
   Real LogOddScore(char d, char psipred, int psiconf) const {
@@ -50,13 +50,13 @@ public:
     }
     int idx_dssp = DSSPToIndex(d);
     int idx_psipred = PsiPredToIndex(psipred);
-    return log(dsspcondP_[idx_dssp][idx_psipred][psiconf]/(psipredP_[psiconf][idx_psipred]*dsspP_[idx_dssp]));
+    return log(overallP_[idx_dssp][idx_psipred][psiconf]/(psipredP_[psiconf][idx_psipred]*dsspP_[idx_dssp]));
   }
 
 private:
   Real psipredP_[10][3];
   Real dsspP_[7];
-  Real dsspcondP_[7][3][10];
+  Real overallP_[7][3][10];
 };
 
 }
