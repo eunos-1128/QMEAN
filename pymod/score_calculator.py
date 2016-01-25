@@ -147,7 +147,7 @@ class LocalScorer():
     self.AANames=['A', 'R', 'N', 'D', 'Q', 'E', 'K', 'S', 'C', 'M', 'W', 'Y', 'T', 'V', 'I', 'L', 'G', 'P', 'H', 'F']
     self.last_used_features=list()
 
-  def TrainNewType(self, features, tab, residue_type, method='robust'):
+  def TrainNewType(self, features, tab, residue_type, method='leastsqr'):
 
     import itertools
 
@@ -273,7 +273,7 @@ class GlobalScorer():
     self.feature_combinations=dict()
     self.trained_types=list()
 
-  def TrainNewType(self, features, tab, structure_type, method='robust'):
+  def TrainNewType(self, features, tab, structure_type, method='leastsqr'):
 
     import itertools
 
