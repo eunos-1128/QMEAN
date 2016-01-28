@@ -28,7 +28,7 @@ Real GetCount_bins(TorsionStatisticPtr s, boost::python::list& bins) {
   return s->GetCount(vec_bins); 
 }
 
-Real GetEnergyView(TorsionPotentialPtr p, ost::mol::ResidueView& view, bool normalize){ return p->GetEnergy(view,normalize); }
+Real GetEnergyView(TorsionPotentialPtr p, ost::mol::ResidueView& view){ return p->GetEnergy(view); }
 
 Real GetEnergyParams(TorsionPotentialPtr p, list& r_n, list& a){ 
   std::vector<String> residue_names = ListToVec<String>(r_n);
@@ -41,8 +41,8 @@ Real GetEnergyStringID(TorsionPotentialPtr p, const String& g_id, list& a){
   return p->GetEnergy(g_id, angles); 
 }
 
-list WrapGetEnergies(TorsionPotentialPtr p, ost::mol::EntityView& target, bool normalize){
-  std::vector<Real> energies = p->GetEnergies(target, normalize);
+list WrapGetEnergies(TorsionPotentialPtr p, ost::mol::EntityView& target){
+  std::vector<Real> energies = p->GetEnergies(target);
   list ret_list = VecToList<Real>(energies);
   return ret_list;
 }
@@ -72,8 +72,8 @@ class_<TorsionPotential, bases<PotentialBase> >("TorsionPotential", no_init)
   .def("Load", &TorsionPotential::Load, (arg("filename"))).staticmethod("Load")
   .def("Save", &TorsionPotential::Save, (arg("filename")))
   .def("Create", &TorsionPotential::Create, (arg("torsion_statistic"),arg("sigma")=0.02,arg("reference_state")="classic")).staticmethod("Create")
-  .def("GetEnergies", &WrapGetEnergies, (arg("target"),arg("normalize")=true))
-  .def("GetEnergy", &GetEnergyView, (arg("target_residue"),arg("normalize")=true))
+  .def("GetEnergies", &WrapGetEnergies, (arg("target")))
+  .def("GetEnergy", &GetEnergyView, (arg("target_residue")))
   .def("GetEnergy", &GetEnergyParams, (arg("residue_names"),arg("angles")))
   .def("GetEnergy", &GetEnergyStringID, (arg("g_id"),arg("angles")))
   .def("GetTotalEnergy", &TorsionPotential::GetTotalEnergy, (arg("target_view"),arg("normalize")=true))

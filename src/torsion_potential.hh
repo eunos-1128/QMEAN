@@ -25,9 +25,9 @@ public:
 
   virtual void OnInteraction(const String& group_identifier, std::vector<Real>& angles);
 
-  std::vector<Real> GetEnergies(ost::mol::EntityView& target, bool normalize);
+  std::vector<Real> GetEnergies(ost::mol::EntityView& target);
 
-  Real GetEnergy(ost::mol::ResidueView& res, bool normalize);
+  Real GetEnergy(ost::mol::ResidueView& res);
 
   Real GetEnergy(std::vector<String>& residue_names, std::vector<Real>& angles);
 

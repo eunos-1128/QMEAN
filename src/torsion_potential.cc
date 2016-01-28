@@ -55,19 +55,19 @@ void TorsionPotential::OnInteraction(const String& group_identifier,
   ++count_;
 }
 
-std::vector<Real> TorsionPotential::GetEnergies(ost::mol::EntityView& target, bool normalize){
+std::vector<Real> TorsionPotential::GetEnergies(ost::mol::EntityView& target){
 
   std::vector<Real> result;
   ost::mol::ResidueViewList res_list=target.GetResidueList();
 
   for(ost::mol::ResidueViewList::iterator it=res_list.begin();it!=res_list.end();++it){
-    result.push_back(this->GetEnergy(*it, normalize));
+    result.push_back(this->GetEnergy(*it));
   }
 
   return result;
 }
 
-Real TorsionPotential::GetEnergy(ost::mol::ResidueView& target_view, bool normalize){
+Real TorsionPotential::GetEnergy(ost::mol::ResidueView& target_view){
   energy_=0;
   count_=0;
   target_view.Apply(*this);
@@ -92,22 +92,17 @@ Real TorsionPotential::GetEnergy(const String& group_id, std::vector<Real>& angl
   energy_=0;
   count_=0;
 
-  std::vector<Real> new_angles;
+  std::vector<Real> new_angles(angles);
   Real new_angle;
 
   if(energies_.find(group_id) == energies_.end()){
     return std::numeric_limits<Real>::quiet_NaN();
   }
 
-  for(std::vector<Real>::iterator it=angles.begin();it!=angles.end();++it){
-    if(*it<-M_PI || *it>M_PI){
-      return std::numeric_limits<Real>::quiet_NaN();
-    }
-    new_angle = *it;
-    if(new_angle==M_PI){
-      new_angle-=0.0001;
-    }
-    new_angles.push_back(new_angle);
+  //let's make sure the angles are in a valid range
+  for(uint i = 0; i < 6; ++i){
+    while (new_angles[i] >= M_PI) new_angles[i] -= 2*M_PI;
+    while (new_angles[i] < -M_PI) new_angles[i] += 2*M_PI;
   }
 
   this->OnInteraction(group_id, new_angles);
