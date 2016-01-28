@@ -6,15 +6,15 @@ PackingStatistic::PackingStatistic(Real cutoff_radius,
                                      int max_count,
                                      int bin_size){
    
-   if(max_count%bin_size!=0){
-    //TODO: throw error
+  if(bin_size!=1){
+    throw std::runtime_error("QMEAN can currently handle only bin sizes of one in Packing Potential!"); 
+  }
 
-   }
-   impl::PackingOpts opts(cutoff_radius, max_count, bin_size);
-   opts_=opts;
-   PackingHistogram histo=PackingHistogram(IntegralClassifier(atom::UNKNOWN, 0),       
-          IntegralClassifier(int(floor(max_count/bin_size))+1, 0));
-   histo_=histo;
+  impl::PackingOpts opts(cutoff_radius, max_count, bin_size);
+  opts_=opts;
+  PackingHistogram histo=PackingHistogram(IntegralClassifier(atom::UNKNOWN, 0),       
+                                          IntegralClassifier(int(floor(max_count/bin_size))+1, 0));
+  histo_=histo;
 }
 
 PackingStatisticPtr PackingStatistic::Load(const String& filename){

@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <limits>
+#include <exception>
 
 using namespace ost;
 
