@@ -11,6 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   Defining Heavy Atoms - The ChemType <chemtype>
+   Statistical Potentials of Mean Force <statistical_potentials>
+   The Container Classes <containers>
+
 
 
 Indices and tables
