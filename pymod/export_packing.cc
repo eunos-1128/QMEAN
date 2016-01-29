@@ -34,11 +34,10 @@ void export_Packing()
   class_<impl::PackingOpts>("PackingOpts", no_init)
     .def_readonly("cutoff", &impl::PackingOpts::cutoff)
     .def_readonly("max_counts", &impl::PackingOpts::max_counts)
-    .def_readonly("bin_size", &impl::PackingOpts::bin_size)
     .def_readonly("sigma", &impl::PackingOpts::sigma)
   ;
 
-  class_<PackingStatistic, bases<StatisticBase> >("PackingStatistic", init<Real, int, int>())
+  class_<PackingStatistic, bases<StatisticBase> >("PackingStatistic", init<Real, int>())
     .def("Load", &PackingStatistic::Load,(arg("filename"))).staticmethod("Load")
     .def("Save", &PackingStatistic::Save,(arg("filename")))
     .def("Extract", &PackingStatistic::Extract, (arg("target"), arg("env"), arg("weight")=1.0))  
@@ -46,7 +45,7 @@ void export_Packing()
     .def("GetCount", &GetCountcount, (arg("count")))
     .def("GetCount", &GetCountatom, (arg("atom")))
     .def("GetCount", &GetCountatomcount, (arg("atom"),arg("count")))
-    .def("GetOptions", &PackingStatistic::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &PackingStatistic::GetOpts)
   ;
 
   class_<PackingPotential, bases<PotentialBase> >("PackingPotential", no_init)
@@ -59,7 +58,7 @@ void export_Packing()
     .def("GetEnergy", &GetEnergyRes, (arg("target_residue"),arg("normalize")=true))
     .def("GetEnergies", &WrapGetEnergies, (arg("target_view"), arg("environment_view"),arg("normalize")=true))
     .def("GetTotalEnergy", &PackingPotential::GetTotalEnergy, (arg("target_view"), arg("environment_view"),arg("normalize")=true))
-    .def("GetOptions", &PackingPotential::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &PackingPotential::GetOpts)
   ;
 
 

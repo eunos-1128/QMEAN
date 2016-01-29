@@ -35,9 +35,9 @@ public:
 
   Real GetCount(int state, int d_bin, int alpha_bin, int beta_bin, int gamma_bin);
 
-  impl::HBondOpts& GetOpts() { return opts_; }
-
   PotentialType GetType() { return HBond; }
+
+  impl::HBondOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

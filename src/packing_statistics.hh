@@ -17,7 +17,7 @@ class DLLEXPORT_QMEAN PackingStatistic : public StatisticBase, impl::PackingPote
 public:
   PackingStatistic() { }
 
-  PackingStatistic(Real cutoff_radius, int max_count, int bin_size);
+  PackingStatistic(Real cutoff_radius, int max_count);
 
   static PackingStatisticPtr Load(const String& filename);
 
@@ -37,9 +37,9 @@ public:
 
   Real GetCount(int bin);
 
-  impl::PackingOpts& GetOpts() { return opts_; }
-
   PotentialType GetType() { return Packing; }
+
+  impl::PackingOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

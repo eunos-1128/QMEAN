@@ -97,7 +97,7 @@ void CBPackingPotentialImpl::SetEnvironment(ost::mol::EntityView& env){
 }
 
 int CBPackingPotentialImpl::GetBin(int count){
-  int bin=int(std::floor((std::min(count, opts_.max_counts))/opts_.bin_size));
+  int bin = std::min(count, opts_.max_counts);
   return bin;
 }
 

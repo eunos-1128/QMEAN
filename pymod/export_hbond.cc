@@ -61,7 +61,7 @@ void export_HBond()
     .def("GetCount", &GetCountstate, (arg("state")))
     .def("GetCount", &GetCountallinfo, (arg("state"),arg("d_bin"),arg("alpha_bin"),
                                         arg("beta_bin"),arg("gamma_bin")))
-    .def("GetOptions", &HBondStatistic::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &HBondStatistic::GetOpts)
   ;
 
   
@@ -75,7 +75,7 @@ void export_HBond()
     .def("GetEnergy", &GetEnergyRes, (arg("target_residue")))
     .def("GetEnergies", &WrapGetEnergies, (arg("target_view")))
     .def("GetTotalEnergy", &HBondPotential::GetTotalEnergy, (arg("view"),arg("normalize")=true))
-    .def("GetOptions", &HBondPotential::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &HBondPotential::GetOpts)
   ;
 
   register_ptr_to_python<HBondStatisticPtr>();

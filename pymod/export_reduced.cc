@@ -44,7 +44,7 @@ void export_Reduced()
     .def("GetCount", &GetCountaabin, (arg("aa_one"),arg("aa_two"),arg("dist_bin"),arg("alpha_bin"),arg("beta_bin"),arg("gamma_bin")))
     .def("GetCount", &GetCountbin, (arg("dist_bin"),arg("alpha_bin"),arg("beta_bin"),arg("gamma_bin")))
     .def("GetCount", &GetCountaa, (arg("aa_one"),arg("aa_two")))
-    .def("GetOptions", &ReducedStatistic::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &ReducedStatistic::GetOpts)
   ;
 
   class_<ReducedPotential, bases<PotentialBase> >("ReducedPotential", no_init)
@@ -58,7 +58,7 @@ void export_Reduced()
     .def("GetEnergies", &WrapGetEnergies, (arg("target_view"),arg("environment_view"),arg("normalize")=true))
     .def("GetTotalEnergy", &ReducedPotential::GetTotalEnergy, (arg("target_view"), arg("environment_view"), arg("normalize")=true))
     .def("GetCounts", &ReducedPotential::GetCounts)
-    .def("GetOptions", &ReducedPotential::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &ReducedPotential::GetOpts)
   ; 
 
   register_ptr_to_python<ReducedStatisticPtr>();

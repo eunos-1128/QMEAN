@@ -34,15 +34,15 @@ public:
 
   Real GetEnergy(ost::conop::AminoAcid aa, int count);
 
-  Real GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env, bool normalize);
+  Real GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env);
 
-  Real GetEnergy(ost::mol::ResidueView& target, bool normalize);
+  Real GetEnergy(ost::mol::ResidueView& target);
 
-  std::vector<Real> GetEnergies(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
+  std::vector<Real> GetEnergies(ost::mol::EntityView& target, ost::mol::EntityView& env);
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  impl::CBPackingOpts& GetOpts() { return opts_; }
+  impl::CBPackingOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

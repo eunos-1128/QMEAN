@@ -55,7 +55,7 @@ PackingPotentialPtr PackingPotential::Create(PackingStatisticPtr stat, Real sigm
   p->opts_=stat->GetOpts();
   p->opts_.sigma=sigma;
   p->energies_=PackingEnergies(0.0, IntegralClassifier(atom::UNKNOWN, 0),
-                                    IntegralClassifier(int(floor(p->opts_.max_counts/p->opts_.bin_size))+1, 0));
+                                    IntegralClassifier(p->opts_.max_counts+1, 0));
 
   p->Fill(stat, reference_state);
   return p;
@@ -67,16 +67,16 @@ void PackingPotential::Fill(PackingStatisticPtr stat, const String& reference_st
   typedef PackingEnergies::IndexType Index;
   Real total_count=stat->GetTotalCount();
 
-  boost::multi_array<Real,1> reference(boost::extents[opts_.max_counts/opts_.bin_size+1]);
+  boost::multi_array<Real,1> reference(boost::extents[opts_.max_counts+1]);
 
   if(reference_state=="classic"){
-    for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
+    for(int i=0;i<opts_.max_counts+1;++i){
       reference[i]=stat->GetCount(i)/total_count;
     }
   }
   else if(reference_state=="uniform"){
-    for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
-      reference[i]=Real(1.0)/(floor(opts_.max_counts/opts_.bin_size)+1);
+    for(int i=0;i<opts_.max_counts+1;++i){
+      reference[i]=Real(1.0)/(opts_.max_counts+1);
     }
   }
   else{
@@ -90,7 +90,7 @@ void PackingPotential::Fill(PackingStatisticPtr stat, const String& reference_st
   for (int i=0; i < atom::UNKNOWN; ++i) {
     Real sequence_count = stat->GetCount(atom::ChemType(i));
 
-    for (int j=0; j<opts_.max_counts/opts_.bin_size+1; ++j) {
+    for (int j=0; j<opts_.max_counts+1; ++j) {
       Real sequence_conformation_count=stat->GetCount(atom::ChemType(i), j);
       Real propensity=0.0;
       if (sequence_count>0 && reference[j]>0) {

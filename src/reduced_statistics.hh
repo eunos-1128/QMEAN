@@ -41,9 +41,9 @@ public:
 
   Real GetCount(int dist_bin, int alpha_bin, int beta_bin, int gamma_bin);
 
-  impl::ReducedOpts& GetOpts() { return opts_; }
-
   PotentialType GetType() { return Reduced; }
+
+  impl::ReducedOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

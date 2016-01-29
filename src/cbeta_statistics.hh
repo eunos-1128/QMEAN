@@ -34,9 +34,9 @@ public:
 
   Real GetCount(int dist_bin);
 
-  impl::CBetaOpts& GetOpts() { return opts_; }
-
   PotentialType GetType() { return CBeta; }
+
+  impl::CBetaOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

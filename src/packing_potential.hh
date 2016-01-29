@@ -43,7 +43,7 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  impl::PackingOpts& GetOpts() { return opts_; }
+  impl::PackingOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

@@ -3,17 +3,12 @@
 namespace qmean {
 
 PackingStatistic::PackingStatistic(Real cutoff_radius,
-                                     int max_count,
-                                     int bin_size){
+                                     int max_count){
    
-  if(bin_size!=1){
-    throw std::runtime_error("QMEAN can currently handle only bin sizes of one in Packing Potential!"); 
-  }
-
-  impl::PackingOpts opts(cutoff_radius, max_count, bin_size);
+  impl::PackingOpts opts(cutoff_radius, max_count, 1);
   opts_=opts;
   PackingHistogram histo=PackingHistogram(IntegralClassifier(atom::UNKNOWN, 0),       
-                                          IntegralClassifier(int(floor(max_count/bin_size))+1, 0));
+                                          IntegralClassifier(max_count+1, 0));
   histo_=histo;
 }
 
@@ -69,7 +64,7 @@ Real PackingStatistic::GetTotalCount(){
 Real PackingStatistic::GetCount(atom::ChemType a){
 
   Real total_count=0;
-  for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
+  for(int i=0;i<opts_.max_counts+1;++i){
     total_count+=histo_.Get(a,i);
   }
   return total_count;

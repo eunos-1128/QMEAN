@@ -39,7 +39,7 @@ CBPackingPotentialPtr CBPackingPotential::Create(CBPackingStatisticPtr stat, Rea
   p->opts_=stat->GetOpts();
   p->opts_.sigma=sigma;
   p->energies_=CBPackingEnergies(0.0, IntegralClassifier(ost::conop::XXX, 0),
-                                      IntegralClassifier(int(floor(p->opts_.max_counts/p->opts_.bin_size))+1, 0));
+                                      IntegralClassifier(p->opts_.max_counts+1, 0));
 
   p->Fill(stat, reference_state);
   return p;
@@ -51,16 +51,16 @@ void CBPackingPotential::Fill(CBPackingStatisticPtr stat, const String& referenc
   typedef CBPackingEnergies::IndexType Index;
   Real total_count=stat->GetTotalCount();
 
-  boost::multi_array<Real,1> reference(boost::extents[opts_.max_counts/opts_.bin_size+1]);
+  boost::multi_array<Real,1> reference(boost::extents[opts_.max_counts+1]);
 
   if(reference_state=="classic"){
-    for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
+    for(int i=0;i<opts_.max_counts+1;++i){
       reference[i]=stat->GetCount(i)/total_count;
     }
   }
   else if(reference_state=="uniform"){
-    for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
-      reference[i]=Real(1.0)/(floor(opts_.max_counts/opts_.bin_size)+1);
+    for(int i=0;i<opts_.max_counts+1;++i){
+      reference[i]=Real(1.0)/(opts_.max_counts+1);
     }
   }
   else{
@@ -68,13 +68,12 @@ void CBPackingPotential::Fill(CBPackingStatisticPtr stat, const String& referenc
     ss << reference_state << " is not implemented as reference state in cb packing potential!"
        << "implemented are: classic, uniform";
     throw io::IOException(ss.str());
-
   }
 
   for (int i=0; i < ost::conop::XXX; ++i) {
     Real sequence_count = stat->GetCount(ost::conop::AminoAcid(i));
 
-    for (int j=0; j<opts_.max_counts/opts_.bin_size+1; ++j) {
+    for (int j=0; j<opts_.max_counts+1; ++j) {
       Real sequence_conformation_count=stat->GetCount(ost::conop::AminoAcid(i), j);
       Real propensity=0.0;
       if (sequence_count>0 && reference[j]>0) {
@@ -92,12 +91,12 @@ Real CBPackingPotential::GetEnergy(ost::conop::AminoAcid aa, int count){
   return energies_.Get(CBPackingEnergies::IndexType(aa, this->GetBin(count)));
 }
 
-Real CBPackingPotential::GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env, bool normalize){
+Real CBPackingPotential::GetEnergy(ost::mol::ResidueView& target, ost::mol::EntityView& env){
   this->SetEnvironment(env);
-  return this->GetEnergy(target, normalize);
+  return this->GetEnergy(target);
 }
 
-Real CBPackingPotential::GetEnergy(ost::mol::ResidueView& target, bool normalize){
+Real CBPackingPotential::GetEnergy(ost::mol::ResidueView& target){
   energy_=0;
   count_=0;
   target.Apply(*this);
@@ -106,19 +105,16 @@ Real CBPackingPotential::GetEnergy(ost::mol::ResidueView& target, bool normalize
     return std::numeric_limits<Real>::quiet_NaN();
   }
   else{
-    if(normalize){
-      return energy_/count_;
-    }
     return energy_;
   }
 }
 
-std::vector<Real> CBPackingPotential::GetEnergies(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize){
+std::vector<Real> CBPackingPotential::GetEnergies(ost::mol::EntityView& target, ost::mol::EntityView& env){
   this->SetEnvironment(env);
   std::vector<Real> result;
   ost::mol::ResidueViewList res_list = target.GetResidueList();
   for(ost::mol::ResidueViewList::iterator it=res_list.begin(); it!=res_list.end();++it){
-    result.push_back(this->GetEnergy(*it, normalize));
+    result.push_back(this->GetEnergy(*it));
   }
   return result;
 }

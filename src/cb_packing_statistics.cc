@@ -3,17 +3,13 @@
 namespace qmean {
 
 CBPackingStatistic::CBPackingStatistic(Real cutoff_radius,
-                                     int max_count,
-                                     int bin_size){
+                                       int max_count){
    
-  if(bin_size!=1){
-    throw std::runtime_error("QMEAN can currently handle only bin sizes of one in CBPacking Potential!"); 
-  }
 
-  impl::CBPackingOpts opts(cutoff_radius, max_count, bin_size);
+  impl::CBPackingOpts opts(cutoff_radius, max_count, 1);
   opts_=opts;
   CBPackingHistogram histo=CBPackingHistogram(IntegralClassifier(ost::conop::XXX, 0),       
-                                              IntegralClassifier(int(floor(max_count/bin_size))+1, 0));
+                                              IntegralClassifier(max_count+1, 0));
   histo_=histo;
 }
 
@@ -59,7 +55,7 @@ Real CBPackingStatistic::GetTotalCount(){
 Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa){
 
   Real total_count=0;
-  for(int i=0;i<opts_.max_counts/opts_.bin_size+1;++i){
+  for(int i=0;i<opts_.max_counts+1;++i){
     total_count += this->GetCount(aa,i);
   }
   return total_count;

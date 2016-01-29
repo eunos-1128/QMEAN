@@ -65,7 +65,7 @@ class_<TorsionStatistic, bases<StatisticBase> >("TorsionStatistic")
   .def("GetTotalCount", &GetTotalCountWithout_gi, (arg("group_identifier")))
   .def("GetCount", &GetCount_gi_bins, (arg("group_identifier"),arg("bins")))
   .def("GetCount", &GetCount_bins, (arg("bins")))
-  .def("GetOptions", &TorsionStatistic::GetOpts, return_value_policy<reference_existing_object>())
+  .def("GetOptions", &TorsionStatistic::GetOpts)
 ;
 
 class_<TorsionPotential, bases<PotentialBase> >("TorsionPotential", no_init)
@@ -77,7 +77,7 @@ class_<TorsionPotential, bases<PotentialBase> >("TorsionPotential", no_init)
   .def("GetEnergy", &GetEnergyParams, (arg("residue_names"),arg("angles")))
   .def("GetEnergy", &GetEnergyStringID, (arg("g_id"),arg("angles")))
   .def("GetTotalEnergy", &TorsionPotential::GetTotalEnergy, (arg("target_view"),arg("normalize")=true))
-  .def("GetOptions", &TorsionPotential::GetOpts, return_value_policy<reference_existing_object>())
+  .def("GetOptions", &TorsionPotential::GetOpts)
   ; 
 
  register_ptr_to_python<TorsionStatisticPtr>();

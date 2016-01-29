@@ -32,9 +32,9 @@ public:
 
   Real GetCount(std::vector<int>& bins);
 
-  impl::TorsionOpts& GetOpts() { return opts_; }
-
   PotentialType GetType() { return Torsion; }
+
+  impl::TorsionOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

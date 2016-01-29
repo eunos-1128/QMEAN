@@ -234,7 +234,7 @@ void export_Interaction()
     .def("GetCount", &GetCountatomdist, (arg("atom_a"), arg("atom_b"), arg("dist_bin")))
     .def("GetCount", &GetCountatom, (arg("atom_a"), arg("atom_b")))
     .def("GetCount", &GetCountdist, (arg("dist_bin")))
-    .def("GetOptions", &InteractionStatistic::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &InteractionStatistic::GetOpts)
   ;
 
   class_<InteractionPotential, bases<PotentialBase> >("InteractionPotential", no_init) //no_init=>forces to use create function
@@ -249,7 +249,7 @@ void export_Interaction()
     .def("GetEnergies", &WrapGetEnergies, (arg("target"), arg("environment"),arg("normalize")=true))
     .def("GetTotalEnergy", &InteractionPotential::GetTotalEnergy, (arg("target_view"), arg("environment_view"),arg("normalize")=true))
     .def("GetCounts", &InteractionPotential::GetCounts)
-    .def("GetOptions", &InteractionPotential::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &InteractionPotential::GetOpts)
   ;
 
 

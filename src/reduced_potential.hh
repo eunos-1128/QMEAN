@@ -42,7 +42,7 @@ public:
 
   uint32_t GetCounts() { return count_; }
 
-  impl::ReducedOpts& GetOpts() { return opts_; }
+  impl::ReducedOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

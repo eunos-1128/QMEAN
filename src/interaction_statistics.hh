@@ -34,9 +34,9 @@ public:
 
   Real GetCount(int dist_bin);
 
-  impl::InteractionOpts& GetOpts() { return opts_; }
-
   PotentialType GetType() { return Interaction; }
+
+  impl::InteractionOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

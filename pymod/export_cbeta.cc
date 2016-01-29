@@ -50,7 +50,7 @@ void export_CBeta(){
     .def("GetCount", &GetCountatomdist, (arg("amino_acid_a"), arg("amino_acid_b"), arg("dist_bin")))
     .def("GetCount", &GetCountatom, (arg("amino_acid_a"), arg("amino_acid_b")))
     .def("GetCount", &GetCountdist, (arg("dist_bin")))
-    .def("GetOptions", &CBetaStatistic::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &CBetaStatistic::GetOpts)
   ;
 
   class_<CBetaPotential, bases<PotentialBase> >("CBetaPotential", no_init)
@@ -65,7 +65,7 @@ void export_CBeta(){
     .def("GetEnergies", &WrapGetEnergies, (arg("target"), arg("environment"),arg("normalize")=true))
     .def("GetTotalEnergy", &CBetaPotential::GetTotalEnergy, (arg("target_view"), arg("environment_view"), arg("normalize")=true))
     .def("GetCounts", &CBetaPotential::GetCounts)
-    .def("GetOptions", &CBetaPotential::GetOpts, return_value_policy<reference_existing_object>())
+    .def("GetOptions", &CBetaPotential::GetOpts)
   ;
 
   register_ptr_to_python<CBetaStatisticPtr>(); 

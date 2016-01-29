@@ -57,10 +57,6 @@ public:
   virtual void OnInteraction(const String& group_identifier,
                              std::vector<Real>& angls)=0;
 
-  TorsionOpts& GetOpts() { return opts_; }
-
-  void SetOpts(TorsionOpts& opts) { opts_=opts; }
-
   String FindStat(std::vector<String>& residues);
 
 protected:

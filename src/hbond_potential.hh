@@ -40,7 +40,7 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& view, bool normalize);
 
-  impl::HBondOpts& GetOpts() { return opts_; }
+  impl::HBondOpts GetOpts() { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){
