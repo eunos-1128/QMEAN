@@ -1,4 +1,5 @@
 from ost import seq
+from ost import mol
 from qmean import *
 from ost.bindings import dssp
 import traceback
@@ -151,7 +152,11 @@ class PSIPREDHandler:
     psipred_ss, psipred_conf, psipred_seq = self.CutPsiPredStuff(chain)
 
     if dssp_assigned==False:
-      dssp.AssignDSSP(chain)
+      if type(chain) == mol.ChainHandle or type(chain) == mol.ChainView:
+        dssp.AssignDSSP(chain.GetEntity(),extract_burial_status=True)
+      else:
+        dssp.AssignDSSP(chain, extract_burial_status=True)
+
 
     observed_ss=''
     for r in chain.residues:
@@ -257,7 +262,10 @@ class ACCPROHandler:
     accpro_ss, accpro_acc, accpro_seq = self.CutACCPROStuff(chain)
 
     if dssp_assigned==False:
-      dssp.AssignDSSP(chain, extract_burial_status=True)
+      if type(chain) == mol.ChainHandle or type(chain) == mol.ChainView:
+        dssp.AssignDSSP(chain.GetEntity(),extract_burial_status=True)
+      else:
+        dssp.AssignDSSP(chain, extract_burial_status=True)
 
     observed_acc=''
 
