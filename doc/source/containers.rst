@@ -3,12 +3,18 @@ Container Classes
 
 .. currentmodule:: qmean
 
-Dealing with many different statistic or potential objects can be tedious and
-often result in many files on your harddrive. QMEAN offers you container
-classes to gather statistic or potential objects. They can then be 
-saved/loaded from/to disk at once and easily be accessed in a 
-dictionary like manner.
+The containers simplify the usage of the statistics/potentials. Espe-
+cially if their numbers grow. They are implemented to show a python
+dictionary like behaviour and are capable of saving and loading their
+content from/to disk. Note that there is a clear separation of types.
+Only statistic objects can be added to a statistic container. The same
+is valid for potential container.
 
+.. literalinclude:: example_scripts/container_example.py
+
+
+Container for Statistic Objects
+--------------------------------------------------------------------------------
 
 .. class:: StatisticContainer
 
@@ -73,8 +79,8 @@ dictionary like manner.
     :rtype:             :class:`int`
 
 
-
-
+Container for Potential Objects
+--------------------------------------------------------------------------------
 
 .. class:: PotentialContainer
 

@@ -14,14 +14,17 @@ energies/scores to protein structures of interest.
 The number of available potentials has grown over the years. Only a subset 
 of them is actually used in the official QMEAN scoring function.
 
-* :ref:`cbeta-potential`: 
-                          Evaluates a pseudo interaction energy
-                          based on pairwise distances between CB atoms.
 
 * :ref:`interaction-potential`: 
                                 Evaluates a pseudo interaction energy
                                 based on pairwise distances between all
                                 chemically distinguishable heavy atoms.
+
+
+* :ref:`cbeta-potential`: 
+                          Evaluates a pseudo interaction energy
+                          based on pairwise distances between CB atoms.
+
 
 * :ref:`reduced-potential`: 
                             Evaluates pseudo interaction energy between the
@@ -43,17 +46,19 @@ of them is actually used in the official QMEAN scoring function.
                             three consecutive residues and their phi/psi 
                             dihedral angles.
 
-* :ref:`cbpacking-potential`: 
-                              Evaluates pseudo energies by counting the number 
-                              of other CB positions within a certain cutoff 
-                              radius of the CB position of the residue to be 
-                              evaluated.
 
 * :ref:`packing-potential`: 
                             Evaluates pseudo energies by counting the number of 
                             counting surrounding atoms around all chemically 
                             distinguishable heavy atoms not belonging to the 
                             assessed residue itself.
+
+
+* :ref:`cbpacking-potential`: 
+                              Evaluates pseudo energies by counting the number 
+                              of other CB positions within a certain cutoff 
+                              radius of the CB position of the residue to be 
+                              evaluated.
 
 
 * :ref:`hbond-potential`: 
@@ -85,6 +90,298 @@ They are not accessible from Python.
 
 .. class:: PotentialBase
 
+
+
+
+
+.. _interaction-potential:
+
+InteractionPotential
+--------------------------------------------------------------------------------
+
+
+.. literalinclude:: example_scripts/interaction_potential_example.py
+
+.. class:: InteractionOpts
+
+  Internal option class without init function. This class gets built when
+  initializing the according statistic object and is automatically passed over
+  when creating the potential. The class is considered to be readonly.
+
+  .. attribute:: lower_cutoff
+
+    Minimal distance two CB positions must have to be considered
+
+  .. attribute:: upper_cutoff
+
+    Maximal distance two CB positions can have to be considered
+
+  .. attribute:: number_of_bins
+
+    Number of equidistant bins building the internal histograms
+
+  .. attribute:: sequence_sep
+
+    Only CB Positions from residues separated by this amount of residues
+    are considered
+
+  .. attribute:: sigma
+
+    Parameter to control the sparse data handling
+
+
+.. class:: InteractionStatistic(l_cutoff, u_cutoff, nob, ssep)
+
+  Builds histograms for each pair of all chemically distinguishable 
+  atoms given the input parameters that can be filled using structural data.
+
+  :param l_cutoff:      Minimal distance two atom positions must have to be 
+                        considered 
+  :param u_cutoff:      Maximal distance two atom positions can have to be 
+                        considered
+  :param nob:           Number of equidistant bins building the internal 
+                        histograms
+  :param ssep:          Only atom positions from residues separated by this amount of residues
+                        are considered
+
+  :type l_cutoff:      :class:`float`
+  :type u_cutoff:      :class:`float`
+  :type nob:           :class:`int`
+  :type ssep:          :class:`int`
+
+  .. method:: Load(filename)
+
+    Loads a :class:`InteractionStatistic` from disk
+
+    :param filename:    Path to file containing the statistic
+    :type filename:     :class:`str`
+
+    :returns:           The loaded statistic
+    :rtype:             :class:`InteractionStatistic`
+    :raises:            :class:`RuntimeError` if **filename** does not exist
+
+  .. method:: Save(filename)
+
+    Saves a the statistic down to disk
+
+    :param filename:    Path of the file, the statistic should be saved in
+    :type filename:     :class:`str`
+
+  .. method:: Extract(target, env, [weight = 1.0])
+
+    Adds the value of the **weight** parameter to the according bins in the
+    internal histograms
+
+    :param target:      The target structure from which the statistics are 
+                        extracted
+    :param env:         The structure a particular atom position in the target
+                        actually sees
+    :param weight:      The value that gets added to the particular histogram 
+                        positions
+
+    :type target:       :class:`ost.mol.EntityView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type weight:       :class:`float`
+
+  .. method:: GetTotalCount()
+
+    Sums up all values in all distance bins in all pairwise histograms
+
+    :returns:           The summed histogram value
+    :rtype:             :class:`float`
+
+  .. method:: GetCount(atom_one, atom_two, dist_bin)
+
+    :param atom_one:    Identity of first atom
+    :param atom_two:    Identity of second atom
+    :param dist_bin:    Distance bin to be considered
+
+    :type atom_one:     :ref:`ChemType <ChemType>`
+    :type atom_two:     :ref:`ChemType <ChemType>`
+    :type dist_bin:     :class:`int`
+
+    :returns:           Returns the histogram count for the particular pair of
+                        atoms in the particular distance bin
+    :rtype:             :class:`float`
+
+  .. method:: GetCount(atom_one, atom_two)
+
+    :param atom_one:    Identity of first atom
+    :param atom_two:    Identity of second atom
+
+    :type atom_one:     :ref:`ChemType <ChemType>`
+    :type atom_two:     :ref:`ChemType <ChemType>`
+
+    :returns:           The histogram count for the particular pair of
+                        atoms
+    :rtype:             :class:`float`
+
+  .. method:: GetCount(dist_bin)
+
+    Sums up all values for one particular distance bin for all possible pairs
+    of atoms
+
+    :param dist_bin:    Distance bin to considered
+    :type dist_bin:     :class:`int`
+
+  .. method:: GetOptions()
+
+    :returns:           A readonly option object
+    :rtype:             :class:`InteractionOpts`
+
+
+.. class:: InteractionPotential()
+
+  Uses a :class:`InteractionStatistic` to generate a potential. The object must be
+  created with its static Create function.
+
+  .. method:: Load(filename)
+
+    Loads a :class:`InteractionPotential` from disk
+
+    :param filename:    Path to file containing the potential
+    :type filename:     :class:`str`
+
+    :returns:           The loaded potential
+    :rtype:             :class:`InteractionPotential`
+    :raises:            :class:`RuntimeError` if **filename** does not exist
+
+  .. method:: Save(filename)
+
+    Saves a the potential down to disk
+
+    :param filename:    Path of the file, the potential should be saved in
+    :type filename:     :class:`str`  
+
+  .. method:: Create(stat, [sigma = 0.02, reference_state = "classic"])
+
+    Uses the passed statistic to generate probability density functions, that
+    are turned into a potential using the formalism described by Sippl.
+
+    :param stat:        The statistic from which you want to create the potential
+    :param sigma:       The sigma parameter to handle sparse data
+    :param reference_state: The reference state to be used. Currently there
+                            is only "classic" available, which implements
+                            the reference state described by Sippl
+
+    :type stat:         :class:`InteractionStatistic`
+    :type sigma:        :class:`float`
+    :type reference_state: :class:`str`
+
+    :returns:           A newly created potential
+    :rtype:             :class:`InteractionPotential`
+    :raises:            :class:`RuntimeError` in case of invalid **reference_state**
+    
+      
+  .. method:: Create(stat_one, stat_two, [sigma = 0.02, reference_state = "classic", max_energy=8.0)
+    
+    Uses the passed statistics to generate probability density functions, that
+    are turned into a potential using the formalism developed for QMEANBrane.
+    **stat_one** is considered to be saturated, whereas **stat_two** is 
+    considered to be sparse.
+
+    :param stat_one:    The saturates statistic from which you want to create
+                        the potential
+    :param stat_two:    The not necessarily saturated statistic from which you
+                        want to create the potential
+    
+    :param sigma:       The sigma parameter to handle sparse data
+    :param reference_state: The reference state to be used. Currently there
+                            is only "classic" available, which implements
+                            the reference state described by Sippl
+    :param max_energy:  Due to the mathematical formalism, you will get infinit
+                        scores for low pairwise distances
+                        (Except your filling your stats with complete crap).
+                        The max energy serves as a cap value.  
+
+    :type stat_one:     :class:`InteractionStatistic`
+    :type stat_two:     :class:`InteractionStatistic`
+    :type sigma:        :class:`float`
+    :type reference_state: :class:`str`
+    :type max_energy:   :class:`float`
+
+    :returns:           A newly created potential
+    :rtype:             :class:`InteractionPotential`
+    :raises:            :class:`RuntimeError` in case of invalid **reference_state**
+                        or when the parametrization of the two stat objects is
+                        inconsistent.
+
+  .. method:: GetEnergy(atom_one, atom_two, dist)
+
+    Get an energy value for a particular pair of atoms with their 
+    positions at a certain distance
+
+    :param atom_one:       First interaction partner
+    :param atom_two:       Second interaction partner
+    :param dist:           Distance of the two interaction partners positions
+
+    :type amino_acid_one:  :ref:`ChemType <ChemType>`
+    :type amino_acid_two:  :ref:`ChemType <ChemType>`
+    :type dist:            :class:`float`
+
+    :returns:              The energy, NaN if one of the partners is invalid or 
+                           the distance is out of range
+    :rtype:                :class:`float`
+
+  .. method:: GetEnergy(res, env [normalize = True] )
+
+    Gets the energy of **res** given the provided environment by evaluating
+    all pairwise distances to the given environment.
+
+    :param res:         Residue to be evaluated
+    :param env:         The environment, the residue actually sees
+    :param normalize:   Whether the final summed energy should be normalized by
+                        total number of observed interactions
+    :type res:          :class:`ost.mol.ResidueView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type normalize:    :class:`bool`
+
+    :returns:           The requested energy, NaN if no valid pairwise distance
+                        is evaluated towards the environment
+    :rtype:             :class:`float`
+
+  .. method:: GetTotalEnergy(target, env, [normalize = True])
+
+    Gets the energy of **target** given the provided environment by evaluating
+    all pairwise distances from all residues of the **target** to the given 
+    environment.
+
+    :param target:      Structure to be evaluated
+    :param env:         The environment, the residues from **target** actually sees
+    :normalize:         Whether the final summed energy should be normalized by
+                        total number of observed interactions
+    :type target:       :class:`ost.mol.EntityView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type normalize:    :class:`bool`
+
+    :returns:           The requested energy, NaN if no valid pairwise distance
+                        is evaluated towards the environment
+    :rtype:             :class:`float`
+
+  .. method:: GetEnergies(target, env, [normalize = True])
+
+    Gets energies for every single residue in the **target** given the provided
+    environment. For every residue, all pairwise interactions towards the
+    environment are evaluated and summed up.
+
+    :param target:      Structure to be evaluated
+    :param env:         The environment, the residues from **target** actually sees
+    :normalize:         Whether the final summed energy for every should be normalized by
+                        total number of observed interactions for this residue
+    :type target:       :class:`ost.mol.EntityView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type normalize:    :class:`bool`
+
+    :returns:           The requested energies, single elements can be NaN if no 
+                        valid pairwise distance is evaluated towards the environment
+                        for one particular residue
+    :rtype:             :class:`list` of :class:`float`
+
+  .. method:: GetOptions()
+
+    :returns:           A readonly option object
+    :rtype:             :class:`InteractionOpts`
+     
 
 .. _cbeta-potential:
 
@@ -373,292 +670,6 @@ CBetaPotential
     :rtype:             :class:`CBetaOpts`
 
 
-.. _interaction-potential:
-
-InteractionPotential
---------------------------------------------------------------------------------
-
-
-.. class:: InteractionOpts
-
-  Internal option class without init function. This class gets built when
-  initializing the according statistic object and is automatically passed over
-  when creating the potential. The class is considered to be readonly.
-
-  .. attribute:: lower_cutoff
-
-    Minimal distance two CB positions must have to be considered
-
-  .. attribute:: upper_cutoff
-
-    Maximal distance two CB positions can have to be considered
-
-  .. attribute:: number_of_bins
-
-    Number of equidistant bins building the internal histograms
-
-  .. attribute:: sequence_sep
-
-    Only CB Positions from residues separated by this amount of residues
-    are considered
-
-  .. attribute:: sigma
-
-    Parameter to control the sparse data handling
-
-
-.. class:: InteractionStatistic(l_cutoff, u_cutoff, nob, ssep)
-
-  Builds histograms for each pair of all chemically distinguishable 
-  atoms given the input parameters that can be filled using structural data.
-
-  :param l_cutoff:      Minimal distance two atom positions must have to be 
-                        considered 
-  :param u_cutoff:      Maximal distance two atom positions can have to be 
-                        considered
-  :param nob:           Number of equidistant bins building the internal 
-                        histograms
-  :param ssep:          Only atom positions from residues separated by this amount of residues
-                        are considered
-
-  :type l_cutoff:      :class:`float`
-  :type u_cutoff:      :class:`float`
-  :type nob:           :class:`int`
-  :type ssep:          :class:`int`
-
-  .. method:: Load(filename)
-
-    Loads a :class:`InteractionStatistic` from disk
-
-    :param filename:    Path to file containing the statistic
-    :type filename:     :class:`str`
-
-    :returns:           The loaded statistic
-    :rtype:             :class:`InteractionStatistic`
-    :raises:            :class:`RuntimeError` if **filename** does not exist
-
-  .. method:: Save(filename)
-
-    Saves a the statistic down to disk
-
-    :param filename:    Path of the file, the statistic should be saved in
-    :type filename:     :class:`str`
-
-  .. method:: Extract(target, env, [weight = 1.0])
-
-    Adds the value of the **weight** parameter to the according bins in the
-    internal histograms
-
-    :param target:      The target structure from which the statistics are 
-                        extracted
-    :param env:         The structure a particular atom position in the target
-                        actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
-
-    :type target:       :class:`ost.mol.EntityView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type weight:       :class:`float`
-
-  .. method:: GetTotalCount()
-
-    Sums up all values in all distance bins in all pairwise histograms
-
-    :returns:           The summed histogram value
-    :rtype:             :class:`float`
-
-  .. method:: GetCount(atom_one, atom_two, dist_bin)
-
-    :param atom_one:    Identity of first atom
-    :param atom_two:    Identity of second atom
-    :param dist_bin:    Distance bin to be considered
-
-    :type atom_one:     :ref:`ChemType <ChemType>`
-    :type atom_two:     :ref:`ChemType <ChemType>`
-    :type dist_bin:     :class:`int`
-
-    :returns:           Returns the histogram count for the particular pair of
-                        atoms in the particular distance bin
-    :rtype:             :class:`float`
-
-  .. method:: GetCount(atom_one, atom_two)
-
-    :param atom_one:    Identity of first atom
-    :param atom_two:    Identity of second atom
-
-    :type atom_one:     :ref:`ChemType <ChemType>`
-    :type atom_two:     :ref:`ChemType <ChemType>`
-
-    :returns:           The histogram count for the particular pair of
-                        atoms
-    :rtype:             :class:`float`
-
-  .. method:: GetCount(dist_bin)
-
-    Sums up all values for one particular distance bin for all possible pairs
-    of atoms
-
-    :param dist_bin:    Distance bin to considered
-    :type dist_bin:     :class:`int`
-
-  .. method:: GetOptions()
-
-    :returns:           A readonly option object
-    :rtype:             :class:`InteractionOpts`
-
-
-.. class:: InteractionPotential()
-
-  Uses a :class:`InteractionStatistic` to generate a potential. The object must be
-  created with its static Create function.
-
-  .. method:: Load(filename)
-
-    Loads a :class:`InteractionPotential` from disk
-
-    :param filename:    Path to file containing the potential
-    :type filename:     :class:`str`
-
-    :returns:           The loaded potential
-    :rtype:             :class:`InteractionPotential`
-    :raises:            :class:`RuntimeError` if **filename** does not exist
-
-  .. method:: Save(filename)
-
-    Saves a the potential down to disk
-
-    :param filename:    Path of the file, the potential should be saved in
-    :type filename:     :class:`str`  
-
-  .. method:: Create(stat, [sigma = 0.02, reference_state = "classic"])
-
-    Uses the passed statistic to generate probability density functions, that
-    are turned into a potential using the formalism described by Sippl.
-
-    :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
-    :param reference_state: The reference state to be used. Currently there
-                            is only "classic" available, which implements
-                            the reference state described by Sippl
-
-    :type stat:         :class:`InteractionStatistic`
-    :type sigma:        :class:`float`
-    :type reference_state: :class:`str`
-
-    :returns:           A newly created potential
-    :rtype:             :class:`InteractionPotential`
-    :raises:            :class:`RuntimeError` in case of invalid **reference_state**
-    
-      
-  .. method:: Create(stat_one, stat_two, [sigma = 0.02, reference_state = "classic", max_energy=8.0)
-    
-    Uses the passed statistics to generate probability density functions, that
-    are turned into a potential using the formalism developed for QMEANBrane.
-    **stat_one** is considered to be saturated, whereas **stat_two** is 
-    considered to be sparse.
-
-    :param stat_one:    The saturates statistic from which you want to create
-                        the potential
-    :param stat_two:    The not necessarily saturated statistic from which you
-                        want to create the potential
-    
-    :param sigma:       The sigma parameter to handle sparse data
-    :param reference_state: The reference state to be used. Currently there
-                            is only "classic" available, which implements
-                            the reference state described by Sippl
-    :param max_energy:  Due to the mathematical formalism, you will get infinit
-                        scores for low pairwise distances
-                        (Except your filling your stats with complete crap).
-                        The max energy serves as a cap value.  
-
-    :type stat_one:     :class:`InteractionStatistic`
-    :type stat_two:     :class:`InteractionStatistic`
-    :type sigma:        :class:`float`
-    :type reference_state: :class:`str`
-    :type max_energy:   :class:`float`
-
-    :returns:           A newly created potential
-    :rtype:             :class:`InteractionPotential`
-    :raises:            :class:`RuntimeError` in case of invalid **reference_state**
-                        or when the parametrization of the two stat objects is
-                        inconsistent.
-
-  .. method:: GetEnergy(atom_one, atom_two, dist)
-
-    Get an energy value for a particular pair of atoms with their 
-    positions at a certain distance
-
-    :param atom_one:       First interaction partner
-    :param atom_two:       Second interaction partner
-    :param dist:           Distance of the two interaction partners positions
-
-    :type amino_acid_one:  :ref:`ChemType <ChemType>`
-    :type amino_acid_two:  :ref:`ChemType <ChemType>`
-    :type dist:            :class:`float`
-
-    :returns:              The energy, NaN if one of the partners is invalid or 
-                           the distance is out of range
-    :rtype:                :class:`float`
-
-  .. method:: GetEnergy(res, env [normalize = True] )
-
-    Gets the energy of **res** given the provided environment by evaluating
-    all pairwise distances to the given environment.
-
-    :param res:         Residue to be evaluated
-    :param env:         The environment, the residue actually sees
-    :param normalize:   Whether the final summed energy should be normalized by
-                        total number of observed interactions
-    :type res:          :class:`ost.mol.ResidueView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type normalize:    :class:`bool`
-
-    :returns:           The requested energy, NaN if no valid pairwise distance
-                        is evaluated towards the environment
-    :rtype:             :class:`float`
-
-  .. method:: GetTotalEnergy(target, env, [normalize = True])
-
-    Gets the energy of **target** given the provided environment by evaluating
-    all pairwise distances from all residues of the **target** to the given 
-    environment.
-
-    :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
-    :normalize:         Whether the final summed energy should be normalized by
-                        total number of observed interactions
-    :type target:       :class:`ost.mol.EntityView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type normalize:    :class:`bool`
-
-    :returns:           The requested energy, NaN if no valid pairwise distance
-                        is evaluated towards the environment
-    :rtype:             :class:`float`
-
-  .. method:: GetEnergies(target, env, [normalize = True])
-
-    Gets energies for every single residue in the **target** given the provided
-    environment. For every residue, all pairwise interactions towards the
-    environment are evaluated and summed up.
-
-    :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
-    :normalize:         Whether the final summed energy for every should be normalized by
-                        total number of observed interactions for this residue
-    :type target:       :class:`ost.mol.EntityView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type normalize:    :class:`bool`
-
-    :returns:           The requested energies, single elements can be NaN if no 
-                        valid pairwise distance is evaluated towards the environment
-                        for one particular residue
-    :rtype:             :class:`list` of :class:`float`
-
-  .. method:: GetOptions()
-
-    :returns:           A readonly option object
-    :rtype:             :class:`InteractionOpts`
-     
 
 .. _reduced-potential:
 
@@ -958,6 +969,10 @@ a list. This list is iterated at every evaluation of three consecutive amino
 acids and the first hit is decisive.
 
 
+
+.. literalinclude:: example_scripts/torsion_potential_example.py
+
+
 .. class:: TorsionOpts
 
   Internal option class without init function. This class gets built when
@@ -1168,6 +1183,245 @@ acids and the first hit is decisive.
 
     :returns:           A readonly option object
     :rtype:             :class:`TorsionOpts`
+
+
+
+.. _packing-potential:
+
+PackingPotential
+--------------------------------------------------------------------------------
+
+.. literalinclude:: example_scripts/packing_potential_example.py
+
+.. class:: PackingOpts
+
+  Internal option class without init function. This class gets built when
+  initializing the according statistic object and is automatically passed over
+  when creating the potential. The class is considered to be readonly.
+
+  .. attribute:: cutoff
+
+    All atom positions within this radius around the atom position of interest
+    are counted
+
+  .. attribute:: max_counts
+
+    The max amount of counts => cap value
+
+  .. attribute:: sigma
+
+    Parameter to control the sparse data handling
+
+
+.. class:: PackingStatistic(cutoff, max_counts)
+
+  Builds histograms for each pair of the 20 standard amino acids given the 
+  input parameters that can be filled using structural data.
+
+  :param cutoff:        Cutoff radius to count other atom positions in the 
+                        environment
+  :param max_counts:    Upper cap of other atom positions to be counted
+
+  :type cutoff:         :class:`float`
+  :type max_counts:     :class:`int`
+
+  .. method:: Load(filename)
+
+    Loads a :class:`PackingStatistic` from disk
+
+    :param filename:    Path to file containing the statistic
+    :type filename:     :class:`str`
+
+    :returns:           The loaded statistic
+    :rtype:             :class:`PackingStatistic`
+    :raises:            :class:`RuntimeError` if **filename** does not exist
+
+  .. method:: Save(filename)
+
+    Saves the statistic down to disk
+
+    :param filename:    Path of the file, the statistic should be saved in
+    :type filename:     :class:`str`
+
+  .. method:: Extract(target, env, [weight = 1.0])
+
+    Adds the value of the **weight** parameter to the according bins in the
+    internal histograms
+
+    :param target:      The target structure from which the statistics are 
+                        extracted
+    :param env:         The structure a particular atom position in the target
+                        actually sees
+    :param weight:      The value that gets added to the particular histogram 
+                        positions
+
+    :type target:       :class:`ost.mol.EntityView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type weight:       :class:`float`
+
+  .. method:: GetTotalCount()
+
+    Sums up all values in all histogram bins
+
+    :returns:           The summed histogram value
+    :rtype:             :class:`float`
+
+  .. method:: GetCount(atom)
+
+    :param atom:        Identity of the atom
+
+    :type aa:           :ref:`ChemType <ChemType>`
+
+    :returns:           The sum of all counts in the histogram for one 
+                        particular atom
+
+    :rtype:             :class:`float`
+
+  .. method:: GetCount(count)
+
+    :param count:       The particular count you're interested in
+
+    :type count:       :class:`int`
+
+    :returns:           The sum of all counts in the histogram for
+                        this particular count
+
+    :rtype:             :class:`float`
+
+
+  .. method:: GetCount(atom, count)
+
+    :param atom:        Identity of the atom
+    :param count:       The particular count you're interested in
+
+    :type atom:         :ref:`ChemType <ChemType>`
+    :type count:        :class:`int`
+
+    :returns:           The histogram value for the particular 
+                        atom / count combination
+
+    :rtype:             :class:`float`
+
+
+  .. method:: GetOptions()
+
+    :returns:           A readonly option object
+    :rtype:             :class:`PackingOpts`
+
+
+
+.. class:: PackingPotential()
+
+  Uses a :class:`PackingStatistic` to generate a potential. The object must be
+  created with its static Create function.
+
+  .. method:: Load(filename)
+
+    Loads a :class:`PackingPotential` from disk
+
+    :param filename:    Path to file containing the potential
+    :type filename:     :class:`str`
+
+    :returns:           The loaded potential
+    :rtype:             :class:`PackingPotential`
+    :raises:            :class:`RuntimeError` if **filename** does not exist
+
+  .. method:: Save(filename)
+
+    Saves a the potential down to disk
+
+    :param filename:    Path of the file, the potential should be saved in
+    :type filename:     :class:`str`  
+
+  .. method:: Create(stat, [sigma = 0.02, reference_state = "classic"])
+
+    Uses the passed statistic to generate probability density functions, that
+    are turned into a potential using the formalism described by Sippl.
+
+    :param stat:        The statistic from which you want to create the potential
+    :param sigma:       The sigma parameter to handle sparse data
+    :param reference_state: The reference state to be used. Currently there
+                            is "classic" available, which implements
+                            the reference state described by Sippl, an
+                            alternative is "uniform".
+
+    :type stat:         :class:`PackingStatistic`
+    :type sigma:        :class:`float`
+    :type reference_state: :class:`str`
+
+    :returns:           A newly created potential
+    :rtype:             :class:`PackingPotential`
+    :raises:            :class:`RuntimeError` in case of invalid **reference_state**
+    
+
+  .. method:: GetEnergy(atom, count)
+
+    Get an energy value for a particular amino acids with a specific count
+
+    :param atom:           The atom of interest
+    :param count:          The count
+
+    :type aa:              :ref:`ChemType <ChemType>`
+    :type count:           :class:`float`
+
+    :returns:              The energy given the input parameters
+    :rtype:                :class:`float`
+
+  .. method:: GetEnergy(res, env, normalize)
+
+    Gets the energy of **res** given the provided environment.
+
+    :param res:         Residue to be evaluated
+    :param env:         The environment, the residue actually sees
+    :normalize:         Whether the energy value should be normalized by the
+                        number of atoms in the residue contributing to the final
+                        energy
+    :type res:          :class:`ost.mol.ResidueView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type normalize:    :class:`bool`
+
+    :returns:           The requested energy
+    :rtype:             :class:`float`
+
+  .. method:: GetTotalEnergy(target, env, normalize)
+
+    Gets the energy of **target** given the provided environment
+
+    :param target:      Structure to be evaluated
+    :param env:         The environment, the residues from **target** actually sees
+    :normalize:         Whether the summed energy should be normalized by the
+                        total number of atoms contributing to the final
+                        energy
+
+    :type target:       :class:`ost.mol.EntityView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type normalize:    :class:`bool`
+
+    :returns:           The requested energy, NaN if no interaction could be observed
+    :rtype:             :class:`float`
+
+  .. method:: GetEnergies(target, env, normalize)
+
+    Gets energies for every single residue in the **target** given the provided
+    environment. 
+
+    :param target:      Structure to be evaluated
+    :param env:         The environment, the residues from **target** actually sees
+    :param normalize:   Whether the per residue energy values should be 
+                        normalized by the number of atoms in a residue contributing
+                        to its final energy
+
+    :type target:       :class:`ost.mol.EntityView`
+    :type env:          :class:`ost.mol.EntityView`
+    :type normalize:    :class:`bool`
+
+    :returns:           The requested energies
+    :rtype:             :class:`list` of :class:`float`
+
+  .. method:: GetOptions()
+
+    :returns:           A readonly option object
+    :rtype:             :class:`PackingOpts`
 
 
 
@@ -1400,249 +1654,6 @@ CBPackingPotential
 
     :returns:           A readonly option object
     :rtype:             :class:`CBPackingOpts`
-
-
-
-.. _packing-potential:
-
-PackingPotential
---------------------------------------------------------------------------------
-
-
-.. class:: PackingOpts
-
-  Internal option class without init function. This class gets built when
-  initializing the according statistic object and is automatically passed over
-  when creating the potential. The class is considered to be readonly.
-
-  .. attribute:: cutoff
-
-    All atom positions within this radius around the atom position of interest
-    are counted
-
-  .. attribute:: max_counts
-
-    The max amount of counts => cap value
-
-  .. attribute:: sigma
-
-    Parameter to control the sparse data handling
-
-
-.. class:: PackingStatistic(cutoff, max_counts)
-
-  Builds histograms for each pair of the 20 standard amino acids given the 
-  input parameters that can be filled using structural data.
-
-  :param cutoff:        Cutoff radius to count other atom positions in the 
-                        environment
-  :param max_counts:    Upper cap of other atom positions to be counted
-
-  :type cutoff:         :class:`float`
-  :type max_counts:     :class:`int`
-
-  .. method:: Load(filename)
-
-    Loads a :class:`PackingStatistic` from disk
-
-    :param filename:    Path to file containing the statistic
-    :type filename:     :class:`str`
-
-    :returns:           The loaded statistic
-    :rtype:             :class:`PackingStatistic`
-    :raises:            :class:`RuntimeError` if **filename** does not exist
-
-  .. method:: Save(filename)
-
-    Saves the statistic down to disk
-
-    :param filename:    Path of the file, the statistic should be saved in
-    :type filename:     :class:`str`
-
-  .. method:: Extract(target, env, [weight = 1.0])
-
-    Adds the value of the **weight** parameter to the according bins in the
-    internal histograms
-
-    :param target:      The target structure from which the statistics are 
-                        extracted
-    :param env:         The structure a particular atom position in the target
-                        actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
-
-    :type target:       :class:`ost.mol.EntityView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type weight:       :class:`float`
-
-  .. method:: GetTotalCount()
-
-    Sums up all values in all histogram bins
-
-    :returns:           The summed histogram value
-    :rtype:             :class:`float`
-
-  .. method:: GetCount(atom)
-
-    :param atom:        Identity of the atom
-
-    :type aa:           :ref:`ChemType <ChemType>`
-
-    :returns:           The sum of all counts in the histogram for one 
-                        particular atom
-
-    :rtype:             :class:`float`
-
-  .. method:: GetCount(count)
-
-    :param count:       The particular count you're interested in
-
-    :type count:       :class:`int`
-
-    :returns:           The sum of all counts in the histogram for
-                        this particular count
-
-    :rtype:             :class:`float`
-
-
-  .. method:: GetCount(atom, count)
-
-    :param atom:        Identity of the atom
-    :param count:       The particular count you're interested in
-
-    :type atom:         :ref:`ChemType <ChemType>`
-    :type count:        :class:`int`
-
-    :returns:           The histogram value for the particular 
-                        atom / count combination
-
-    :rtype:             :class:`float`
-
-
-  .. method:: GetOptions()
-
-    :returns:           A readonly option object
-    :rtype:             :class:`PackingOpts`
-
-
-
-
-
-.. class:: PackingPotential()
-
-  Uses a :class:`PackingStatistic` to generate a potential. The object must be
-  created with its static Create function.
-
-  .. method:: Load(filename)
-
-    Loads a :class:`PackingPotential` from disk
-
-    :param filename:    Path to file containing the potential
-    :type filename:     :class:`str`
-
-    :returns:           The loaded potential
-    :rtype:             :class:`PackingPotential`
-    :raises:            :class:`RuntimeError` if **filename** does not exist
-
-  .. method:: Save(filename)
-
-    Saves a the potential down to disk
-
-    :param filename:    Path of the file, the potential should be saved in
-    :type filename:     :class:`str`  
-
-  .. method:: Create(stat, [sigma = 0.02, reference_state = "classic"])
-
-    Uses the passed statistic to generate probability density functions, that
-    are turned into a potential using the formalism described by Sippl.
-
-    :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
-    :param reference_state: The reference state to be used. Currently there
-                            is "classic" available, which implements
-                            the reference state described by Sippl, an
-                            alternative is "uniform".
-
-    :type stat:         :class:`PackingStatistic`
-    :type sigma:        :class:`float`
-    :type reference_state: :class:`str`
-
-    :returns:           A newly created potential
-    :rtype:             :class:`PackingPotential`
-    :raises:            :class:`RuntimeError` in case of invalid **reference_state**
-    
-
-  .. method:: GetEnergy(atom, count)
-
-    Get an energy value for a particular amino acids with a specific count
-
-    :param atom:           The atom of interest
-    :param count:          The count
-
-    :type aa:              :ref:`ChemType <ChemType>`
-    :type count:           :class:`float`
-
-    :returns:              The energy given the input parameters
-    :rtype:                :class:`float`
-
-  .. method:: GetEnergy(res, env, normalize)
-
-    Gets the energy of **res** given the provided environment.
-
-    :param res:         Residue to be evaluated
-    :param env:         The environment, the residue actually sees
-    :normalize:         Whether the energy value should be normalized by the
-                        number of atoms in the residue contributing to the final
-                        energy
-    :type res:          :class:`ost.mol.ResidueView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type normalize:    :class:`bool`
-
-    :returns:           The requested energy
-    :rtype:             :class:`float`
-
-  .. method:: GetTotalEnergy(target, env, normalize)
-
-    Gets the energy of **target** given the provided environment
-
-    :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
-    :normalize:         Whether the summed energy should be normalized by the
-                        total number of atoms contributing to the final
-                        energy
-
-    :type target:       :class:`ost.mol.EntityView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type normalize:    :class:`bool`
-
-    :returns:           The requested energy, NaN if no interaction could be observed
-    :rtype:             :class:`float`
-
-  .. method:: GetEnergies(target, env, normalize)
-
-    Gets energies for every single residue in the **target** given the provided
-    environment. 
-
-    :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
-    :param normalize:   Whether the per residue energy values should be 
-                        normalized by the number of atoms in a residue contributing
-                        to its final energy
-
-    :type target:       :class:`ost.mol.EntityView`
-    :type env:          :class:`ost.mol.EntityView`
-    :type normalize:    :class:`bool`
-
-    :returns:           The requested energies
-    :rtype:             :class:`list` of :class:`float`
-
-  .. method:: GetOptions()
-
-    :returns:           A readonly option object
-    :rtype:             :class:`PackingOpts`
-
-    
-
 
 
 .. _hbond-potential:

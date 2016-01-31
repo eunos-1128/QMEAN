@@ -20,6 +20,8 @@ using following function:
   :rtype:               :ref:`ChemType <ChemType>`         
 
 
+.. literalinclude:: example_scripts/chemtype_example.py
+
 
 .. _ChemType:
 
