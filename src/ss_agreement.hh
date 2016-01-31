@@ -15,12 +15,7 @@ typedef boost::shared_ptr<SSAgreement> SSAgreementPtr;
 int PsiPredToIndex(char pp);
 int DSSPToIndex(char dssp);
 
-//Holds dssp, psipred and confidence value distributions, such that the likelihood can be 
-//calculated to observe a certain dssp state given a psipred prediction with its confidence
-//value. The data has been extracted from a representative list of CATH groups with a seqid 
-//threshold of 0.35. Structures with resolution below 2 A have been filtered out.
-//
-//Wat you get at the end is the logodd of the probability of the tuple (dssp_state, psipred_state, psipred_conf)
+//What you get at the end is the logodd of the probability of the tuple (dssp_state, psipred_state, psipred_conf)
 //and the product of the probabilities for this dssp state and the pair of psipred_values
 // => log(P(dssp,psipred,conf)/(P(dssp)*P(psipred))
 
@@ -37,7 +32,7 @@ public:
     return dsspP_[DSSPToIndex(d)];
   }
 
-  Real GetConditionalP(char d, char psipred, int psiconf) const {
+  Real GetOverallP(char d, char psipred, int psiconf) const {
     if(psiconf<0 || psiconf>9){
       throw std::invalid_argument("confidence value must be in [0,9]");
     }

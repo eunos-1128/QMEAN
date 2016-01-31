@@ -15,7 +15,7 @@ void export_SSAgreement()
       .def("GetPsiPredP", &SSAgreement::GetPsiPredP)
       .def("LogOddScore", &SSAgreement::LogOddScore)
       .def("GetDSSPP", &SSAgreement::GetDSSPP)
-      .def("GetConditionalP", &SSAgreement::GetConditionalP)
+      .def("GetOverallP", &SSAgreement::GetOverallP)
   ;
 
   register_ptr_to_python<SSAgreementPtr>();
