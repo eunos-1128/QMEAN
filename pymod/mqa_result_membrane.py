@@ -256,9 +256,12 @@ class LocalMembraneResult:
     return LocalMembraneResult(model,lscores)
 
 
-def AssessModelQuality(model, membrane_query=None, interface_query=None, mem_param = None, output_dir='.', plots=True,
-                       table_format='ost', psipred=None, accpro=None, dc=None,settings=conf.MembraneSettings(), 
-                       dssp_path=None, assign_bfactors=True):
+def AssessMembraneModelQuality(model, membrane_query=None, interface_query=None, 
+                               mem_param = None, output_dir='.', plots=True,
+                               table_format='ost', psipred=None, accpro=None, 
+                               dc=None,settings=conf.MembraneSettings(), 
+                               dssp_path=None, assign_bfactors=True):
+
   #hack, that torsion handles get assigned
   processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,assign_torsions=True)
   processor.Process(model.handle,False)
