@@ -1021,6 +1021,10 @@ std::pair<std::pair<Real,Real>, Real> ScanAxis(std::vector<geom::Vec3>& atom_pos
 
 FindMemParam FindMembrane(ost::mol::EntityHandle& ent, ost::mol::SurfaceHandle& surf, std::vector<Real>& asa){
 
+  if(ent.GetAtomCount() != static_cast<int>(asa.size())){
+    throw ost::io::IOException("Number of atoms and number of elements in asa must be consistent!");
+  }
+
   ost::io::IOProfile io_profile;
 
 
