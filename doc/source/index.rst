@@ -18,6 +18,7 @@ Contents:
    Predicted Sequence Features <predicted_sequence_features>
    Spherical Smoothing <spherical_smoother>
    Combining Scores <score_combination>
+   Membrane Detection <membrane>
 
 
 
