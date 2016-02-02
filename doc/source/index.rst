@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    Getting Started <getting_started>
+   The QMEAN scoring functions <run_qmean_scoring>
    Defining Heavy Atoms - The ChemType <chemtype>
    Statistical Potentials of Mean Force <statistical_potentials>
    The Container Classes <containers>

@@ -2,6 +2,7 @@
 from qmean import PSIPREDHandler
 #we also need dssp, make sure an executable lies in your PATH!!
 from ost.bindings import dssp
+import os
 
 #let's define the psipred data for crambin
 data = dict()
@@ -14,7 +15,8 @@ handler = PSIPREDHandler(data)
 
 #let's load the crystal structure and assign the secondary structure
 #as estimated by dssp
-prot = io.LoadPDB("1crn",remote=True)
+prot_path = os.path.join("example_data","1CRN.pdb")
+prot = io.LoadPDB(prot_path)
 dssp.AssignDSSP(prot)
 
 #Let's use the handler for the full first chain, but also for a subset of it!

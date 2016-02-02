@@ -1,7 +1,8 @@
 #load required modules
-from ost.table import *
+from ost.table import Table
 from qmean import LocalScorer
 import random
+import os
 
 #we need to have some training data
 training_tab = Table()
@@ -62,4 +63,5 @@ print "Local score for alanine when one of the features is NaN:"
 print local_scorer.GetLocalScore("random",'A',data_two)
 
 #save down the scorer...
-local_scorer.Save("local_scorer.dat")
+scorer_path = os.path.join("example_out","local_scorer.dat")
+local_scorer.Save(scorer_path)

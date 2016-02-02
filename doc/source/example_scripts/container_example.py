@@ -1,7 +1,10 @@
 #Example code to demonstrate the usage of the container classes
 
 #load required modules
-from qmean import *
+from qmean import InteractionStatistic, InteractionPotential, \
+                  PackingStatistic, PackingPotential, \
+                  StatisticContainer, PotentialContainer
+import os
 
 #define some training targets used later on
 training_targets = ["7ODC","2QUD","3T47","4C1A","3ZSJ","4I4T","3H6R","3BSO",
@@ -20,7 +23,8 @@ s_container["int"] = InteractionStatistic(0.0,10.0,10,4)
 s_container["pack"] = PackingStatistic(5.0,32)
 
 for t in training_targets:
-    prot = io.LoadPDB(t,remote=True).Select("peptide=true")
+    prot_path = os.path.join("example_data",t+".pdb")
+    prot = io.LoadPDB(prot_path).Select("peptide=true")
     s_container["int"].Extract(prot,prot)
     s_container["pack"].Extract(prot,prot)
 
@@ -31,16 +35,18 @@ p_container["int"] = InteractionPotential.Create(s_container["int"])
 p_container["pack"] = PackingPotential.Create(s_container["pack"])
 
 #let's get a crambin and print some global energies
-crambin = io.LoadPDB("1crn",remote=True).Select("peptide=true")
+crambin_path = os.path.join("example_data","1CRN.pdb")
+crambin = io.LoadPDB(crambin_path).Select("peptide=true")
 
 print "interaction e: ", p_container["int"].GetTotalEnergy(crambin,crambin)
 print "packing e: ", p_container["pack"].GetTotalEnergy(crambin,crambin)
 
 
 #The awesome thing is, that we can dump the full container at once
-p_container.Save("potential_container.dat")
+container_path = os.path.join("example_out","potential_container.dat")
+p_container.Save(container_path)
 #and load it again
-new_p_container = PotentialContainer.Load("potential_container.dat")
+new_p_container = PotentialContainer.Load(container_path)
 
 print "Just loaded the same container again, let's see whether the "
 print "energies are consistent"

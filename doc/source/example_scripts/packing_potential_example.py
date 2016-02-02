@@ -2,7 +2,9 @@
 #and get some basic info out of it. You need matplotlib to run this script!
 
 #load required modules
-from qmean import *
+import os
+from qmean import PackingStatistic, PackingPotential, \
+                  ChemType
 import matplotlib.pyplot as plt
 
 
@@ -23,7 +25,8 @@ stat = PackingStatistic(5.0,32)
 
 #Let's fill the stat with some data!
 for t in training_targets:
-    prot = io.LoadPDB(t,remote=True).Select("peptide=true")
+    prot_path = os.path.join("example_data",t+".pdb")
+    prot = io.LoadPDB(prot_path).Select("peptide=true")
     stat.Extract(prot,prot)
 
 
@@ -32,8 +35,10 @@ for t in training_targets:
 pot = PackingPotential.Create(stat,reference_state="uniform")
 
 #Save the statistic and potential objects
-stat.Save("packing_statistic.dat")
-pot.Save("packing_pot.dat")
+stat_out_path = os.path.join("example_out","packing_statistic.dat")
+pot_out_path = os.path.join("example_out","packing_potential.dat")
+stat.Save(stat_out_path)
+pot.Save(pot_out_path)
 
 
 #We're not done yet! Let's play around a bit
@@ -71,4 +76,5 @@ plt.plot([0,33],[0,0],'k')
 plt.xlabel("other atoms within cutoff")
 plt.ylabel("pseudo energy")
 plt.legend(frameon=False)
-plt.savefig("energy_plot.png")
+out_path = os.path.join("example_out","packing_energy_plot.png")
+plt.savefig(out_path)

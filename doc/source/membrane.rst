@@ -68,6 +68,8 @@ Angstrom along the **membrane_axis**.
   .. method:: Load(filename)
 
     Static load function to load a FindMemParam object from disk
+
+    :param filename:    The filename you want to load
     :type filename:     :class:`str`
 
     :returns:           The loaded object

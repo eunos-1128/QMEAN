@@ -2,7 +2,9 @@
 #and get some basic info out of it. You need matplotlib to run this script!
 
 #load required modules
-from qmean import *
+from qmean import InteractionStatistic, InteractionPotential
+from qmean import ChemType
+import os
 import matplotlib.pyplot as plt
 
 
@@ -25,7 +27,8 @@ stat = InteractionStatistic(0.0,10.0,10,4)
 
 #Let's fill the stat with some data!
 for t in training_targets:
-    prot = io.LoadPDB(t,remote=True).Select("peptide=true")
+    prot_path = os.path.join("example_data",t+".pdb")
+    prot = io.LoadPDB(prot_path).Select("peptide=true")
     stat.Extract(prot,prot)
 
 
@@ -33,8 +36,10 @@ for t in training_targets:
 pot = InteractionPotential.Create(stat)
 
 #Save the statistic and potential objects
-stat.Save("interaction_statistic.dat")
-pot.Save("interaction_pot.dat")
+stat_path = os.path.join("example_out","interaction_statistic.dat")
+pot_path = os.path.join("example_out","interaction_potential.dat")
+stat.Save(stat_path)
+pot.Save(pot_path)
 
 
 #We're not done yet! Let's play around a bit
@@ -63,11 +68,13 @@ plt.plot([0,10],[0,0],'k')
 plt.xlabel("distance")
 plt.ylabel("pseudo energy")
 plt.legend(frameon=False)
-plt.savefig("energy_plot.png")
+fig_path = os.path.join("example_out","interaction_energy_plot.png")
+plt.savefig(fig_path)
 
 
 #To get structure dependent pseudo energies we use crambin
-crambin = io.LoadPDB("1crn",remote=True).Select("peptide=True")
+crambin_path = os.path.join("example_data","1CRN.pdb")
+crambin = io.LoadPDB(crambin_path).Select("peptide=True")
 
 #Let's get the pseudo energy for the residue num 42 given the full
 #strucure as environment

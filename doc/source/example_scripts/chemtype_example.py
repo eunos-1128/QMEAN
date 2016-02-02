@@ -1,5 +1,6 @@
 #Load the required modules
-from qmean import *
+from qmean import SSAgreement
+from qmean import GetAtomTypeByName
 
 #Let's check out all ChemTypes for a Phenylalanine...
 atom_names = ["N","CA","CB","O","CG","CD1","CD2","CE1","CE2","CZ"]

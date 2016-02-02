@@ -3,6 +3,7 @@
 
 #load the QMEAN modules
 from qmean import *
+import os
 
 
 #Let's define some groups for three consecutive amino acids
@@ -34,8 +35,9 @@ stat = TorsionStatistic(group_identifier, bins)
 
 
 #Load some structure from the PDB and train the stats with it
-ent = io.LoadPDB("1ake",remote=True).Select("cname=A and peptide=true")
-stat.Extract(ent)
+crambin_path = os.path.join("example_data","1CRN.pdb")
+crambin = io.LoadPDB(crambin_path).Select("cname=A and peptide=true")
+stat.Extract(crambin)
 
 
 #Create a super undersaturated potential

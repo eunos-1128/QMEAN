@@ -2,9 +2,11 @@
 from qmean import *
 #import python random module
 import random
+import os
 
 #Load crambin and extract CA positions
-crambin = io.LoadPDB("1crn",remote=True)
+crambin_path = os.path.join("example_data","1CRN.pdb")
+crambin = io.LoadPDB(crambin_path)
 positions = [r.FindAtom("CA").GetPos() for r in crambin.residues]
 
 #Generate smoother object with extracted positions

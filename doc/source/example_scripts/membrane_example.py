@@ -1,6 +1,7 @@
 #import the required modules
 #Please note, that you need to have executables
 #of dssp, msms and naccess in your path!!!
+import os
 from ost import mol
 from qmean import FindMembrane
 from ost.bindings import dssp
@@ -11,7 +12,8 @@ from ost.bindings import naccess
 #We use a GPCR example... 
 #Directly after loading we strip of all hydrogens 
 #and everything, that doesn't look like a peptide
-gpcr = io.LoadPDB('3eml',remote=True).Select("peptide=true and ele!=H")
+gpcr_path = os.path.join("example_data","3EML.pdb")
+gpcr = io.LoadPDB(gpcr_path).Select("peptide=true and ele!=H")
 
 #The FindMembrane function requires an entity as an input!
 gpcr = mol.CreateEntityFromView(gpcr,False)
@@ -54,4 +56,7 @@ for r in gpcr.residues:
 transmembrane_part = gpcr.Select("grin_membrane:0=1")
 
 #We can finally save down the transmembrane part!
-io.SavePDB(transmembrane_part, "transmembrane_part_3eml.pdb")
+gpcr_path = os.path.join("example_out","gpcr.pdb")
+gpcr_transmem_path = os.path.join("example_out","gpcr_transmembrane_part.pdb")
+io.SavePDB(gpcr,gpcr_path)
+io.SavePDB(transmembrane_part, gpcr_transmem_path)
