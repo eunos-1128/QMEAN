@@ -148,8 +148,6 @@ Real TorsionPotential::GetTotalEnergy(ost::mol::EntityView& target, bool normali
 
 void TorsionPotential::Fill(TorsionStatisticPtr stat, const String& reference_state){
 
-  //TODO: no check whether options are consistent
-
   typedef TorsionEnergies::IndexType Index;
   Real total_count=stat->GetTotalCount();
 
@@ -248,4 +246,3 @@ void TorsionPotential::Fill(TorsionStatisticPtr stat, const String& reference_st
 }
 
 }
-

@@ -16,7 +16,19 @@ CBetaOpts() { }
 CBetaOpts(Real l_cutoff, Real u_cutoff, int nob, int ssep, Real s=0.02):
           lower_cutoff(l_cutoff), upper_cutoff(u_cutoff), number_of_bins(nob),
           sequence_sep(ssep), sigma(s)
-  { }
+  { 
+    if(l_cutoff >= u_cutoff){
+      throw std::runtime_error("Lower cutoff must be smaller than upper cutoff!");
+    }
+
+    if(l_cutoff < 0.0){
+      throw std::runtime_error("Lower cutoff must be greater or equal 0.0!");
+    }
+
+    if(s <= 0.0){
+      throw std::runtime_error("Sigma must be larger larger than 0.0!");
+    }
+  }
 
 public:
   Real lower_cutoff;
@@ -66,7 +78,7 @@ public:
     opts_(opts), env_(5) { }
 
 
-  virtual bool VisitResidue(const ost::mol::ResidueHandle& res);
+  virtual bool VisitResidue(ost::mol::ResidueHandle& res);
 
   virtual void OnInteraction(ost::conop::AminoAcid a,
                              ost::conop::AminoAcid b,

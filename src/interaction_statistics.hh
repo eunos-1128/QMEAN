@@ -26,17 +26,17 @@ public:
 
   void Extract(ost::mol::EntityView& target, ost::mol::EntityView& env, Real weight);
 
-  Real GetTotalCount();
+  Real GetTotalCount() const;
 
-  Real GetCount(atom::ChemType a, atom::ChemType b, int dist_bin);
+  Real GetCount(atom::ChemType a, atom::ChemType b, uint dist_bin) const;
 
-  Real GetCount(atom::ChemType a, atom::ChemType b);
+  Real GetCount(atom::ChemType a, atom::ChemType b) const;
 
-  Real GetCount(int dist_bin);
+  Real GetCount(uint dist_bin) const;
 
-  PotentialType GetType() { return Interaction; }
+  PotentialType GetType() const { return Interaction; }
 
-  impl::InteractionOpts GetOpts() { return opts_; }
+  impl::InteractionOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

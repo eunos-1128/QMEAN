@@ -29,7 +29,7 @@ public:
 
   void Fill(PackingStatisticPtr stat, const String& reference_state);
 
-  PotentialType GetType() { return Packing; }
+  PotentialType GetType() const { return Packing; }
 
   void SetEnvironment(ost::mol::EntityView& env) { env_=env; }
 
@@ -43,7 +43,7 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  impl::PackingOpts GetOpts() { return opts_; }
+  impl::PackingOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

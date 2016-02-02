@@ -31,7 +31,7 @@ public:
 
   void Fill(InteractionStatisticPtr s1, InteractionStatisticPtr s2, const String& reference_state, Real max_energy);
 
-  PotentialType GetType() { return Interaction; }
+  PotentialType GetType() const { return Interaction; }
 
   void SetEnvironment(ost::mol::EntityView& env) { env_=env; }
 
@@ -45,9 +45,9 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  uint32_t GetCounts() { return count_; }
+  uint32_t GetCounts() const { return count_; }
 
-  impl::InteractionOpts GetOpts() { return opts_; }
+  impl::InteractionOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

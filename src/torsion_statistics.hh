@@ -24,17 +24,17 @@ public:
 
   void Extract(ost::mol::EntityView& target, Real weight);
 
-  Real GetTotalCount();
+  Real GetTotalCount() const;
 
-  Real GetTotalCount(const String& gi);
+  Real GetTotalCount(const String& gi) const;
 
-  Real GetCount(const String& gi, std::vector<int>& bins);
+  Real GetCount(const String& gi, std::vector<int>& bins) const;
 
-  Real GetCount(std::vector<int>& bins);
+  Real GetCount(std::vector<int>& bins) const;
 
-  PotentialType GetType() { return Torsion; }
+  PotentialType GetType() const { return Torsion; }
 
-  impl::TorsionOpts GetOpts() { return opts_; }
+  impl::TorsionOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

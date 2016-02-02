@@ -32,7 +32,7 @@ public:
 
   void Fill(CBetaStatisticPtr s1, CBetaStatisticPtr s2, const String& reference_state, Real max_energy);
 
-  PotentialType GetType() { return CBeta; }
+  PotentialType GetType() const { return CBeta; }
 
   Real GetEnergy(ost::conop::AminoAcid a, ost::conop::AminoAcid, Real dist);
 
@@ -44,9 +44,9 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  uint32_t GetCounts() { return count_; }
+  uint32_t GetCounts() const { return count_; }
 
-  impl::CBetaOpts GetOpts() { return opts_; }
+  impl::CBetaOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

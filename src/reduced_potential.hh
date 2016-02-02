@@ -28,7 +28,7 @@ public:
 
   void Fill(ReducedStatisticPtr stat, const String& reference_state);
 
-  PotentialType GetType() { return Reduced; }
+  PotentialType GetType() const { return Reduced; }
 
   Real GetEnergy(ost::conop::AminoAcid a, ost::conop::AminoAcid b, Real distance, Real alpha, Real beta, Real gamma);
 
@@ -40,9 +40,9 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  uint32_t GetCounts() { return count_; }
+  uint32_t GetCounts() const { return count_; }
 
-  impl::ReducedOpts GetOpts() { return opts_; }
+  impl::ReducedOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

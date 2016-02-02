@@ -44,7 +44,7 @@ void CBPackingStatistic::Extract(ost::mol::EntityView& target, ost::mol::EntityV
   target.Apply(*this);
 }
 
-Real CBPackingStatistic::GetTotalCount(){
+Real CBPackingStatistic::GetTotalCount() const{
   Real total_count=0;
   for(int aa=0;aa<ost::conop::XXX;++aa){
     total_count+=this->GetCount(ost::conop::AminoAcid(aa));
@@ -52,7 +52,7 @@ Real CBPackingStatistic::GetTotalCount(){
   return total_count;
 }
 
-Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa){
+Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa) const{
 
   Real total_count=0;
   for(int i=0;i<opts_.max_counts+1;++i){
@@ -61,11 +61,20 @@ Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa){
   return total_count;
 }
 
-Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa, int bin){
+Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa, uint bin) const{
+
+  if(aa == ost::conop::XXX){
+    throw std::runtime_error("Cannot get count for invalid amino acid!");
+  }
+
+  if(bin >= opts_.max_counts+1){
+    throw std::runtime_error("Cannot get count for invalid bin!");
+  }
+
   return histo_.Get(CBPackingHistogram::IndexType(aa,bin));
 }
 
-Real CBPackingStatistic::GetCount(int bin){
+Real CBPackingStatistic::GetCount(uint bin) const{
 
   Real total_count=0;
   for(int i=0; i < ost::conop::XXX; ++i){

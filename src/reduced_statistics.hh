@@ -30,20 +30,20 @@ public:
 
   void Extract(ost::mol::EntityView& target, ost::mol::EntityView& env, Real weight);
 
-  Real GetTotalCount();
+  Real GetTotalCount() const;
 
   Real GetCount(ost::conop::AminoAcid aa_one,
-                ost::conop::AminoAcid aa_two);
+                ost::conop::AminoAcid aa_two) const;
 
 
   Real GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                int dist_bin, int alpha_bin, int beta_bin, int gamma_bin);
+                uint dist_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const;
 
-  Real GetCount(int dist_bin, int alpha_bin, int beta_bin, int gamma_bin);
+  Real GetCount(uint dist_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const;
 
-  PotentialType GetType() { return Reduced; }
+  PotentialType GetType() const { return Reduced; }
 
-  impl::ReducedOpts GetOpts() { return opts_; }
+  impl::ReducedOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

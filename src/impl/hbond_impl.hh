@@ -22,7 +22,48 @@ public:
                                   beta_min(beta_mi),beta_max(beta_ma),
                                   gamma_min(gamma_mi),gamma_max(gamma_ma),
                                   d_bins(d_b),alpha_bins(alpha_b),beta_bins(beta_b),
-                                  gamma_bins(gamma_b), seq_sep(ss) { }
+                                  gamma_bins(gamma_b), seq_sep(ss) { 
+
+    if(d_min >= d_max){
+      throw std::runtime_error("Min distance must be smaller than max distance!");
+    }
+
+    if(d_min < 0.0){
+      throw std::runtime_error("Min distance must be larger or equal 0.0!");
+    }
+
+    if(alpha_min >= alpha_max){
+      throw std::runtime_error("Min alpha must be smaller than max alpha!");
+    }
+
+    if(beta_min >= beta_max){
+      throw std::runtime_error("Min beta must be smaller than max beta!");
+    }
+
+    if(gamma_min >= gamma_max){
+      throw std::runtime_error("Min gamma must be smaller than max gamma!");
+    }
+
+    if(d_bins <= 0){
+      throw std::runtime_error("Number of distance bins must be larger 0!");
+    }
+
+    if(alpha_bins <= 0){
+      throw std::runtime_error("Number of alpha bins must be larger 0!");
+    }
+
+    if(beta_bins <= 0){
+      throw std::runtime_error("Number of beta bins must be larger 0!");
+    }
+
+    if(gamma_bins <= 0){
+      throw std::runtime_error("Number of gamma bins must be larger 0!");
+    }
+    
+    if(seq_sep < 0){
+      throw std::runtime_error("Sequence separation must be larger 0!");
+    }
+  }
 
   inline bool operator == (const HBondOpts& opts) const {
     return d_min == opts.d_min && d_max == opts.d_max &&

@@ -46,7 +46,7 @@ void ReducedStatistic::Extract(ost::mol::EntityView& target, ost::mol::EntityVie
   target.Apply(*this);
 }
 
-Real ReducedStatistic::GetTotalCount(){
+Real ReducedStatistic::GetTotalCount() const{
 
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;
@@ -66,7 +66,11 @@ Real ReducedStatistic::GetTotalCount(){
   return count;
 }
 
-Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two){
+Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two) const{
+
+  if(aa_one == ost::conop::XXX || aa_two == ost::conop::XXX){
+    throw std::runtime_error("Cannot get count of invalid amino acid!"); 
+  }
 
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;
@@ -83,13 +87,49 @@ Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoA
 }
 
 Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
-                                int dist_bin, int alpha_bin, int beta_bin, int gamma_bin){
+                                uint dist_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const{
+
+  if(aa_one == ost::conop::XXX || aa_two == ost::conop::XXX){
+    throw std::runtime_error("Cannot get count of invalid amino acid!"); 
+  }
+
+  if(dist_bin >= opts_.num_dist_bins){
+    throw std::runtime_error("Cannot get count of invalid distance bin!");
+  }
+
+  if(alpha_bin >= opts_.num_angle_bins){
+    throw std::runtime_error("Cannot get count of invalid alpha bin!");
+  }
+
+  if(beta_bin >= opts_.num_angle_bins){
+    throw std::runtime_error("Cannot get count of invalid beta bin!");
+  }
+
+  if(gamma_bin >= opts_.num_dihedral_bins){
+    throw std::runtime_error("Cannot get count of invalid gamma bin!");
+  }
 
   return histo_.Get(ReducedHistogram::IndexType(aa_one, aa_two, dist_bin,
                                                 alpha_bin, beta_bin, gamma_bin));
 }
 
-Real ReducedStatistic::GetCount(int dist_bin, int alpha_bin, int beta_bin, int gamma_bin) {
+Real ReducedStatistic::GetCount(uint dist_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const{
+
+  if(dist_bin >= opts_.num_dist_bins){
+    throw std::runtime_error("Cannot get count of invalid distance bin!");
+  }
+
+  if(alpha_bin >= opts_.num_angle_bins){
+    throw std::runtime_error("Cannot get count of invalid alpha bin!");
+  }
+
+  if(beta_bin >= opts_.num_angle_bins){
+    throw std::runtime_error("Cannot get count of invalid beta bin!");
+  }
+
+  if(gamma_bin >= opts_.num_dihedral_bins){
+    throw std::runtime_error("Cannot get count of invalid gamma bin!");
+  }
 
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;

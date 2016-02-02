@@ -29,15 +29,15 @@ public:
 
   void Extract(ost::mol::EntityView& view, Real weight);
 
-  Real GetTotalCount();
+  Real GetTotalCount() const;
 
-  Real GetCount(int state);
+  Real GetCount(uint state) const;
 
-  Real GetCount(int state, int d_bin, int alpha_bin, int beta_bin, int gamma_bin);
+  Real GetCount(uint state, uint d_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const;
 
-  PotentialType GetType() { return HBond; }
+  PotentialType GetType() const { return HBond; }
 
-  impl::HBondOpts GetOpts() { return opts_; }
+  impl::HBondOpts GetOpts() const{ return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

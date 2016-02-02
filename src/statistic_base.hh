@@ -60,11 +60,11 @@ public:
 
   virtual ~StatisticBase() = 0;
 
-  virtual PotentialType GetType()=0;
+  virtual PotentialType GetType() const = 0;
 
   void Save(const String& filename);
 
-  virtual void OnSave(io::BinaryDataSink& ds)=0;
+  virtual void OnSave(io::BinaryDataSink& ds) = 0;
 
 };
 

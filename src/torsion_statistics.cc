@@ -46,16 +46,16 @@ void TorsionStatistic::Extract(ost::mol::EntityView& target, Real weight){
   target.Apply(*this);
 }
 
-Real TorsionStatistic::GetTotalCount(){
+Real TorsionStatistic::GetTotalCount() const {
 
   Real total=0.0;
-  for(std::map<String,TorsionHistogram>::iterator it=histos_.begin();it!=histos_.end();++it){
+  for(std::map<String,TorsionHistogram>::const_iterator it=histos_.begin();it!=histos_.end();++it){
     total+=this->GetTotalCount(it->first);
   }
   return total;
 }
 
-Real TorsionStatistic::GetTotalCount(const String& gi){
+Real TorsionStatistic::GetTotalCount(const String& gi) const{
 
   if(histos_.count(gi)==0){
     std::stringstream ss;
@@ -73,7 +73,8 @@ Real TorsionStatistic::GetTotalCount(const String& gi){
         for(int d=0;d<opts_.num_of_bins[3];++d){
           for(int e=0;e<opts_.num_of_bins[4];++e){
             for(int f=0;f<opts_.num_of_bins[5];++f){
-              total+=histos_[gi].Get(Index(a,b,c,d,e,f));
+              std::map<String,TorsionHistogram>::const_iterator i = histos_.find(gi);
+              total += i->second.Get(Index(a,b,c,d,e,f));
             }
           }
         }
@@ -84,34 +85,43 @@ Real TorsionStatistic::GetTotalCount(const String& gi){
   return total;
 }
 
-Real TorsionStatistic::GetCount(const String& gi, std::vector<int>& bins){
+Real TorsionStatistic::GetCount(const String& gi, std::vector<int>& bins) const{
 
   if(histos_.count(gi)==0){
     std::stringstream ss;
     ss<<"invalid group identifier: ";
     ss<<gi;
-    for(std::map<String,TorsionHistogram>::iterator it=histos_.begin();it!=histos_.end();++it){
-      std::cout<<it->first<<std::endl;
-    }
     throw std::runtime_error(ss.str());
   }
   if(bins.size()!=6){
     throw std::runtime_error("There are 6 angle bins!");
   }
-  typedef TorsionHistogram::IndexType Index;
 
-  return histos_[gi].Get(Index(bins[0],bins[1],bins[2],bins[3],bins[4],bins[5]));
+  for(int i = 0; i < 6; ++i){
+    if(bins[i] < 0 || bins[i] >= opts_.num_of_bins[i]){
+      throw std::runtime_error("Cannot get count for invalid torsion bin!");
+    }
+  }
+  typedef TorsionHistogram::IndexType Index;
+  std::map<String,TorsionHistogram>::const_iterator i = histos_.find(gi);
+  return i->second.Get(Index(bins[0],bins[1],bins[2],bins[3],bins[4],bins[5]));
 }
 
-Real TorsionStatistic::GetCount(std::vector<int>& bins){
+Real TorsionStatistic::GetCount(std::vector<int>& bins) const{
 
   if(bins.size()!=6){
     throw std::runtime_error("There are 6 angle bins!");
   }
 
+  for(int i = 0; i < 6; ++i){
+    if(bins[i] < 0 || bins[i] >= opts_.num_of_bins[i]){
+      throw std::runtime_error("Cannot get count for invalid torsion bin!");
+    }
+  }
+
   Real total=0;
 
-  for(std::map<String,TorsionHistogram>::iterator it=histos_.begin();it!=histos_.end();++it){
+  for(std::map<String,TorsionHistogram>::const_iterator it=histos_.begin();it!=histos_.end();++it){
     total+=this->GetCount(it->first, bins);
   }
   return total;

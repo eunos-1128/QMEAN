@@ -28,17 +28,17 @@ public:
 
   void Extract(ost::mol::EntityView& target, ost::mol::EntityView& env, Real weight);
 
-  Real GetTotalCount();
+  Real GetTotalCount() const;
 
-  Real GetCount(ost::conop::AminoAcid aa);
+  Real GetCount(ost::conop::AminoAcid aa) const;
 
-  Real GetCount(ost::conop::AminoAcid aa, int bin);
+  Real GetCount(ost::conop::AminoAcid aa, uint bin) const;
 
-  Real GetCount(int bin);
+  Real GetCount(uint bin) const;
 
-  PotentialType GetType() { return CBPacking; }
+  PotentialType GetType() const { return CBPacking; }
 
-  impl::CBPackingOpts GetOpts() { return opts_; }
+  impl::CBPackingOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

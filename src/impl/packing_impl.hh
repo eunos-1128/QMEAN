@@ -14,12 +14,42 @@ struct DLLEXPORT_QMEAN PackingOpts {
 
   PackingOpts () { }
 
-  PackingOpts(Real co, int mc, int bs): cutoff(co), max_counts(mc), bin_size(bs), sigma(0)
-  { }
-  PackingOpts(Real co, int mc, int bs, Real s): cutoff(co), max_counts(mc), bin_size(bs), sigma(s)
-  { }
+  PackingOpts(Real co, int mc, int bs): cutoff(co), max_counts(mc), bin_size(bs), sigma(0.02){ 
+    
+    if(cutoff <= 0.0){
+      throw std::runtime_error("Cutoff must be larger 0.0!");
+    }
 
+    if(max_counts <= 0){
+      throw std::runtime_error("Max counts , must be larger 0!");
+    }
 
+    if(bin_size != 1){
+      throw std::runtime_error("Bin size must be one!");
+    }
+
+    if(sigma <= 0.0){
+      throw std::runtime_error("Sigma parameter must be larger 0.0!"); 
+    }
+  }
+  PackingOpts(Real co, int mc, int bs, Real s): cutoff(co), max_counts(mc), bin_size(bs), sigma(s){ 
+
+    if(cutoff <= 0.0){
+      throw std::runtime_error("Cutoff must be larger 0.0!");
+    }
+
+    if(max_counts <= 0){
+      throw std::runtime_error("Max counts , must be larger 0!");
+    }
+
+    if(bin_size != 1){
+      throw std::runtime_error("Bin size must be one!");
+    }
+
+    if(sigma <= 0.0){
+      throw std::runtime_error("Sigma parameter must be larger 0.0!"); 
+    }
+  }
 
   inline bool operator == (const PackingOpts& opts) const {
     return max_counts == opts.max_counts && cutoff == opts.cutoff &&

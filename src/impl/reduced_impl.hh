@@ -11,15 +11,42 @@ namespace qmean { namespace impl {
 
   
 struct DLLEXPORT_QMEAN ReducedOpts{
-ReducedOpts(): lower_cutoff(0), upper_cutoff(0), num_angle_bins(0), 
-               num_dihedral_bins(0), num_dist_bins(0), sequence_sep(0), 
-               sigma(0) { }
+ReducedOpts() { }
 
 ReducedOpts(Real l_cutoff, Real u_cutoff, int nab, int ndab,
-             int ndb, int ssep, Real s=0.02):
-             lower_cutoff(l_cutoff), upper_cutoff(u_cutoff),
-             num_angle_bins(nab),  num_dihedral_bins(ndab),
-             num_dist_bins(ndb), sequence_sep(ssep), sigma(s) { }
+            int ndb, int ssep, Real s=0.02):
+            lower_cutoff(l_cutoff), upper_cutoff(u_cutoff),
+            num_angle_bins(nab),  num_dihedral_bins(ndab),
+            num_dist_bins(ndb), sequence_sep(ssep), sigma(s) { 
+
+  if(lower_cutoff >= upper_cutoff){
+    throw std::runtime_error("Lower cutoff must be smaller than upper cutoff!");
+  }
+
+  if(lower_cutoff < 0.0){
+    throw std::runtime_error("Lower cutoff must be larger or equal 0.0");
+  }
+
+  if(num_angle_bins <= 0){
+    throw std::runtime_error("Number of angle bins must be larger 0!");
+  }
+
+  if(num_dihedral_bins <= 0){
+    throw std::runtime_error("Number of dihedral bins must be larger 0!");
+  }
+
+  if(num_dist_bins <= 0){
+    throw std::runtime_error("Number of distance bins must be larger 0!");
+  }
+
+  if(sequence_sep < 0){
+    throw std::runtime_error("Sequence separation must be larger or equal 0!");
+  }
+
+  if(sigma <= 0.0){
+    throw std::runtime_error("Sigma parameter must be larger 0.0!");
+  }
+}
 
 public:
 

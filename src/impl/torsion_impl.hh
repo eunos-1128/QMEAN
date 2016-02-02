@@ -11,8 +11,10 @@ namespace qmean { namespace impl {
 struct DLLEXPORT_QMEAN TorsionOpts{
 
 public:
-  TorsionOpts(): sigma(0.02) { }
+  TorsionOpts() { }
   TorsionOpts(std::vector<String>& gi, std::vector<int>& nob, Real s=0.02);
+
+  String FindStat(const std::vector<String>& residues);
 
   template <typename DS>
   void Serialize(DS& ds){

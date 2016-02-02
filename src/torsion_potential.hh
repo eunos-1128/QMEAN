@@ -35,9 +35,9 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, bool normalize);
 
-  PotentialType GetType() { return Torsion; }
+  PotentialType GetType() const { return Torsion; }
 
-  impl::TorsionOpts GetOpts() { return opts_; }
+  impl::TorsionOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

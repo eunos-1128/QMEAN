@@ -45,7 +45,7 @@ void InteractionStatistic::Extract(ost::mol::EntityView& target, ost::mol::Entit
   target.Apply(*this);
 }
 
-Real InteractionStatistic::GetTotalCount(){
+Real InteractionStatistic::GetTotalCount() const{
   Real total_count=0.0;
   for(int i=0; i<opts_.number_of_bins; ++i){
     total_count+=this->GetCount(i);
@@ -53,11 +53,20 @@ Real InteractionStatistic::GetTotalCount(){
   return total_count;
 }
 
-Real InteractionStatistic::GetCount(atom::ChemType a, atom::ChemType b, int dist_bin){
+Real InteractionStatistic::GetCount(atom::ChemType a, atom::ChemType b, uint dist_bin) const{
+
+  if(a == atom::UNKNOWN || b == atom::UNKNOWN){
+    throw std::runtime_error("Cannot get count for invalid ChemType!");
+  }
+
+  if(dist_bin >= opts_.number_of_bins){
+    throw std::runtime_error("Cannot get count for invalid distance bin!");
+  }
+
   return histo_.Get(InteractionHistogram::IndexType(a, b, dist_bin)); 
 }
 
-Real InteractionStatistic::GetCount(atom::ChemType a, atom::ChemType b){
+Real InteractionStatistic::GetCount(atom::ChemType a, atom::ChemType b) const{
   Real count=0.0;
   for(int i=0; i<opts_.number_of_bins; ++i){
     count+=this->GetCount(a,b,i);
@@ -65,7 +74,8 @@ Real InteractionStatistic::GetCount(atom::ChemType a, atom::ChemType b){
   return count;
 }
 
-Real InteractionStatistic::GetCount(int dist_bin){
+Real InteractionStatistic::GetCount(uint dist_bin) const{
+
   Real count=0.0;
   for (size_t i=0; i<atom::UNKNOWN; ++i) {
     for (size_t j=0; j<atom::UNKNOWN; ++j) {

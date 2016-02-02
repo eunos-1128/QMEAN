@@ -53,6 +53,12 @@ void HBondPotential::Fill(HBondStatisticPtr stat){
 
   for (int i=0; i < 3; ++i) {
     state_count = stat->GetCount(i);
+    if(state_count == 0.0){
+      std::stringstream ss;
+      ss <<"Cannot create potential function from state " << i;
+      ss <<" without counts in histogram!";
+      throw std::runtime_error(ss.str());
+    }
     expectation_value = 0.0;
     for(uint j = 0; j < opts_.d_bins; ++j){
       for(uint k = 0; k < opts_.alpha_bins; ++k){

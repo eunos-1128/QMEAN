@@ -9,6 +9,12 @@ TorsionOpts::TorsionOpts(std::vector<String>& gi, std::vector<int>& nob, Real s)
     throw std::runtime_error("number of bin list must contain 6 values!");
   } 
 
+  for(int i = 0; i < 6; ++i){
+    if(nob[i] <= 0){
+      throw std::runtime_error("All torsion angles must have at least one bin!");
+    }
+  }
+
   for(std::vector<String>::iterator it=gi.begin();it!=gi.end();++it){
     ost::StringRef gid(it->c_str(), it->length());
     if(gid.split('-').size()!=3){
@@ -20,10 +26,59 @@ TorsionOpts::TorsionOpts(std::vector<String>& gi, std::vector<int>& nob, Real s)
       throw std::runtime_error(ss.str());      
     }
   }
-     
+
   num_of_bins=nob;
   group_identifier=gi;
 
+  std::vector<String> single_ids(3);
+  String current_identifier;
+  for(int i = 0; i < ost::conop::XXX; ++i){
+    for(int j = 0; j < ost::conop::XXX; ++j){
+      for(int k = 0; k < ost::conop::XXX; ++k){
+        single_ids[0] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(i));
+        single_ids[1] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(j));
+        single_ids[2] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(k));
+        current_identifier = this->FindStat(single_ids);
+        if(current_identifier == ""){
+          std::stringstream ss;
+          ss << "Amino acid triplet "<<single_ids[0]<<", "<<single_ids[1]<<", ";
+          ss << single_ids[2]<<" is not covered by any of the provided group ids!";
+          throw std::runtime_error(ss.str());
+        }
+      }
+    }
+  }     
+}
+
+String TorsionOpts::FindStat(const std::vector<String>& residues){
+  bool match;
+
+  for(std::vector<String>::iterator it=group_identifier.begin();it!=group_identifier.end();++it){
+
+    match=true;
+    ost::StringRef gid(it->c_str(), it->length());
+    std::vector<ost::StringRef> single_ids=gid.split('-'); //split ids
+
+    //iterate over all three positions
+    for(int i=0;i<3;++i){
+      //"all" matches every residue
+      if(single_ids[i].str().find("all")!=(-1)){
+        continue;
+      }
+      //check, whether currrent residue matches current id position
+      if(single_ids[i].str().find(residues[i])==-1){
+        match=false;
+        break;
+      }
+    }
+
+    if(match){
+      //FIRST match gets returned
+      return *it;
+    }
+  }
+  String empty("");
+  return empty;
 }
 
 bool TorsionPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
@@ -100,34 +155,7 @@ bool TorsionPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
 
 String TorsionPotentialImpl::FindStat(std::vector<String>& residues){
 
-  bool match;
-
-  for(std::vector<String>::iterator it=opts_.group_identifier.begin();it!=opts_.group_identifier.end();++it){
-
-    match=true;
-    ost::StringRef gid(it->c_str(), it->length());
-    std::vector<ost::StringRef> single_ids=gid.split('-'); //split ids
-
-    //iterate over all three positions
-    for(int i=0;i<3;++i){
-      //"all" matches every residue
-      if(single_ids[i].str().find("all")!=(-1)){
-        continue;
-      }
-      //check, whether currrent residue matches current id position
-      if(single_ids[i].str().find(residues[i])==-1){
-        match=false;
-        break;
-      }
-    }
-
-    if(match){
-      //FIRST match gets returned
-      return *it;
-    }
-  }
-  String empty("");
-  return empty;
+  opts_.FindStat(residues);
 }
 
 }}//namespaces

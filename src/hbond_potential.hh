@@ -28,7 +28,7 @@ public:
 
   void Fill(HBondStatisticPtr stat);
 
-  PotentialType GetType() { return HBond; }
+  PotentialType GetType() const { return HBond; }
 
   Real GetEnergy(int state, float d, float alpha, float beta, float gamma);
 
@@ -40,7 +40,7 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& view, bool normalize);
 
-  impl::HBondOpts GetOpts() { return opts_; }
+  impl::HBondOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

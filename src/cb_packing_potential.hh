@@ -30,7 +30,7 @@ public:
 
   void Fill(CBPackingStatisticPtr s1, CBPackingStatisticPtr s2, const String& reference_state, Real max_energy);
 
-  PotentialType GetType() { return CBPacking; }
+  PotentialType GetType() const { return CBPacking; }
 
   Real GetEnergy(ost::conop::AminoAcid aa, int count);
 
@@ -42,7 +42,7 @@ public:
 
   Real GetTotalEnergy(ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize);
 
-  impl::CBPackingOpts GetOpts() { return opts_; }
+  impl::CBPackingOpts GetOpts() const { return opts_; }
 
   template <typename DS>
   void Serialize(DS& ds){

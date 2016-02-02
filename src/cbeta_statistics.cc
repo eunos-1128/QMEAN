@@ -45,7 +45,7 @@ void CBetaStatistic::Extract(ost::mol::EntityView& target, ost::mol::EntityView&
   target.Apply(*this);
 }
 
-Real CBetaStatistic::GetTotalCount(){
+Real CBetaStatistic::GetTotalCount() const{
   Real total_count=0.0;
   for(int i=0; i<opts_.number_of_bins; ++i){
     total_count+=this->GetCount(i);
@@ -53,11 +53,21 @@ Real CBetaStatistic::GetTotalCount(){
   return total_count;
 }
 
-Real CBetaStatistic::GetCount(ost::conop::AminoAcid a, ost::conop::AminoAcid b, int dist_bin){
+Real CBetaStatistic::GetCount(ost::conop::AminoAcid a, ost::conop::AminoAcid b, uint dist_bin) const{
+
+  if(a == ost::conop::XXX || b == ost::conop::XXX){
+    throw std::runtime_error("Cannot get count for invalid AminoAcid!");
+  }
+
+  if(dist_bin >= opts_.number_of_bins){
+    throw std::runtime_error("Cannot get count for invalid bin!");
+  }
+
   return histo_.Get(CBetaHistogram::IndexType(a, b, dist_bin)); 
 }
 
-Real CBetaStatistic::GetCount(ost::conop::AminoAcid a, ost::conop::AminoAcid b){
+Real CBetaStatistic::GetCount(ost::conop::AminoAcid a, ost::conop::AminoAcid b) const{
+
   Real count=0.0;
   for(int i=0; i<opts_.number_of_bins; ++i){
     count+=this->GetCount(a,b,i);
@@ -65,7 +75,8 @@ Real CBetaStatistic::GetCount(ost::conop::AminoAcid a, ost::conop::AminoAcid b){
   return count;
 }
 
-Real CBetaStatistic::GetCount(int dist_bin){
+Real CBetaStatistic::GetCount(uint dist_bin) const{
+
   Real count=0.0;
   for (size_t i=0; i<ost::conop::XXX; ++i) {
     for (size_t j=0; j<ost::conop::XXX; ++j) {

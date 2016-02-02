@@ -88,6 +88,11 @@ void CBPackingPotential::Fill(CBPackingStatisticPtr stat, const String& referenc
 }
 
 Real CBPackingPotential::GetEnergy(ost::conop::AminoAcid aa, int count){
+
+  if(aa == ost::conop::XXX){
+    throw std::runtime_error("Cannot get energy for invalid amino acid!");
+  }
+
   return energies_.Get(CBPackingEnergies::IndexType(aa, this->GetBin(count)));
 }
 

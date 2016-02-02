@@ -53,7 +53,7 @@ void PackingStatistic::Extract(ost::mol::EntityView& target, ost::mol::EntityVie
   target.Apply(*this);
 }
 
-Real PackingStatistic::GetTotalCount(){
+Real PackingStatistic::GetTotalCount() const{
   Real total_count=0;
   for(int a=0;a<atom::UNKNOWN;++a){
     total_count+=this->GetCount(atom::ChemType(a));
@@ -61,7 +61,7 @@ Real PackingStatistic::GetTotalCount(){
   return total_count;
 }
 
-Real PackingStatistic::GetCount(atom::ChemType a){
+Real PackingStatistic::GetCount(atom::ChemType a) const{
 
   Real total_count=0;
   for(int i=0;i<opts_.max_counts+1;++i){
@@ -70,11 +70,24 @@ Real PackingStatistic::GetCount(atom::ChemType a){
   return total_count;
 }
 
-Real PackingStatistic::GetCount(atom::ChemType a, int bin){
+Real PackingStatistic::GetCount(atom::ChemType a, uint bin) const{
+
+  if(a == atom::UNKNOWN){
+    throw std::runtime_error("Cannot get count for invalid atom!");
+  }
+
+  if(bin > opts_.max_counts){
+    throw std::runtime_error("Cannot get count for invalid bin!");
+  }
+
   return histo_.Get(a,bin);
 }
 
-Real PackingStatistic::GetCount(int bin){
+Real PackingStatistic::GetCount(uint bin) const{
+
+  if(bin > opts_.max_counts){
+    throw std::runtime_error("Cannot get count for invalid bin!");
+  }
 
   Real total_count=0;
   for(int i=0;i<atom::UNKNOWN;++i){
@@ -84,4 +97,3 @@ Real PackingStatistic::GetCount(int bin){
 }
 
 }//namespace
-

@@ -100,19 +100,23 @@ void ReducedPotential::Fill(ReducedStatisticPtr stats, const String& reference_s
 Real ReducedPotential::GetEnergy(ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two,
                                     Real dist, Real alpha, Real beta, Real gamma){
 
+  if(aa_one == ost::conop::XXX || aa_two == ost::conop::XXX){
+    throw std::runtime_error("Cannot get energy from invalid amino acid!");
+  }
+  if(alpha >= M_PI || alpha < 0){
+    throw std::runtime_error("alpha must be within [0,pi[");
+  }
+  if(beta >= M_PI || beta < 0){
+    throw std::runtime_error("beta must be within [0,pi[");
+  }
+  if(gamma >= M_PI || gamma < -M_PI){
+    throw std::runtime_error("gamma must be within [-pi,pi[");
+  }
+
   if(dist<opts_.lower_cutoff || dist>=opts_.upper_cutoff){
     return std::numeric_limits<Real>::quiet_NaN();
   }
 
-  if(alpha >= M_PI || alpha < 0){
-    throw io::IOException("alpha must be within [0,pi[");
-  }
-  if(beta >= M_PI || beta < 0){
-    throw io::IOException("beta must be within [0,pi[");
-  }
-  if(gamma >= M_PI || gamma < -M_PI){
-    throw io::IOException("gamma must be within [-pi,pi[");
-  }
   return energies_.Get(aa_one, aa_two, dist, alpha, beta, gamma);
 }
 

@@ -47,7 +47,7 @@ void HBondStatistic::Extract(ost::mol::EntityView& view, Real weight){
   view.Apply(*this);
 }
 
-Real HBondStatistic::GetTotalCount(){
+Real HBondStatistic::GetTotalCount() const{
   Real total_count=0;
   for(int i=0; i < 3; ++i){
     total_count+=this->GetCount(i);
@@ -55,7 +55,7 @@ Real HBondStatistic::GetTotalCount(){
   return total_count;
 }
 
-Real HBondStatistic::GetCount(int state){
+Real HBondStatistic::GetCount(uint state) const{
 
   Real total_count=0;
   for(int i = 0; i < opts_.d_bins; ++i){
@@ -70,7 +70,24 @@ Real HBondStatistic::GetCount(int state){
   return total_count;
 }
 
-Real HBondStatistic::GetCount(int state, int d_bin, int alpha_bin, int beta_bin, int gamma_bin){
+Real HBondStatistic::GetCount(uint state, uint d_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const{
+
+  if(state > 2){
+    throw std::runtime_error("Cannot get count for invalid state!");
+  }
+
+  if(alpha_bin >= opts_.alpha_bins){
+    throw std::runtime_error("Cannot get count for invalid alpha bin!");
+  }
+
+  if(beta_bin >= opts_.beta_bins){
+    throw std::runtime_error("Cannot get count for invalid beta bin!");
+  }
+
+  if(gamma_bin >= opts_.gamma_bins){
+    throw std::runtime_error("Cannot get count for invalid gamma bin!");
+  }
+
   return histo_.Get(HBondHistogram::IndexType(state,d_bin,alpha_bin,beta_bin,gamma_bin));
 }
 
