@@ -380,7 +380,7 @@ class MembraneScores:
 
   def GetTorsion(self):
     #we use the soluble torsion potential in the membrane!
-    torsion = self.potential_container_soluble['torsion'].GetEnergies(self.target, normalize=self.norm)
+    torsion = self.potential_container_soluble['torsion'].GetEnergies(self.target)
     self.data['avg_torsion'] = self.GetAverage(torsion)
     if self.smooth_std!=None:
       self.data['torsion'] = self.spherical_smoother.Smooth(torsion)

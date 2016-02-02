@@ -274,7 +274,7 @@ class Scores:
         raise ValueError('Requested feature \"%s\" is not supported!' %(f))
 
   def GetTorsion(self):
-    torsion = self.potential_container['torsion'].GetEnergies(self.target, normalize=self.norm)
+    torsion = self.potential_container['torsion'].GetEnergies(self.target)
     self.data['avg_torsion'] = self.GetAverage(torsion)
     if self.smooth_std!=None:
       self.data['torsion'] = self.spherical_smoother.Smooth(torsion)
