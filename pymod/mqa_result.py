@@ -391,7 +391,7 @@ class LocalResult:
 
 def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
                        global_scores=True, table_format='ost', psipred=None, 
-                       accpro=None,dc=None,settings=conf.SwissmodelSettings(), dssp_path=None,
+                       accpro=None,dc=None, dssp_path=None,
                        assign_bfactors=True):
   #hack, that torsion handles get assigned
   processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,assign_torsions=True)
@@ -400,6 +400,8 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
   dssp.AssignDSSP(model, extract_burial_status=True,dssp_bin=dssp_path)
 
   results = []
+
+  settings = conf.SwissmodelSettings()
 
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
