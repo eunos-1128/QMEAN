@@ -25,7 +25,7 @@ InteractionOpts(Real l_cutoff, Real u_cutoff, int nob, int ssep, Real s=0.02):
   }
 
   if(sequence_sep < 0){
-    throw std::runtime_error("Sequence separation must be larger 0!");
+    throw std::runtime_error("Sequence separation must be larger or equal 0!");
   }
 
   if(sigma <= 0.0){

@@ -16,6 +16,7 @@ struct DLLEXPORT_QMEAN CBPackingOpts {
   CBPackingOpts () { }
 
   CBPackingOpts(Real co, int mc, int bs): cutoff(co), max_counts(mc), bin_size(bs), sigma(0.02){ 
+
     if(cutoff <= 0.0){
       throw std::runtime_error("Cutoff radius must be larger 0.0!");
     }
@@ -34,6 +35,7 @@ struct DLLEXPORT_QMEAN CBPackingOpts {
   }
 
   CBPackingOpts(Real co, int mc, int bs, Real s): cutoff(co), max_counts(mc), bin_size(bs), sigma(s){ 
+
     if(cutoff <= 0.0){
       throw std::runtime_error("Cutoff radius must be larger 0.0!");
     }

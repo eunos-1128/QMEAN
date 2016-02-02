@@ -44,6 +44,30 @@ public:
       throw std::runtime_error("Min gamma must be smaller than max gamma!");
     }
 
+    if(alpha_min < 0.0){
+      throw std::runtime_error("Min alpha must be larger 0.0!");
+    }
+
+    if(alpha_max > M_PI){
+      throw std::runtime_error("Max alpha must be smaller pi!");
+    }
+
+    if(beta_min < 0.0){
+      throw std::runtime_error("Min beta must be larger 0.0!");
+    }
+
+    if(beta_max > M_PI){
+      throw std::runtime_error("Max beta must be smaller pi!");
+    }
+
+    if(gamma_min < -M_PI){
+      throw std::runtime_error("Min Alpha must be larger -pi!");
+    }
+
+    if(gamma_max > M_PI){
+      throw std::runtime_error("Max Alpha must be smaller pi!");
+    }
+
     if(d_bins <= 0){
       throw std::runtime_error("Number of distance bins must be larger 0!");
     }

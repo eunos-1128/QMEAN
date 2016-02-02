@@ -33,16 +33,18 @@ TorsionOpts::TorsionOpts(std::vector<String>& gi, std::vector<int>& nob, Real s)
   std::vector<String> single_ids(3);
   String current_identifier;
   for(int i = 0; i < ost::conop::XXX; ++i){
+    single_ids[0] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(i));
+
     for(int j = 0; j < ost::conop::XXX; ++j){
+      single_ids[1] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(j));
+
       for(int k = 0; k < ost::conop::XXX; ++k){
-        single_ids[0] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(i));
-        single_ids[1] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(j));
         single_ids[2] = ost::conop::AminoAcidToResidueName(ost::conop::AminoAcid(k));
         current_identifier = this->FindStat(single_ids);
         if(current_identifier == ""){
           std::stringstream ss;
-          ss << "Amino acid triplet "<<single_ids[0]<<", "<<single_ids[1]<<", ";
-          ss << single_ids[2]<<" is not covered by any of the provided group ids!";
+          ss << "Amino acid triplet \""<<single_ids[0]<<", "<<single_ids[1]<<", ";
+          ss << single_ids[2]<<"\" is not covered by any of the provided group ids!";
           throw std::runtime_error(ss.str());
         }
       }

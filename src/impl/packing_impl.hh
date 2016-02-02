@@ -21,7 +21,7 @@ struct DLLEXPORT_QMEAN PackingOpts {
     }
 
     if(max_counts <= 0){
-      throw std::runtime_error("Max counts , must be larger 0!");
+      throw std::runtime_error("Max counts must be larger 0!");
     }
 
     if(bin_size != 1){

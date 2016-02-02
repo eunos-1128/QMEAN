@@ -17,16 +17,19 @@ CBetaOpts(Real l_cutoff, Real u_cutoff, int nob, int ssep, Real s=0.02):
           lower_cutoff(l_cutoff), upper_cutoff(u_cutoff), number_of_bins(nob),
           sequence_sep(ssep), sigma(s)
   { 
-    if(l_cutoff >= u_cutoff){
+    if(lower_cutoff >= upper_cutoff){
       throw std::runtime_error("Lower cutoff must be smaller than upper cutoff!");
     }
 
-    if(l_cutoff < 0.0){
+    if(lower_cutoff < 0.0){
       throw std::runtime_error("Lower cutoff must be greater or equal 0.0!");
     }
 
-    if(s <= 0.0){
+    if(sigma <= 0.0){
       throw std::runtime_error("Sigma must be larger larger than 0.0!");
+    }
+    if(sequence_sep < 0){
+      throw std::runtime_error("Sequence separation must be larger or equal 0!");
     }
   }
 
