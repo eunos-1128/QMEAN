@@ -81,7 +81,7 @@ public:
     opts_(opts), env_(5) { }
 
 
-  virtual bool VisitResidue(ost::mol::ResidueHandle& res);
+  virtual bool VisitResidue(const ost::mol::ResidueHandle& res);
 
   virtual void OnInteraction(ost::conop::AminoAcid a,
                              ost::conop::AminoAcid b,

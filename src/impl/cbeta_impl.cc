@@ -50,7 +50,7 @@ void CBetaPotentialImpl::SetEnvironment(ost::mol::EntityView& env){
   }
 }
 
-bool CBetaPotentialImpl::VisitResidue(ost::mol::ResidueHandle& res){
+bool CBetaPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
 
   if (!res.IsPeptideLinking()) {
     return false;
