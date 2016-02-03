@@ -6,9 +6,9 @@ Statistical Potentials of Mean Force
 Most of the available quality predictors are based on statistical potentials
 of mean force as described by Sippl [sippl1990]_. 
 The training and the application of the potentials of mean force 
-is split into two objects. A statistics object is used to extract structural
-features from training protein structures and internally store them
-using histogram techniques. A potentials object then converts these
+is split into two objects. A statistic object is used to extract structural
+features from training protein structures and internally stores them
+using histogram techniques. A potential object then converts these
 histograms into potential functions and assigns pseudo 
 energies/scores to protein structures of interest. 
 The number of available potentials has grown over the years. Only a subset 
@@ -16,18 +16,18 @@ of them is actually used in the official QMEAN scoring function.
 
 
 * :ref:`interaction-potential`: 
-                                Evaluates a pseudo interaction energy
+                                Evaluates a pseudo energy
                                 based on pairwise distances between all
                                 chemically distinguishable heavy atoms.
 
 
 * :ref:`cbeta-potential`: 
-                          Evaluates a pseudo interaction energy
+                          Evaluates a pseudo energy
                           based on pairwise distances between CB atoms.
 
 
 * :ref:`reduced-potential`: 
-                            Evaluates pseudo interaction energy between the
+                            Evaluates a pseudo energy between the
                             reduced representation of residues.
                             Every residue gets represented by its CA
                             position p and a directional component 
@@ -42,27 +42,27 @@ of them is actually used in the official QMEAN scoring function.
                             * gamma => dihedral between (p1+v1,p1,p2,p2+v2)              
 
 * :ref:`torsion-potential`: 
-                            Evaluates pseudo energies based on the identity of 
+                            Evaluates a pseudo energy based on the identity of 
                             three consecutive residues and their phi/psi 
                             dihedral angles.
 
 
 * :ref:`packing-potential`: 
-                            Evaluates pseudo energies by counting the number of 
-                            counting surrounding atoms around all chemically 
+                            Evaluates a pseudo energy by counting the number of 
+                            surrounding atoms around all chemically 
                             distinguishable heavy atoms not belonging to the 
                             assessed residue itself.
 
 
 * :ref:`cbpacking-potential`: 
-                              Evaluates pseudo energies by counting the number 
+                              Evaluates a pseudo energy by counting the number 
                               of other CB positions within a certain cutoff 
                               radius of the CB position of the residue to be 
                               evaluated.
 
 
 * :ref:`hbond-potential`: 
-                          Evaluates pairwise HBond pseudo energies similar to 
+                          Evaluates HBond pseudo energies similar to 
                           the one defined in the Rosetta energy 
                           function [kortemme2003]_. 
                           It considers the CA, C and O positions from backbone 
@@ -110,11 +110,11 @@ InteractionPotential
 
   .. attribute:: lower_cutoff
 
-    Minimal distance two CB positions must have to be considered
+    Minimal distance two atom positions must have to be considered
 
   .. attribute:: upper_cutoff
 
-    Maximal distance two CB positions can have to be considered
+    Maximal distance two atom positions can have to be considered
 
   .. attribute:: number_of_bins
 
@@ -122,7 +122,7 @@ InteractionPotential
 
   .. attribute:: sequence_sep
 
-    Only CB Positions from residues separated by this amount of residues
+    Only atom Positions from residues separated by this amount of residues
     are considered
 
   .. attribute:: sigma
@@ -141,8 +141,8 @@ InteractionPotential
                         considered
   :param nob:           Number of equidistant bins building the internal 
                         histograms
-  :param ssep:          Only atom positions from residues separated by this amount of residues
-                        are considered
+  :param ssep:          Only atom positions from residues separated by this 
+                        amount of residues are considered
 
   :type l_cutoff:      :class:`float`
   :type u_cutoff:      :class:`float`
@@ -185,9 +185,8 @@ InteractionPotential
 
   .. method:: GetTotalCount()
 
-    Sums up all values in all distance bins in all pairwise histograms
-
-    :returns:           The summed histogram value
+    :returns:           The summed value in all distance bins in all 
+                        pairwise histograms
     :rtype:             :class:`float`
 
   .. method:: GetCount(atom_one, atom_two, dist_bin)
@@ -200,7 +199,7 @@ InteractionPotential
     :type atom_two:     :ref:`ChemType <ChemType>`
     :type dist_bin:     :class:`int`
 
-    :returns:           Returns the histogram count for the particular pair of
+    :returns:           The histogram count for the particular pair of
                         atoms in the particular distance bin
     :rtype:             :class:`float`
 
@@ -218,11 +217,11 @@ InteractionPotential
 
   .. method:: GetCount(dist_bin)
 
-    Sums up all values for one particular distance bin for all possible pairs
-    of atoms
-
     :param dist_bin:    Distance bin to considered
     :type dist_bin:     :class:`int`
+
+    :returns:           The histogram count for this particular
+                        distance bins in all pairwise histograms
 
   .. method:: GetOptions()
 
@@ -388,6 +387,8 @@ InteractionPotential
 CBetaPotential
 --------------------------------------------------------------------------------
 
+.. literalinclude:: example_scripts/cbeta_potential_example.py
+
 .. class:: CBetaOpts
 
   Internal option class without init function. This class gets built when
@@ -505,11 +506,11 @@ CBetaPotential
 
   .. method:: GetCount(dist_bin)
 
-    Sums up all values for one particular distance bin for all possible pairs
-    of amino acids
-
     :param dist_bin:    Distance bin to considered
     :type dist_bin:     :class:`int`
+
+    :returns:          The histogram count for this particular distance bin
+                       summed over all pairwise histograms
 
   .. method:: GetOptions()
 
