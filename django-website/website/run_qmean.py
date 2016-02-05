@@ -6,10 +6,10 @@ except ImportError:
 
 import matplotlib
 matplotlib.use("Agg")
-from qmean import mqa_result
-from qmean import mqa_result_membrane
-from qmean.predicted_sequence_features import PSIPREDHandler
-from qmean.predicted_sequence_features import ACCPROHandler
+from qmean import AssessModelQuality
+from qmean import AssessMembraneModelQuality
+from qmean import PSIPREDHandler
+from qmean import ACCPROHandler
 from qmean import FindMembrane
 from qmean import FillDCData
 from ost.io import LoadPDB
@@ -580,8 +580,6 @@ if "results_page" in project_data["meta"]:
   results_page = project_data["meta"]["results_page"]
 
 
-
-
 #lets extract the names of the models and the sequences
 model_files = list()
 sequences = list()
@@ -618,24 +616,24 @@ for i,f in enumerate(model_files):
   if use_qmeanbrane:
     mem_p = GetMemParam(model,tmp_dir) 
     membrane_representation = CreateMembraneRepresentation(model, mem_param = mem_p)
-    mqa_result_membrane.AssessModelQuality(model,
-                                           mem_param = mem_p,
-                                           output_dir = out_path,
-                                           psipred = psipred_handler,
-                                           accpro = accpro_handler,
-                                           dc = dc,
-                                           dssp_path = config.DSSP_BIN)
+    AssessMembraneModelQuality(model,
+                               mem_param = mem_p,
+                               output_dir = out_path,
+                               psipred = psipred_handler,
+                               accpro = accpro_handler,
+                               dc = dc,
+                               dssp_path = config.DSSP_BIN)
     do_local_assessment = False
     
 
-  mqa_result.AssessModelQuality(model,
-                                local_scores = do_local_assessment,
-                                global_scores = do_global_assessment, 
-                                output_dir = out_path, 
-                                psipred = psipred_handler,
-                                accpro = accpro_handler,
-                                dc = dc,
-                                dssp_path = config.DSSP_BIN)
+  AssessModelQuality(model,
+                     local_scores = do_local_assessment,
+                     global_scores = do_global_assessment, 
+                     output_dir = out_path, 
+                     psipred = psipred_handler,
+                     accpro = accpro_handler,
+                     dc = dc,
+                     dssp_path = config.DSSP_BIN)
 
 
   SavePDB(model,os.path.join(out_path,"model.pdb"))
