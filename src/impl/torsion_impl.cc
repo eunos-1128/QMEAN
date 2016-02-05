@@ -150,13 +150,12 @@ bool TorsionPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
     return false;
   }
 
-  this->OnInteraction(FindStat(r_names),angles);
+  this->OnInteraction(s,angles);
 
   return false;
 }
 
 String TorsionPotentialImpl::FindStat(std::vector<String>& residues){
-
   return opts_.FindStat(residues);
 }
 
