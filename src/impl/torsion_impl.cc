@@ -157,7 +157,7 @@ bool TorsionPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
 
 String TorsionPotentialImpl::FindStat(std::vector<String>& residues){
 
-  opts_.FindStat(residues);
+  return opts_.FindStat(residues);
 }
 
 }}//namespaces

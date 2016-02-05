@@ -14,7 +14,6 @@ TorsionStatistic::TorsionStatistic(std::vector<String>& gi, std::vector<int>& no
   }
   impl::TorsionOpts opts(gi, nob);
   opts_=opts;
-  std::cerr<<"finished initialisation..."<<std::endl;
 }
 
 TorsionStatisticPtr TorsionStatistic::Load(const String& filename){
