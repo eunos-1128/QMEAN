@@ -3,10 +3,8 @@
 #include <ost/seq/aligned_column.hh>
 #include <ost/seq/aligned_column_iterator.hh>
 #include <numeric>
-
 #include <boost/iostreams/filter/gzip.hpp> 
 #include <boost/iostreams/filtering_stream.hpp>
-
 
 
 namespace qmean{
@@ -14,7 +12,6 @@ namespace qmean{
                                                         std::vector<bool>& valid_structures){
 
     std::vector<std::vector<geom::Vec3> > tpl_ca_pos; 
-    std::ifstream file;
     for(int i=0; i<filenames.size(); ++i){
       std::vector<geom::Vec3>  ca_pos;
       String filename = filenames[i];
@@ -59,7 +56,7 @@ namespace qmean{
             z_pos = boost::lexical_cast<Real>(z_str);
             ca_pos.push_back(geom::Vec3(x_pos,y_pos,z_pos));
             calpha_found = true;
-          };
+          }
           
           if(res_num != old_res_num && old_res_num != "none"){
             if(calpha_found == false){
@@ -70,8 +67,7 @@ namespace qmean{
             calpha_found = false;
           }
           old_res_num = res_num;
-        };
-
+        }
       }
       file.close();
       if(all_ca_found){
@@ -84,13 +80,13 @@ namespace qmean{
       }
     }    
     return tpl_ca_pos;
-  };
+  }
 
 
-  //Average sequnce similarity of all templates in a cluster to the target sequence
   std::vector<float> CalculateClusterSeqSim(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
-                                            ost::seq::alg::SubstWeightMatrixPtr subst){ 
-    std::vector<float> cluster_similarities;
+                                            ost::seq::alg::SubstWeightMatrixPtr subst, const std::vector<bool>& valid_structures){ 
+
+    std::vector<float> cluster_similarities; //average sequence similarity of templates in clusters to target 
     float cl_sim;
     int tpl_idx;
 
@@ -98,6 +94,7 @@ namespace qmean{
       cl_sim = 0;
       for (std::vector<int>::const_iterator it2=(*it).begin();it2!=(*it).end();++it2){
         tpl_idx = *it2 +1;
+        if(valid_structures[tpl_idx-1] == false) continue;
         cl_sim += ost::seq::alg::SequenceSimilarity(msaln,subst,true,0,tpl_idx);
       }
       cl_sim /= (*it).size();
@@ -106,10 +103,10 @@ namespace qmean{
     return cluster_similarities;
   }
 
-
-  //Average sequnce identity of all templates in a cluster to the target sequence
-  std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster){
-    std::vector<float> cluster_seq_ids;
+  
+    std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
+                                            const std::vector<bool>& valid_structures){
+    std::vector<float> cluster_seq_ids; //average sequnece identity of templates in clusters to target
     float cl_seq_id;
     int tpl_idx;
 
@@ -117,6 +114,7 @@ namespace qmean{
       cl_seq_id = 0;
       for (std::vector<int>::const_iterator it2=(*it).begin();it2!=(*it).end();++it2){
         tpl_idx = *it2 +1;
+        if(valid_structures[tpl_idx-1] == false) continue;
         cl_seq_id += ost::seq::alg::SequenceIdentity(msaln,ost::seq::alg::RefMode::LONGER_SEQUENCE,0,tpl_idx);
       }
       cl_seq_id /= (*it).size();
@@ -125,9 +123,9 @@ namespace qmean{
     return cluster_seq_ids;
   }
 
-
-  //indices of c alpha positions 
+  
   std::vector<std::vector<int> > GetIndexMatrix(const ost::seq::AlignmentHandle& msaln){
+
     std::vector<std::vector<int> > idxs(msaln.GetCount());
     int c, i = 0;
     for( std::vector<std::vector<int> >::iterator it = idxs.begin(); it != idxs.end(); ++it, ++i){
@@ -137,7 +135,9 @@ namespace qmean{
       ost::seq::ConstSequenceHandle seq = msaln.GetSequence(i);
       for(int j = 0; j<seq.GetLength(); j++){
         if(seq[j] != '-'){
+          // for target sequence
           if(i == 0) (*it)[j] = c;
+          // for templates the offset needs to be added
           else (*it)[j] = c+offset;
           c++;
         }
@@ -150,15 +150,14 @@ namespace qmean{
   std::vector<std::vector<std::vector<float> > > ExtractDistances(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,   const std::vector<std::vector<geom::Vec3> > tpl_ca_pos,
                                                                   const std::vector<bool>& valid_structures, std::vector<std::vector<std::vector<unsigned short> > >& cluster_sizes, unsigned short dist_cutoff){
 
-    std::vector<float> tpl_distances_ij;           //distances between reidue pair ij in all templates
-    std::vector<unsigned short> cluster_sizes_ij;  //info about number of distances in clusters for residue pair ij
-    // const float D = 15;                            //distance cutoff
-    float dist_ijk;                                //distance between reisdue pair i,j of template k
+    std::vector<float> tpl_distances_ij;           // distances between reidue pair (i,j) in all templates
+    std::vector<unsigned short> cluster_sizes_ij;  // info about number of distances in clusters for residue pair (i,j)
+    float dist_ijk;                                // distance between reisdue pair (i,j) of template k
     int idx_i, idx_j, i = 0, j, k;
     geom::Vec3 ca_pos_i, ca_pos_j;
 
+    // create a matrix to be able to look up c-alpha positios of each residue in the alignemnt
     std::vector<std::vector<int> > idxs = GetIndexMatrix(msaln);
-
 
     int n = msaln.GetSequence(0).GetGaplessString().size();
     std::vector<std::vector<std::vector<float> > > tpl_distances(n);
@@ -169,7 +168,6 @@ namespace qmean{
     for(std::vector<std::vector<std::vector<unsigned short> > >::iterator it = cluster_sizes.begin(); it != cluster_sizes.end(); ++it){
       it->resize(n);
     } 
-
 
     for (ost::seq::AlignmentHandle::iterator aln_it1 = msaln.begin(), e1 = msaln.end(); aln_it1 != e1; aln_it1++, i++) {
       const ost::seq::AlignedColumn& col_i = *aln_it1;
@@ -210,41 +208,47 @@ namespace qmean{
   }
 
 
-  // Compute score for distance between residue i and j
   float CalculateScoreIJ(float model_distance_ij ,const DCData& data, int i, int j){
-    // const int sigma_ijk = 1;
-    // const float pi = 3.14159265358;
-    // const float con = 1./(sigma_ijk*sqrt(2.*pi));
-    const float con = 0.3989422804;  //only if sigma_ijk == 1;
+
+    const float con = 0.4;  //for sigma = 1;
     std::vector<float> gaussians; 
     std::vector<float> tpl_distances_ij = data.get_distances(i,j);
     std::vector<unsigned short> cluster_sizes = data.get_cluster(i,j);      
     for(int k = 0; k< tpl_distances_ij.size(); k++){
-      gaussians.push_back(con*exp(-pow(model_distance_ij-tpl_distances_ij[k],2)));
+      gaussians.push_back(con*exp(-pow(model_distance_ij-tpl_distances_ij[k],2)/2.));
     }
     float score_ij = 0;
-    float norm = 0;
+    float cluster_weight_tot = 0;
     int cluster_start = 0;
 
     for(int k = 0; k< cluster_sizes.size(); k++){
       int cluster_end = cluster_sizes[k];
       if(cluster_start == cluster_end) continue;
 
+      // sum up all gaussians in a cluster
       float cluster_gauss_sum = std::accumulate(gaussians.begin()+(cluster_start), gaussians.begin()+(cluster_end), 0.0);
-      cluster_gauss_sum /= float(cluster_end-cluster_start);  //divide by number of occurences of res pair in cluster
+
+      // divide by number of occurences of res pair in cluster
+      cluster_gauss_sum /= float(cluster_end-cluster_start);  
+
+      // weight with sequence similarity dependent weighting factor
       float cluster_weight = data.cluster_weights[k];
       cluster_gauss_sum *= cluster_weight;
-      norm += cluster_weight;
+      cluster_weight_tot += cluster_weight;
+
+      // add cluster score to total score of residue pair (i,j)
       score_ij += cluster_gauss_sum;
+
       cluster_start = cluster_end;
     }
-    score_ij /= norm;  //weights of clusters have to add up to one
+    // weights of clusters have to add up to one
+    score_ij /= cluster_weight_tot;  
   return score_ij; 
   }    
 
 
-  // Compute Local scores for all residues in a model
   std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data ,unsigned short dist_cutoff/*=15*/){
+
     int j, i =0;
     float score_ij, model_distance_ij;
     std::vector<float> model_scores;
@@ -255,10 +259,12 @@ namespace qmean{
     memset( num_inter, 0, aln.GetLength()*sizeof(int)); 
 
     // check for valid DCData amd valid alignment
-    if(data.tpl_distances.size() != aln.GetLength())  throw std::invalid_argument("DCData does not match alignment!");
-    for (ost::seq::AlignmentHandle::iterator aln_it = aln.begin(); aln_it != aln.end(); aln_it++) {
-      const ost::seq::AlignedColumn& col = *aln_it;
-      if(col[1]!=col[0] and !(col[1]=='-' or col[0]=='-')) throw std::invalid_argument("Chain sequence is not consistent with DCData sequence!");
+    if(aln.GetSequence(0).GetString()!= data.seq.c_str() ){
+      throw std::invalid_argument("SEQRES of DCData does not match SEQRES in alignment!");
+    }
+
+    if(not aln.GetCount()>=2){
+      throw std::invalid_argument("Number of sequences in alignment has to be at least 2!");
     }
 
     //Compute DisCo score
@@ -269,7 +275,8 @@ namespace qmean{
       if (col_i[1] == '-') continue;
       for (ost::seq::AlignmentHandle::iterator aln_it2 = ost::seq::AlignedColumnIterator(aln,j,aln.GetLength()), e2 = aln.end(); aln_it2 != e2; aln_it2++, j++) {            
         const ost::seq::AlignedColumn& col_j = *aln_it2;
-        if (col_j[1] == '-') continue;
+        if(col_j[1] == '-') continue;
+        // if(std::abs(i-j)<=1) continue;
 
         ost::mol::ResidueView res_i = aln.GetSequence(1).GetResidue(i);
         ost::mol::AtomView ca_i = res_i.FindAtom("CA");
@@ -300,8 +307,8 @@ namespace qmean{
   }
 
 
-
   // std::vector<std::vector<float> > MaxScores(const DCData& data){ 
+  //
   //   int n = data.tpl_distances.size();
   //   std::vector<std::vector<float> > max_scores(n);
   //   for(std::vector<std::vector<float> >::iterator it = max_scores.begin(); it != max_scores.end(); ++it){
@@ -332,41 +339,32 @@ namespace qmean{
   // }
 
 
-
+  template <typename T>
+  void WriteVecToFile(std::vector<T>& v, std::ofstream& out_stream){
+    unsigned short size = v.size();
+    out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
+    if(size > 0){
+      out_stream.write(reinterpret_cast<char*>(&v[0]),size* sizeof(T));
+    }
+  }
 
 
   void SaveDCData(DCData& data, const String& filename){
+
     std::ofstream out_stream(filename.c_str(), std::ios::binary);
-    unsigned short size = data.cluster_weights.size();
-    out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
-    if(size > 0){
-      out_stream.write(reinterpret_cast<char*>(&data.cluster_weights[0]),size* sizeof(float));
-    }
+    WriteVecToFile(data.cluster_seq_sim, out_stream);
+    WriteVecToFile(data.cluster_seq_ids, out_stream);
 
-    size = data.cluster_seq_sim.size();
-    out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
-    if(size > 0){
-      out_stream.write(reinterpret_cast<char*>(&data.cluster_seq_sim[0]),size* sizeof(float));
-    }
-
-    size = data.cluster_seq_ids.size();
-    out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
-    if(size > 0){
-      out_stream.write(reinterpret_cast<char*>(&data.cluster_seq_ids[0]),size* sizeof(float));
-    }
-
-    size = data.tpl_distances.size();
+    unsigned short size = data.tpl_distances.size();
     out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
     for(int i = 0; i<size;++i){
       for(int j = i+1; j<size;++j){
         unsigned short size2 = data.get_distances(i,j).size();
-        out_stream.write(reinterpret_cast<char*>(&size2),sizeof(unsigned short));
-        if(data.get_distances(i,j).empty()) continue; 
         std::vector<unsigned short> short_dist(size2);
         for(int k= 0; k< size2; k++){
           short_dist[k] = data.get_distances(i,j)[k]*100; 
         }
-        out_stream.write(reinterpret_cast<char*>(&short_dist[0]),size2*sizeof(unsigned short));         
+        WriteVecToFile(short_dist, out_stream);
       }
     }
 
@@ -374,50 +372,50 @@ namespace qmean{
     out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
     for(int i = 0; i<size;++i){
       for(int j = i+1; j<size;++j){
-        unsigned short size2 = data.get_cluster(i,j).size();
-        out_stream.write(reinterpret_cast<char*>(&size2),sizeof(unsigned short));
-        if(data.get_cluster(i,j).empty()) continue; 
-        out_stream.write(reinterpret_cast<char*>(&data.cluster_sizes.at(i).at(j)[0]),size2*sizeof(unsigned short));     
+        WriteVecToFile(data.cluster_sizes.at(i).at(j),out_stream);
       }
     }
 
-    size = data.seq.size();
-    out_stream.write(reinterpret_cast<char*>(&size),sizeof(unsigned short));
-    if(size > 0){
-      out_stream.write(data.seq.c_str(), data.seq.size());
-    }
-    out_stream.write(reinterpret_cast<char*>(&data.dist_cutoff),sizeof(unsigned short));
-    out_stream.close();
+    size_t ulen = data.seq.length() + 1;
+    out_stream.write((const char*)&ulen, sizeof(size_t));
+    if(ulen>0) out_stream.write((const char*)data.seq.c_str(), ulen);
 
+    out_stream.write(reinterpret_cast<char*>(&data.dist_cutoff),sizeof(unsigned short));
+    out_stream.write(reinterpret_cast<char*>(&data.exp_factor),sizeof(unsigned short));
+    out_stream.close();
   }
 
 
-
-
-
-
-
-  DCData LoadDCData(const String& filename){   
-    std::ifstream in_stream(filename.c_str(), std::ios::binary);
+  template <typename T>
+  void LoadVecFromFile(std::vector<T>& v, std::ifstream& in_stream){
     unsigned short size;
     in_stream.read(reinterpret_cast<char*>(&size),sizeof(unsigned short));  
-    std::vector<float> cluster_weights(size);
+    v.resize(size);
     if(size > 0){
-      in_stream.read(reinterpret_cast<char*>(&cluster_weights[0]),size * sizeof(float));
+      in_stream.read(reinterpret_cast<char*>(&v[0]),size * sizeof(T));
     }
+  }
 
-    in_stream.read(reinterpret_cast<char*>(&size),sizeof(unsigned short));  
-    std::vector<float> cluster_seq_sim(size);
-    if(size > 0){
-      in_stream.read(reinterpret_cast<char*>(&cluster_seq_sim[0]),size * sizeof(float));
+
+  DCData LoadDCData(const String& filename){
+    std::vector<float> cluster_weights;
+    std::vector<float> cluster_seq_sim;
+    std::vector<float> cluster_seq_ids;
+    std::vector<float> short_dist;
+    std::vector<unsigned short> v;
+    std::ifstream in_stream(filename.c_str(), std::ios::binary);
+
+    if(! in_stream){
+      std::stringstream ss;
+      ss<<"Could not read file. File '";
+      ss<<filename<<"' does not exist!";
+      throw std::invalid_argument(ss.str());
     }
     
-    in_stream.read(reinterpret_cast<char*>(&size),sizeof(unsigned short));  
-    std::vector<float> cluster_seq_ids(size);
-    if(size > 0){
-      in_stream.read(reinterpret_cast<char*>(&cluster_seq_ids[0]),size * sizeof(float));
-    }
-
+    unsigned short size;
+    LoadVecFromFile(cluster_seq_sim, in_stream);
+    LoadVecFromFile(cluster_seq_ids, in_stream);
+      
     in_stream.read(reinterpret_cast<char*>(&size),sizeof(unsigned short));
     std::vector<std::vector<std::vector<float> > > tpl_distances(size);
     for(std::vector<std::vector<std::vector<float> > >::iterator i = tpl_distances.begin(); i != tpl_distances.end(); ++i){
@@ -425,19 +423,16 @@ namespace qmean{
     } 
     for(int i = 0; i<size;++i){
       for(int j = i+1; j<size;++j){
-        unsigned short size2;
-        in_stream.read(reinterpret_cast<char*>(&size2),sizeof(unsigned short));
-        if(size2 == 0) continue;
-        std::vector<unsigned short> short_dist(size2);
-        in_stream.read(reinterpret_cast<char*>(&short_dist[0]),size2 * sizeof(unsigned short));
-        std::vector<float> float_dist(size2);
-        for(int k = 0;  k< size2; k++){
+        std::vector<unsigned short> short_dist;
+        LoadVecFromFile(short_dist, in_stream);
+        std::vector<float> float_dist(short_dist.size());
+        for(int k = 0;  k< short_dist.size(); k++){
           float_dist[k] = short_dist[k]/100.;
         }
         tpl_distances.at(i).at(j) = float_dist;
       }
     }
-
+    
     in_stream.read(reinterpret_cast<char*>(&size),sizeof(unsigned short));
     std::vector<std::vector<std::vector<unsigned short> > > cluster_sizes(size);
     for(std::vector<std::vector<std::vector<unsigned short> > >::iterator i = cluster_sizes.begin(); i != cluster_sizes.end(); ++i){
@@ -445,22 +440,27 @@ namespace qmean{
     }
     for(int i = 0; i<size;++i){
       for(int j = i+1; j<size;++j){
-        unsigned short size2;
-        in_stream.read(reinterpret_cast<char*>(&size2),sizeof(unsigned short));
-        if(size2 == 0) continue;
-        std::vector<unsigned short> v(size2);
-        in_stream.read(reinterpret_cast<char*>(&v[0]),size2 * sizeof(unsigned short));
+        LoadVecFromFile(v, in_stream);
         cluster_sizes.at(i).at(j) = v;
       }
     }
-    in_stream.read(reinterpret_cast<char*>(&size),sizeof(unsigned short));  
-    char seq[size];
-    if(size > 0){
-      in_stream.read(reinterpret_cast<char*>(&seq[0]),size);
-    }
+
+    size_t len = 0;
+    in_stream.read((char*)&len, sizeof(size_t));
+    char* seq = new char[len];
+    if(len>0) in_stream.read(seq, len);
+
     unsigned short dist_cutoff;
     in_stream.read(reinterpret_cast<char*>(&dist_cutoff),sizeof(unsigned short));  
+
+    unsigned short exp_factor;
+    in_stream.read(reinterpret_cast<char*>(&exp_factor),sizeof(unsigned short));  
     in_stream.close();
+
+    for(std::vector<float>::iterator i = cluster_seq_sim.begin(); i != cluster_seq_sim.end(); ++i){
+      float weight = exp(exp_factor*(*i));
+      cluster_weights.push_back(weight);
+    }
 
     DCData data;
     data.seq = seq;
@@ -470,17 +470,22 @@ namespace qmean{
     data.tpl_distances = tpl_distances;
     data.cluster_sizes = cluster_sizes;
     data.dist_cutoff = dist_cutoff;
+    data.exp_factor = exp_factor;
     return data;
   }
 
 
-
-
-
-
-
   DCData FillDCData(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster, const std::vector<String>& filenames,
-                    ost::seq::alg::SubstWeightMatrixPtr subst, unsigned short dist_cutoff /*=15*/, int exp_factor /*=16*/){
+                    ost::seq::alg::SubstWeightMatrixPtr subst, unsigned short dist_cutoff /*=15*/, unsigned short exp_factor /*=70*/){
+
+    if(msaln.GetCount()-1 != filenames.size()){
+      throw std::runtime_error("Length of filename list must match the number of templates in msaln");
+    }
+
+    if(msaln.GetCount() == 0){
+      throw std::runtime_error("msaln must contain a sequence");
+    }    
+
     std::vector<std::vector<geom::Vec3> > structural_info;
     std::vector<bool> valid_structures;
     std::vector<float> cluster_weights;
@@ -488,24 +493,16 @@ namespace qmean{
     std::vector<float> cluster_seq_ids;
     std::vector<std::vector<std::vector<float> > >  tpl_distances;
     std::vector<std::vector<std::vector<unsigned short> > > cluster_sizes;
-    // const int c = 16;
 
     structural_info = ReadCalphaPos(filenames, valid_structures); 
-    cluster_seq_sim = CalculateClusterSeqSim(msaln, cluster, subst);
-   
-    float max_sim = 0;
+    cluster_seq_sim = CalculateClusterSeqSim(msaln, cluster, subst, valid_structures);
     for(std::vector<float>::iterator i = cluster_seq_sim.begin(); i != cluster_seq_sim.end(); ++i){
-      if((*i)>max_sim) max_sim = (*i);
-    }
-
- 
-    for(std::vector<float>::iterator i = cluster_seq_sim.begin(); i != cluster_seq_sim.end(); ++i){
-      float weight = exp(exp_factor/max_sim*(*i));
+      float weight = exp(exp_factor*(*i));
       cluster_weights.push_back(weight);
     }
     
     tpl_distances = ExtractDistances(msaln,cluster,structural_info, valid_structures, cluster_sizes, dist_cutoff);
-    cluster_seq_ids = CalculateClusterSeqIds(msaln,cluster);
+    cluster_seq_ids = CalculateClusterSeqIds(msaln,cluster, valid_structures);
 
     DCData data;
     data.seq = msaln.GetSequence(0).GetGaplessString();
@@ -515,12 +512,9 @@ namespace qmean{
     data.cluster_weights = cluster_weights;
     data.cluster_seq_ids = cluster_seq_ids;
     data.dist_cutoff = dist_cutoff;
-
+    data.exp_factor = exp_factor;
     return data;  
   }
-
-
-
 
 
   std::vector<std::vector<float> > DetermineFeatureValues(const ost::seq::AlignmentHandle& aln, const DCData& data){
@@ -536,9 +530,8 @@ namespace qmean{
 
     //check for valid DCData and valid alignment
     if(data.tpl_distances.size() != aln.GetLength())  throw std::invalid_argument("DCData does not match alignment!");
-    for (ost::seq::AlignmentHandle::iterator aln_it = aln.begin(); aln_it != aln.end(); aln_it++) {
-      const ost::seq::AlignedColumn& col = *aln_it;
-      if(col[1]!=col[0] and !(col[1]=='-' or col[0]=='-')) throw std::invalid_argument("Chain sequence is not consistent with DCData sequence!");
+    if(aln.GetSequence(0).GetString()!= data.seq.c_str() ){
+      throw std::invalid_argument("SEQRES of DCData does not match SEQRES in alignment!");
     }
 
     //Compute features
@@ -582,7 +575,7 @@ namespace qmean{
         feature_values[j][1] += num_cluster;
         feature_values[i][2] += var;
         feature_values[j][2] += var;
-        feature_values[i][3] += 1;  //count number of residues that are within cutoff radius of one residue
+        feature_values[i][3] += 1;  //count residues within cutoff radius
         feature_values[j][3] += 1;
         feature_values[i][4] += max_seq_id;
         feature_values[j][4] += max_seq_id;        
@@ -610,10 +603,8 @@ namespace qmean{
   }
 
 
-
-
-
   float CalculateVariance(const std::vector<float>& distances){
+  
     float size = distances.size();
     float mean = std::accumulate(distances.begin(), distances.end(), 0.0)/size;
     float temp = 0;
@@ -622,8 +613,6 @@ namespace qmean{
     }
     return temp/size;
   }
-
-
 
 
 }

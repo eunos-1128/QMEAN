@@ -15,13 +15,10 @@
 #include <math.h>
 
 
-
 namespace qmean{
 
   struct DCData;
   typedef boost::shared_ptr<DCData> DCDataPtr;
-
-
 
   struct DCData{
     String seq;
@@ -31,6 +28,7 @@ namespace qmean{
     std::vector<std::vector<std::vector<float> > > tpl_distances;
     std::vector<std::vector<std::vector<unsigned short> > > cluster_sizes;
     unsigned short dist_cutoff;
+    unsigned short exp_factor;
     // std::vector<std::vector<float> > max_scores;
 
     const std::vector<float>&  get_distances(int i, int j) const{
@@ -43,7 +41,6 @@ namespace qmean{
       return cluster_sizes[j][i];
     }
 
-
     // const float& get_max_score(int i, int j) const{
     //   if(i < j) return max_scores[i][j];
     //   return max_scores[j][i];
@@ -51,15 +48,9 @@ namespace qmean{
   };
 
 
-
-
-
-
-
-
-
   std::vector<std::vector<geom::Vec3> > ReadCalphaPos(const std::vector<String>& filenames,std::vector<bool>& valid_structures);
-  std::vector<float> CalculateClusterSeqSim(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster, ost::seq::alg::SubstWeightMatrixPtr subst);
+  std::vector<float> CalculateClusterSeqSim(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
+                                            ost::seq::alg::SubstWeightMatrixPtr subst, const std::vector<bool>& valid_structures);
   std::vector<std::vector<std::vector<float> > > ExtractDistances(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,
                                                                   const std::vector<std::vector<geom::Vec3> > tpl_ca_pos, const std::vector<bool>& valid_structures,
                                                                   std::vector<std::vector<std::vector<unsigned short> > >& cluster_sizes, unsigned short dist_cutoff);
@@ -67,12 +58,12 @@ namespace qmean{
   void SaveDCData(DCData& data, const String& filename);
   DCData LoadDCData(const String& filename);
   DCData FillDCData(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,const std::vector<String>& filenames,
-                    ost::seq::alg::SubstWeightMatrixPtr subst, unsigned short dist_cutoff, int exp_factor);
+                    ost::seq::alg::SubstWeightMatrixPtr subst, unsigned short dist_cutoff, unsigned short exp_factor);
   std::vector<std::vector<float> > DetermineFeatureValues(const ost::seq::AlignmentHandle& aln, const DCData& data);
   float CalculateVariance(const std::vector<float>& distances);
   float CalculateScoreIJ(float model_distance_ij ,const DCData& data, int i, int j);
-  std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster);
+  std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
+                                            const std::vector<bool>& valid_structures);
   std::vector<std::vector<int> > GetIndexMatrix(const ost::seq::AlignmentHandle& msaln);
   // std::vector<std::vector<float> > MaxScores(const DCData& data); 
-
 }

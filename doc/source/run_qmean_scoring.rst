@@ -20,7 +20,7 @@ Assessing the quality for soluble protein models
 
 .. method:: AssessModelQuality(model,[output_dir='.', plots=True,  \
                                local_scores=True, global_scores=True \
-                               table_format="ost",psipred=None, \
+                               table_format="ost",psipred=None, dc=None \
                                accpro=None, dssp_path=None, \
                                assign_bfactors=True])
 
@@ -44,6 +44,8 @@ Assessing the quality for soluble protein models
                         through without it being set but for optimal performance
                         this variable must be set.
 
+  :param dc:            Information from homologous templates with known 
+                        structure, QMEAN will run through without it being set but for optimal performance this variable must be set.                         
   :param dssp_path:     Path to your dssp executable, expects an executable to
                         be in your PATH if set to None
 
@@ -58,6 +60,7 @@ Assessing the quality for soluble protein models
   :type table_format:   :class:`str`
   :type psipred:        :class:`PSIPREDHandler`
   :type accpro:         :class:`ACCPROHandler`
+  :type dc:             :class:`DCData`
   :type dssp_path:      :class:`str`
   :type assign_bfactors: :class:`bool`
 
@@ -71,7 +74,7 @@ Assessing the quality for membrane protein models
 .. method:: AssessMembraneModelQuality(model, [mem_param = None, \ 
                                        output_dir='.', \
                                        plots = True, table_format='ost', \
-                                       psipred=None, accpro=None, \
+                                       psipred=None, accpro=None, dc=None\
                                        dssp_path=None, assign_bfactors=True])
 
   :param model:         The model you want to assess
@@ -103,7 +106,10 @@ Assessing the quality for membrane protein models
                         through without it being set but for optimal performance
                         this variable must be set. Please note, that the ACCPRO
                         prediction won't be used for assessing the quality in
-                        the transmembrane part, only in the soluble part.      
+                        the transmembrane part, only in the soluble part.
+
+  :param dc:            Information from homologous templates with known 
+                        structure, QMEAN will run through without it being set but for optimal performance this variable must be set. 
 
   :param dssp_path:     Path to your dssp executable, expects an executable to
                         be in your PATH if set to None

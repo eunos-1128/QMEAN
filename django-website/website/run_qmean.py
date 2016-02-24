@@ -279,44 +279,6 @@ def GetSequenceFeatures(sequences, hhblits_cache, accpro_cache, out_dir):
 
   return (psipred_handler, accpro_handler)
 
-def Search(a3m_file, database, out_dir, options={}, prefix=''):
-
-  opts = {'cpu' : 1, # no. of cpus used
-          'n'   : 1}   # no. of iterations
-  opts.update(options)
-  o = []
-  f = []
-  for k, v in opts.iteritems():
-    if type(v) == type(True):
-      if v == True:
-        o.append('-%s' % str(k))
-        f.append(str(k))
-    else:
-      o.append('-%s %s' % (str(k), str(v)))
-      f.append('%s%s' % (str(k), str(v)))
-  o = ' '.join(o)
-  f = '_'.join(f)
-  base = os.path.basename(os.path.splitext(a3m_file)[0])
-  hhr_file = '%s%s_%s.hhr' % (prefix, base, f)
-  hhr_file = os.path.join(out_dir,hhr_file)#("self.working_dir", hhr_file)
-  hhblits_bin = os.path.join(config.HHSUITE_ROOT_DIR, 'bin/hhblits')
-  search_cmd='%s %s -e 0.001 -Z 10000 -B 10000 -i %s -o %s -d %s'%(hhblits_bin, 
-                                                            o, a3m_file,
-                                                            hhr_file,
-                                                            database)
-  job = subprocess.Popen(search_cmd, shell=True, cwd=out_dir,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  sout, serr = job.communicate()
-  if job.returncode !=0:
-      lines = sout.splitlines()
-      for l in lines:
-          print l.strip()
-      lines = serr.splitlines()
-      for l in lines:
-          print l.strip()
-      return None   
-  return hhr_file
-
 def HasAtLeastNResidues(aln, threshold=15):
 
   count = 0 
@@ -411,8 +373,15 @@ def GetDistanceConstraints(sequences, hhblits_cache, tmp_dir):
     h = hashlib.md5(sequence.GetString()).hexdigest()
     a3m_file = os.path.join(hhblits_cache,h)
     aln_dict = dict()
-    hhr_file = Search(a3m_file,database=config.SMTL_HHBLITS_DB_PREFIX, out_dir=tmp_dir)
-    _, hits = ParseHHblitsOutput(open(hhr_file))
+    hh = hhblits.HHblits(sequence, hhsuite_root = config.HHSUITE_ROOT_DIR,
+                         working_dir=tmp_dir)
+    hhr_file = hh.Search(a3m_file,database=config.SMTL_HHBLITS_DB_PREFIX)
+
+    if hhr_file == None:
+      dc_list.append(None)
+      continue
+
+    _, hits = hhblits.ParseHHblitsOutput(open(hhr_file))
     os.remove(hhr_file)
     
     for hit in hits:      
@@ -430,7 +399,7 @@ def GetDistanceConstraints(sequences, hhblits_cache, tmp_dir):
         bio_unit = tpl_lib.Get(smt_id,int(assembly_id))
         bio_unit_chain = bio_unit.GetChainByName(chain_name)
         new_aln = StripTerminalTags(new_aln, bio_unit_chain.expr_tags)
-        offset=new_aln.sequences[1].offset
+        offset = new_aln.sequences[1].offset
         trg_sr_to_tpl_ar_aln = bio_unit_chain.ToAtomSeqAlignment(new_aln)
         if not HasAtLeastNResidues(trg_sr_to_tpl_ar_aln, 15):
           continue
