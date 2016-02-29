@@ -18,7 +18,7 @@ def AlignChainToSEQRES(chain, seqres):
     print e
 
   chain_seq = seq.SequenceFromChain('atom_seq', chain)
-  aln = seq.alg.LocalAlign(seq.CreateSequence('seqres',seqres),
+  aln = seq.alg.SemiGlobalAlign(seq.CreateSequence('seqres',seqres),
                             chain_seq, seq.alg.BLOSUM100)[0]
 
   #the seqres must not contain gaps...
