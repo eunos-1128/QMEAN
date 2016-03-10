@@ -51,10 +51,6 @@ Description of columns:
   acc_agreement Agreement score of burial status predicted by accpro, with the
                 the observed burial status in the structure (DSSP).
 
-  dist_const    Score predicting correctness of pairwise residue distances in the model.
-                Distance constraints are obtained from distances between residue pairs
-                in homologous templates.
-
   membrane      Assignment of the membrane part. 1 for membrane residues, 0 otherwise
 
   lDDT          Predicted local lDDT value 
@@ -155,14 +151,14 @@ class LocalMembraneResult:
     return p
 
   @staticmethod
-  def Create(model, settings, assign_bfactors, membrane_query = None, interface_query = None, mem_param = None, psipred=None, accpro=None, dc = None):
+  def Create(model, settings, assign_bfactors, membrane_query = None, interface_query = None, mem_param = None, psipred=None, accpro=None):
 
     pot_membrane = PotentialContainer.Load(settings.local_potentials_membrane)
     pot_soluble = PotentialContainer.Load(settings.local_potentials_soluble)
     scorer_membrane = score_calculator.LocalScorer.Load(settings.local_scorer_membrane)
     scorer_soluble = score_calculator.LocalScorer.Load(settings.local_scorer_soluble)
     local_mqa = mqa_membrane.MembraneScores(model, model, pot_soluble, pot_membrane, smooth_std=5.0, psipred=psipred, 
-                            accpro=accpro, dc=dc, membrane_query = membrane_query, interface_query = interface_query,mem_param = mem_param)
+                            accpro=accpro, membrane_query = membrane_query, interface_query = interface_query,mem_param = mem_param)
 
 
     features = ['interaction','cbeta','packing','torsion','exposed']
@@ -170,8 +166,6 @@ class LocalMembraneResult:
       features.append('ss_agreement')
     if accpro != None:
       features.append('acc_agreement')
-    if dc != None:
-      features.append('dist_const')  
 
     local_mqa.CalculateScores(features)
     data = local_mqa.GetLocalData(features)
@@ -185,8 +179,6 @@ class LocalMembraneResult:
       if membrane_states[i] == 0:
         residue_data=dict()
         for f in features:
-          if f  == 'dist_const':
-            continue
           residue_data[f]=data[f][i]
         ss = ''
         if dssp_ss[i]=='H':
@@ -200,7 +192,7 @@ class LocalMembraneResult:
       else:
         residue_data=dict()
         for f in features:
-          if f in ['ss_agreement','acc_agreement','dist_const']:
+          if f in ['ss_agreement','acc_agreement']:
             continue
           residue_data[f] = data[f][i]
         if membrane_states[i] == 1:
@@ -210,8 +202,6 @@ class LocalMembraneResult:
         else:
           raise RuntimeError("Invalid membrane state encountered")
           
-    if dc is not None:
-      scores = local_mqa.UpdateScores(scores,settings) 
 
     data['lDDT'] = scores
 
@@ -228,13 +218,13 @@ class LocalMembraneResult:
       data['ss_agreement'] = [float('NaN')] * len(data[features[0]])
     if 'acc_agreement' not in features:
       data['acc_agreement'] = [float('NaN')] * len(data[features[0]])
-    if 'dist_const' not in features:
-      data['dist_const'] = [float('NaN')] * len(data[features[0]])  
+
+
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'membrane','all_atom',
                    'cbeta', 'solvation', 'torsion', 'exposed',
-                   'ss_agreement', 'acc_agreement', 'dist_const', 'lDDT'],
-                   'siisifffffffff')
+                   'ss_agreement', 'acc_agreement', 'lDDT'],
+                   'siisiffffffff')
 
     for i, res in enumerate(model.residues):
       lscores.AddRow({ 'chain' : res.chain.name,
@@ -249,7 +239,6 @@ class LocalMembraneResult:
                       'exposed' : data['exposed'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
-                      'dist_const' : data['dist_const'][i],
                       'lDDT' : data['lDDT'][i]})
 
     lscores.comment=LSCORES_TABLE_HEADER
@@ -258,7 +247,7 @@ class LocalMembraneResult:
 
 def AssessMembraneModelQuality(model, mem_param = None, output_dir='.', 
                                plots=True, table_format='ost', psipred=None, 
-                               accpro=None, dc=None, dssp_path=None, 
+                               accpro=None, dssp_path=None, 
                                assign_bfactors=True):
 
   settings = conf.MembraneSettings()
@@ -278,7 +267,7 @@ def AssessMembraneModelQuality(model, mem_param = None, output_dir='.',
   if plots:
     if not os.path.exists(plot_dir):
       os.makedirs(plot_dir)
-  local_result=LocalMembraneResult.Create(model,settings,assign_bfactors,membrane_query,interface_query,mem_param,psipred=psipred,accpro=accpro,dc=dc)
+  local_result=LocalMembraneResult.Create(model,settings,assign_bfactors,membrane_query,interface_query,mem_param,psipred=psipred,accpro=accpro)
   tab=local_result.score_table
   tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
   if plots:

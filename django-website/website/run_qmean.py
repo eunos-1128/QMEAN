@@ -590,7 +590,6 @@ for i,f in enumerate(model_files):
                                output_dir = out_path,
                                psipred = psipred_handler,
                                accpro = accpro_handler,
-                               dc = dc,
                                dssp_path = config.DSSP_BIN)
     do_local_assessment = False
     
