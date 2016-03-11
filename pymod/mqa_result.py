@@ -423,22 +423,26 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
       qmean4_scores = [global_result.qmean4, global_result.interaction, global_result.cbeta, global_result.packing, global_result.torsion]
       p=global_result.ZScoreSliders(qmean4_scores)
       p.savefig(os.path.join(plot_dir,'qmean4.png'))
+      p.close("all")
       for s in qmean4_scores:
         p=global_result.ZScoreSlider(s)
         p.savefig(os.path.join(sliders_dir,'%s_compact.png'%(sm_conversions[s.name])))
         p=global_result.ZScoreSlider(s, compact=False)
         p.savefig(os.path.join(sliders_dir,'%s.png'%(sm_conversions[s.name])))
+        p.close("all")
       if psipred!=None and accpro!=None:
         qmean6_scores = qmean4_scores
         qmean6_scores[0] = global_result.qmean6
         qmean6_scores+=[global_result.ss_agreement,global_result.acc_agreement]
         p=global_result.ZScoreSliders(qmean6_scores)
         p.savefig(os.path.join(plot_dir,'qmean6.png'))
+        p.close("all")
         for s in [global_result.qmean6,global_result.ss_agreement,global_result.acc_agreement]:
           p=global_result.ZScoreSlider(s)
           p.savefig(os.path.join(sliders_dir,'%s_compact.png'%(sm_conversions[s.name])))
           p=global_result.ZScoreSlider(s,compact=False)
           p.savefig(os.path.join(sliders_dir,'%s.png'%(sm_conversions[s.name])))
+          p.close("all")
     results.append(global_result)
   if local_scores:
     local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro,dc=dc)
