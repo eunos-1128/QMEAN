@@ -113,7 +113,8 @@ class ReferenceSet:
     """
     Plots QMEAN scores as sliders.
     """
-    from matplotlib import pyplot, mpl
+    import matplotlib as mpl
+    from matplotlib import pyplot
 
     if len(qmean_norm_scores)!=len(score_names):
       raise ValueError('Number of scores and score names is not consistent!')
