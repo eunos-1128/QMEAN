@@ -306,7 +306,7 @@ class LocalResult:
 
 
   @staticmethod
-  def Create(model, settings, assign_bfactors, psipred=None, accpro=None,dc=None):
+  def Create(model, settings, assign_bfactors, psipred=None, accpro=None,dc=None, global_result=None):
 
     pot = PotentialContainer.Load(settings.local_potentials)
     scorer = score_calculator.LocalScorer.Load(settings.local_scorer)
@@ -355,8 +355,11 @@ class LocalResult:
       scores.append(min(max(scorer.GetLocalScore(ss, r.one_letter_code, residue_data),0.0),1.0))
 
     if dc:
-      global_result=GlobalResult.Create(model,settings) #TODO no need to compute twice
-      scores = local_mqa.UpdateScores(scores,settings,global_result) 
+      if not global_result:
+        global_result=GlobalResult.Create(model,settings, psipred=psipred, accpro=accpro) 
+      scores = local_mqa.UpdateScores(scores,settings,global_result.qmean4.norm) 
+
+
     data['lDDT'] = scores
 
     if assign_bfactors:
@@ -403,6 +406,8 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
 
   settings = conf.SwissmodelSettings()
 
+  global_result = None
+
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
   plot_dir=os.path.join(output_dir,'plots')
@@ -445,7 +450,7 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
           p.close("all")
     results.append(global_result)
   if local_scores:
-    local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro,dc=dc)
+    local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro,dc=dc, global_result=global_result)
     tab=local_result.score_table
     tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
     if plots:

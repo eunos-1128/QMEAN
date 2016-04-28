@@ -26,7 +26,7 @@ class TemplateInformation:
     # creation of Swissmodel project and template search
     md5_hash = md5.new(self.seqres).hexdigest()
     prj_name = md5_hash
-    sm_prj_path = self.working_dir+'/'+self.prj_name
+    sm_prj_path = self.working_dir+'/'+prj_name
     cmd = 'sm init '+sm_prj_path+' '+self.seqres
 
     os.system(cmd)
