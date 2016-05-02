@@ -1329,6 +1329,12 @@ FindMemParam FindMemParam::Load(const String& filename){
 
 void FindMemParam::Save(const String& filename){
   std::ofstream stream(filename.c_str(), std::ios_base::binary);
+  std::stringstream ss;
+  if(! stream){
+    ss<<"Could not write to file '";
+    ss<<filename<<"'";
+    throw ost::io::IOException(ss.str());
+  } 
   ost::io::BinaryDataSink ds(stream);
   ds << *this;
 }

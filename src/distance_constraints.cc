@@ -5,6 +5,7 @@
 #include <numeric>
 #include <boost/iostreams/filter/gzip.hpp> 
 #include <boost/iostreams/filtering_stream.hpp>
+#include <ost/io/io_exception.hh>
 
 
 namespace qmean{
@@ -350,8 +351,14 @@ namespace qmean{
 
 
   void SaveDCData(DCData& data, const String& filename){
-
     std::ofstream out_stream(filename.c_str(), std::ios::binary);
+    std::stringstream ss;
+    if(! out_stream){
+      ss<<"Could not write to file '";
+      ss<<filename<<"'";
+      throw ost::io::IOException(ss.str());
+    }  
+
     WriteVecToFile(data.cluster_seq_sim, out_stream);
     WriteVecToFile(data.cluster_seq_ids, out_stream);
 
@@ -409,7 +416,7 @@ namespace qmean{
       std::stringstream ss;
       ss<<"Could not read file. File '";
       ss<<filename<<"' does not exist!";
-      throw std::invalid_argument(ss.str());
+      throw ost::io::IOException(ss.str());
     }
     
     unsigned short size;

@@ -443,11 +443,10 @@ class Scores:
     else:   
       raise ValueError("Cannot calculate dist_const term without DCData information!")
     
-  def UpdateScores(self,scores,settings,global_result):
+  def UpdateScores(self,scores,settings,qmean4_score):
     updated_scores = list()
     disco_tree = pickle.load(open(settings.disco_tree)) 
     chain_start_index = 0
-    qmean4 = global_result.qmean4
 
     for c,d in zip(self.target.chains, self.dc): 
       entity_view =self.target.Select('cname ='+c.name)
@@ -458,11 +457,11 @@ class Scores:
       for i in range(len(c.residues)):
         try:  
           feature_values[i].extend([scores[i], self.data['dist_const'][i+chain_start_index]])
-          feature_values[i] = [qmean4.norm] + feature_values[i]
+          feature_values[i] = [qmean4_score] + feature_values[i]
           qmean_disco_score = disco_tree.predict([feature_values[i]])[0]
           updated_scores.append(qmean_disco_score)
         except:
-          if scores[i+chain_start_index]== scores[i+chain_start_index]:
+          if scores[i+chain_start_index] == scores[i+chain_start_index]:
             updated_scores.append(scores[i+chain_start_index])
           else: 
             updated_scores.append(self.data['dist_const'][i+chain_start_index]) 
