@@ -262,6 +262,25 @@ void SolvationGrid::Flood(){
   is_flooded_=true;
 }
 
+void SolvationGrid::Flood3D(geom::Vec3& pos){
+
+  geom::Vec3 box_pos = pos - origin_;
+  
+  int x_bin = static_cast<int>(box_pos[0]/bin_size_);
+  int y_bin = static_cast<int>(box_pos[1]/bin_size_);
+  int z_bin = static_cast<int>(box_pos[2]/bin_size_);
+
+  x_bin = std::min(x_bin,xbins_-1);
+  y_bin = std::min(y_bin,ybins_-1);
+  z_bin = std::min(z_bin,zbins_-1);
+
+  x_bin = std::max(x_bin,0);
+  y_bin = std::max(y_bin,0);
+  z_bin = std::max(z_bin,0);
+
+  this->FloodFull(x_bin,y_bin,z_bin, 0, 2);
+}
+
 
 void SolvationGrid::FloodLevel(int level, std::pair<int, int> start_coordinates, int orig_value, int dest_value){
   //http://lodev.org/cgtutor/floodfill.html
@@ -314,6 +333,74 @@ void SolvationGrid::FloodLevel(int level, std::pair<int, int> start_coordinates,
       y1++;
     }
   }
+}
+
+void SolvationGrid::FloodFull(int x_bin, int y_bin, int z_bin, int orig_value, int dest_value){
+
+  if(orig_value!=grid_[x_bin][y_bin][z_bin]){
+    return;
+  }
+
+  std::vector<int> x_queue;
+  std::vector<int> y_queue;
+  std::vector<int> z_queue;
+ 
+  x_queue.push_back(x_bin);
+  y_queue.push_back(y_bin);
+  z_queue.push_back(z_bin);
+
+
+  int actual_x, actual_y, actual_z;
+    
+  while(!x_queue.empty()){    
+
+    actual_x = x_queue.back();
+    x_queue.pop_back();
+    actual_y = y_queue.back();
+    y_queue.pop_back();
+    actual_z = z_queue.back();
+    z_queue.pop_back();
+
+    if(grid_[actual_x][actual_y][actual_z] != orig_value) continue;
+
+    grid_[actual_x][actual_y][actual_z] = dest_value;
+
+    if(actual_x > 0){
+      x_queue.push_back(actual_x-1);
+      y_queue.push_back(actual_y);
+      z_queue.push_back(actual_z);
+    }
+
+    if(actual_y > 0){
+      x_queue.push_back(actual_x);
+      y_queue.push_back(actual_y-1);
+      z_queue.push_back(actual_z);
+    }
+
+    if(actual_z > 0){
+      x_queue.push_back(actual_x);
+      y_queue.push_back(actual_y);
+      z_queue.push_back(actual_z-1);
+    }
+
+    if(actual_x < xbins_-1){
+      x_queue.push_back(actual_x+1);
+      y_queue.push_back(actual_y);
+      z_queue.push_back(actual_z);
+    }
+
+    if(actual_y < ybins_-1){
+      x_queue.push_back(actual_x);
+      y_queue.push_back(actual_y+1);
+      z_queue.push_back(actual_z);
+    }
+
+    if(actual_z < zbins_-1){
+      x_queue.push_back(actual_x);
+      y_queue.push_back(actual_y);
+      z_queue.push_back(actual_z+1);
+    }
+  } 
 }
 
 bool SolvationGrid::IsFilled(geom::Vec3& pos){

@@ -82,6 +82,8 @@ public:
 
   void Flood();
 
+  void Flood3D(geom::Vec3& pos);
+
   bool IsFilled(geom::Vec3& pos);
 
   geom::Vec3 GetOrigin() { return origin_; }
@@ -102,6 +104,8 @@ public:
 private:
 
   void FloodLevel(int level, std::pair<int, int> start_coordinates, int orig_value, int dest_value);
+
+  void FloodFull(int x_bin, int y_bin, int z_bin, int orig_value, int dest_value);
 
   void FloodLevel8Neighbours(int level, std::pair<int,int> start_coordinates, int orig_value, int dest_value);
 
