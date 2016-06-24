@@ -52,9 +52,9 @@ namespace qmean{
   std::vector<float> CalculateClusterSeqSim(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
                                             ost::seq::alg::SubstWeightMatrixPtr subst, const std::vector<bool>& valid_structures);
   std::vector<std::vector<std::vector<float> > > ExtractDistances(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,
-                                                                  const std::vector<std::vector<geom::Vec3> > tpl_ca_pos, const std::vector<bool>& valid_structures,
+                                                                  const std::vector<std::vector<geom::Vec3> >& tpl_ca_pos, const std::vector<bool>& valid_structures,
                                                                   std::vector<std::vector<std::vector<unsigned short> > >& cluster_sizes, unsigned short dist_cutoff);
-  std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data, unsigned short dist_cutoff/*=15*/);
+  std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data, unsigned short dist_cutoff/*=15*/,const int seq_sep);
   void SaveDCData(DCData& data, const String& filename);
   DCData LoadDCData(const String& filename);
   DCData FillDCData(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,const std::vector<String>& filenames,

@@ -30,9 +30,9 @@ namespace qmean{
       std::ifstream file(fn, std::ios_base::in | std::ios_base::binary);
 
       if(! file){
-        std::stringstream ss;
-        ss<<"Could not read file. File '";
-        ss<<filename<<"' does not exist!";
+        //could not open file, add it as invalid
+        tpl_ca_pos.push_back(std::vector<geom::Vec3>());
+        valid_structures.push_back(false);
         continue;
       }
 
@@ -89,36 +89,42 @@ namespace qmean{
 
     std::vector<float> cluster_similarities; //average sequence similarity of templates in clusters to target 
     float cl_sim;
+    int counter;
     int tpl_idx;
 
     for(std::vector<std::vector<int> >::const_iterator it=cluster.begin();it!=cluster.end();++it){
       cl_sim = 0;
+      counter = 0;
       for (std::vector<int>::const_iterator it2=(*it).begin();it2!=(*it).end();++it2){
         tpl_idx = *it2 +1;
         if(valid_structures[tpl_idx-1] == false) continue;
         cl_sim += ost::seq::alg::SequenceSimilarity(msaln,subst,true,0,tpl_idx);
+        ++counter;
       }
-      cl_sim /= (*it).size();
+      if(counter > 0) cl_sim /= counter;
       cluster_similarities.push_back(cl_sim);
     }
     return cluster_similarities;
   }
 
   
-    std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
+  std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
                                             const std::vector<bool>& valid_structures){
     std::vector<float> cluster_seq_ids; //average sequnece identity of templates in clusters to target
     float cl_seq_id;
+    int counter;
     int tpl_idx;
 
     for(std::vector<std::vector<int> >::const_iterator it=cluster.begin();it!=cluster.end();++it){
       cl_seq_id = 0;
+      counter = 0;
       for (std::vector<int>::const_iterator it2=(*it).begin();it2!=(*it).end();++it2){
         tpl_idx = *it2 +1;
         if(valid_structures[tpl_idx-1] == false) continue;
         cl_seq_id += ost::seq::alg::SequenceIdentity(msaln,ost::seq::alg::RefMode::LONGER_SEQUENCE,0,tpl_idx);
+        ++counter;
       }
-      cl_seq_id /= (*it).size();
+      if(counter > 0) cl_seq_id /= counter;
       cluster_seq_ids.push_back(cl_seq_id);
     }
     return cluster_seq_ids;
@@ -148,7 +154,7 @@ namespace qmean{
   }
 
 
-  std::vector<std::vector<std::vector<float> > > ExtractDistances(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,   const std::vector<std::vector<geom::Vec3> > tpl_ca_pos,
+  std::vector<std::vector<std::vector<float> > > ExtractDistances(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,   const std::vector<std::vector<geom::Vec3> >& tpl_ca_pos,
                                                                   const std::vector<bool>& valid_structures, std::vector<std::vector<std::vector<unsigned short> > >& cluster_sizes, unsigned short dist_cutoff){
 
     std::vector<float> tpl_distances_ij;           // distances between reidue pair (i,j) in all templates
@@ -248,7 +254,7 @@ namespace qmean{
   }    
 
 
-  std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data ,unsigned short dist_cutoff/*=15*/){
+  std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data ,unsigned short dist_cutoff/*=15*/, const int seq_sep){
 
     int j, i =0;
     float score_ij, model_distance_ij;
@@ -277,7 +283,7 @@ namespace qmean{
       for (ost::seq::AlignmentHandle::iterator aln_it2 = ost::seq::AlignedColumnIterator(aln,j,aln.GetLength()), e2 = aln.end(); aln_it2 != e2; aln_it2++, j++) {            
         const ost::seq::AlignedColumn& col_j = *aln_it2;
         if(col_j[1] == '-') continue;
-        // if(std::abs(i-j)<=1) continue;
+        if(std::abs(i-j)<=seq_sep) continue;
 
         ost::mol::ResidueView res_i = aln.GetSequence(1).GetResidue(i);
         ost::mol::AtomView ca_i = res_i.FindAtom("CA");
@@ -306,38 +312,6 @@ namespace qmean{
     }
   return model_scores;
   }
-
-
-  // std::vector<std::vector<float> > MaxScores(const DCData& data){ 
-  //
-  //   int n = data.tpl_distances.size();
-  //   std::vector<std::vector<float> > max_scores(n);
-  //   for(std::vector<std::vector<float> >::iterator it = max_scores.begin(); it != max_scores.end(); ++it){
-  //     it->resize(n);
-  //   } 
-  //   // find maximal possible score for residue pair ij  
-  //   for(int i =0; i< n; i++){
-  //     for(int j =i+1; j< n; j++){
-  //       if(data.get_distances(i,j).empty()) continue;             
-  //       float max_score_ij = 0;
-  //       float stepsize = 0.1;
-  //       std::vector<float> distances = data.get_distances(i,j);
-  //       float min = *std::min_element(distances.begin(),distances.end());
-  //       float max = *std::max_element(distances.begin(),distances.end());
-  //       if(max == min){
-  //         max_scores[i][j] = 0.4; //for sigma =1
-  //         continue;
-  //       }
-  //       for(int c = 0; c<=ceil((max-min)*1./stepsize); c++){
-  //         float d = min+stepsize*c;
-  //         float score_ij = CalculateScoreIJ(d, data,i,j);
-  //         if(score_ij > max_score_ij) max_score_ij = score_ij;
-  //       }       
-  //       max_scores.at(i).at(j) = max_score_ij;
-  //     }
-  //   }
-  //   return max_scores;    
-  // }
 
 
   template <typename T>
@@ -504,7 +478,7 @@ namespace qmean{
     structural_info = ReadCalphaPos(filenames, valid_structures); 
     cluster_seq_sim = CalculateClusterSeqSim(msaln, cluster, subst, valid_structures);
     for(std::vector<float>::iterator i = cluster_seq_sim.begin(); i != cluster_seq_sim.end(); ++i){
-      float weight = exp(exp_factor*(*i));
+      float weight = std::exp(exp_factor*(*i));
       cluster_weights.push_back(weight);
     }
     
