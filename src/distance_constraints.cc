@@ -9,10 +9,11 @@
 
 
 namespace qmean{
-    std::vector<std::vector<geom::Vec3> > ReadCalphaPos(const std::vector<String>& filenames,
-                                                        std::vector<bool>& valid_structures){
+  void ReadCalphaPos(const std::vector<String>& filenames,
+                     std::vector<bool>& valid_structures,
+                     std::vector<std::vector<geom::Vec3> >& tpl_ca_pos){
 
-    std::vector<std::vector<geom::Vec3> > tpl_ca_pos; 
+    tpl_ca_pos.clear(); 
     for(int i=0; i<filenames.size(); ++i){
       std::vector<geom::Vec3>  ca_pos;
       String filename = filenames[i];
@@ -80,14 +81,14 @@ namespace qmean{
         valid_structures.push_back(false);
       }
     }    
-    return tpl_ca_pos;
   }
 
 
-  std::vector<float> CalculateClusterSeqSim(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
-                                            ost::seq::alg::SubstWeightMatrixPtr subst, const std::vector<bool>& valid_structures){ 
+  void CalculateClusterSeqSim(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
+                         ost::seq::alg::SubstWeightMatrixPtr subst, const std::vector<bool>& valid_structures,
+                         std::vector<float>& cluster_similarities){ 
 
-    std::vector<float> cluster_similarities; //average sequence similarity of templates in clusters to target 
+    cluster_similarities.clear(); //average sequence similarity of templates in clusters to target 
     float cl_sim;
     int counter;
     int tpl_idx;
@@ -104,13 +105,13 @@ namespace qmean{
       if(counter > 0) cl_sim /= counter;
       cluster_similarities.push_back(cl_sim);
     }
-    return cluster_similarities;
   }
 
   
-  std::vector<float> CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
-                                            const std::vector<bool>& valid_structures){
-    std::vector<float> cluster_seq_ids; //average sequnece identity of templates in clusters to target
+  void CalculateClusterSeqIds(const ost::seq::AlignmentHandle& msaln, const std::vector<std::vector<int> >& cluster,
+                              const std::vector<bool>& valid_structures,
+                              std::vector<float>& cluster_seq_ids){
+    cluster_seq_ids.clear(); //average sequnece identity of templates in clusters to target
     float cl_seq_id;
     int counter;
     int tpl_idx;
@@ -127,13 +128,13 @@ namespace qmean{
       if(counter > 0) cl_seq_id /= counter;
       cluster_seq_ids.push_back(cl_seq_id);
     }
-    return cluster_seq_ids;
   }
 
   
-  std::vector<std::vector<int> > GetIndexMatrix(const ost::seq::AlignmentHandle& msaln){
+  void GetIndexMatrix(const ost::seq::AlignmentHandle& msaln,
+                      std::vector<std::vector<int> >& idxs){
 
-    std::vector<std::vector<int> > idxs(msaln.GetCount());
+    idxs.resize(msaln.GetCount());
     int c, i = 0;
     for( std::vector<std::vector<int> >::iterator it = idxs.begin(); it != idxs.end(); ++it, ++i){
       it->resize(msaln.GetLength());
@@ -150,12 +151,16 @@ namespace qmean{
         }
       }
     }
-    return idxs;
   }
 
 
-  std::vector<std::vector<std::vector<float> > > ExtractDistances(const ost::seq::AlignmentHandle& msaln,const std::vector<std::vector<int> >& cluster,   const std::vector<std::vector<geom::Vec3> >& tpl_ca_pos,
-                                                                  const std::vector<bool>& valid_structures, std::vector<std::vector<std::vector<unsigned short> > >& cluster_sizes, unsigned short dist_cutoff){
+  void ExtractDistances(const ost::seq::AlignmentHandle& msaln,
+                        const std::vector<std::vector<int> >& cluster,   
+                        const std::vector<std::vector<geom::Vec3> >& tpl_ca_pos,
+                        const std::vector<bool>& valid_structures, 
+                        std::vector<std::vector<std::vector<unsigned short> > >& cluster_sizes, 
+                        unsigned short dist_cutoff,
+                        std::vector<std::vector<std::vector<float> > >& tpl_distances){
 
     std::vector<float> tpl_distances_ij;           // distances between reidue pair (i,j) in all templates
     std::vector<unsigned short> cluster_sizes_ij;  // info about number of distances in clusters for residue pair (i,j)
@@ -164,10 +169,11 @@ namespace qmean{
     geom::Vec3 ca_pos_i, ca_pos_j;
 
     // create a matrix to be able to look up c-alpha positios of each residue in the alignemnt
-    std::vector<std::vector<int> > idxs = GetIndexMatrix(msaln);
+    std::vector<std::vector<int> > idxs;
+    GetIndexMatrix(msaln,idxs);
 
     int n = msaln.GetSequence(0).GetGaplessString().size();
-    std::vector<std::vector<std::vector<float> > > tpl_distances(n);
+    tpl_distances.resize(n);
     for(std::vector<std::vector<std::vector<float> > >::iterator it = tpl_distances.begin(); it != tpl_distances.end(); ++it){
       it->resize(n);
     } 
@@ -211,9 +217,7 @@ namespace qmean{
         cluster_sizes[idx_i][idx_j] = cluster_sizes_ij;
       }
     }
-    return tpl_distances;
   }
-
 
   float CalculateScoreIJ(float model_distance_ij ,const DCData& data, int i, int j){
 
@@ -250,13 +254,13 @@ namespace qmean{
     }
     // weights of clusters have to add up to one
     score_ij /= cluster_weight_tot;  
-  return score_ij; 
+    return score_ij; 
   }    
 
 
-  std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data ,unsigned short dist_cutoff/*=15*/, const int seq_sep){
+  std::vector<float> DCScore(const ost::seq::AlignmentHandle& aln, const DCData& data ,unsigned short dist_cutoff, int seq_sep){
 
-    int j, i =0;
+    int j, i = 0;
     float score_ij, model_distance_ij;
     std::vector<float> model_scores;
 
@@ -270,8 +274,12 @@ namespace qmean{
       throw std::invalid_argument("SEQRES of DCData does not match SEQRES in alignment!");
     }
 
-    if(not aln.GetCount()>=2){
-      throw std::invalid_argument("Number of sequences in alignment has to be at least 2!");
+    if(aln.GetCount() != 2){
+      throw std::invalid_argument("Number of sequences in alignment must be 2!");
+    }
+
+    if(!aln.GetSequence(1).HasAttachedView()){
+      throw std::invalid_argument("second sequence must have view attached!");
     }
 
     //Compute DisCo score
@@ -310,7 +318,8 @@ namespace qmean{
       if(num_inter[k] == 0)  model_scores.push_back(NAN);
       else{model_scores.push_back(scores[k]/(num_inter[k]*0.4));}
     }
-  return model_scores;
+
+    return model_scores;
   }
 
 
@@ -475,15 +484,15 @@ namespace qmean{
     std::vector<std::vector<std::vector<float> > >  tpl_distances;
     std::vector<std::vector<std::vector<unsigned short> > > cluster_sizes;
 
-    structural_info = ReadCalphaPos(filenames, valid_structures); 
-    cluster_seq_sim = CalculateClusterSeqSim(msaln, cluster, subst, valid_structures);
+    ReadCalphaPos(filenames, valid_structures, structural_info); 
+    CalculateClusterSeqSim(msaln, cluster, subst, valid_structures, cluster_seq_sim);
     for(std::vector<float>::iterator i = cluster_seq_sim.begin(); i != cluster_seq_sim.end(); ++i){
       float weight = std::exp(exp_factor*(*i));
       cluster_weights.push_back(weight);
     }
     
-    tpl_distances = ExtractDistances(msaln,cluster,structural_info, valid_structures, cluster_sizes, dist_cutoff);
-    cluster_seq_ids = CalculateClusterSeqIds(msaln,cluster, valid_structures);
+    ExtractDistances(msaln,cluster,structural_info, valid_structures, cluster_sizes, dist_cutoff,tpl_distances);
+    CalculateClusterSeqIds(msaln,cluster, valid_structures, cluster_seq_ids);
 
     DCData data;
     data.seq = msaln.GetSequence(0).GetGaplessString();
@@ -506,13 +515,22 @@ namespace qmean{
     const int num_features = 5;
     const int aln_length = aln.GetLength();
     float feature_values[aln_length][num_features];   
-    memset(feature_values, 0, sizeof(feature_values[0][0]) * aln_length * num_features);     
+    memset(feature_values, 0, sizeof(float) * aln_length * num_features);     
     std::vector<std::vector<float> > model_feature_values; 
 
     //check for valid DCData and valid alignment
     if(data.tpl_distances.size() != aln.GetLength())  throw std::invalid_argument("DCData does not match alignment!");
+
     if(aln.GetSequence(0).GetString()!= data.seq.c_str() ){
       throw std::invalid_argument("SEQRES of DCData does not match SEQRES in alignment!");
+    }
+
+    if(aln.GetCount() != 2){
+      throw std::invalid_argument("Number of sequences in alignment must be 2!");
+    }
+
+    if(!aln.GetSequence(1).HasAttachedView()){
+      throw std::invalid_argument("second sequence must have view attached!");
     }
 
     //Compute features
