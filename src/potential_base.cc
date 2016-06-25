@@ -87,6 +87,12 @@ PotentialContainerPtr PotentialContainer::Load(const String& filename){
 void PotentialContainer::Save(const String& filename){
 
   std::ofstream stream(filename.c_str(), std::ios_base::binary);
+  std::stringstream ss;
+  if(! stream){
+    ss<<"Could not write to file '";
+    ss<<filename<<"'";
+    throw ost::io::IOException(ss.str());
+  }  
   io::BinaryDataSink ds(stream);
 
   int s = potentials_.size();

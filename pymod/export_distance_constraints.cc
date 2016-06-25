@@ -29,7 +29,7 @@ void export_DistanceConstraints()
 {
   def("FillDCData",&WrapFillDCData,(boost::python::arg("msaln"), boost::python::arg("cluster"), boost::python::arg("filenmes"),
                                     boost::python::arg("subst"), boost::python::arg("dist_cutoff")=15, boost::python::arg("exp_factor")=70));
-  def("DCScore",&qmean::DCScore, (boost::python::arg("aln"), boost::python::arg("data"), boost::python::arg("dist_cutoff")=15));
+  def("DCScore",&qmean::DCScore, (boost::python::arg("aln"), boost::python::arg("data"), boost::python::arg("dist_cutoff")=15,boost::python::arg("seq_sep")=0));
   def("SaveDCData", &qmean::SaveDCData);
   def("LoadDCData",&qmean::LoadDCData);
   def("DetermineFeatureValues",&qmean::DetermineFeatureValues);

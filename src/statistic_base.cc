@@ -87,6 +87,12 @@ StatisticContainerPtr StatisticContainer::Load(const String& filename){
 void StatisticContainer::Save(const String& file_name){
 
   std::ofstream stream(file_name.c_str(), std::ios_base::binary);
+  std::stringstream ss;
+  if(! stream){
+    ss<<"Could not write to file '";
+    ss<<file_name<<"'";
+    throw ost::io::IOException(ss.str());
+  }  
   io::BinaryDataSink ds(stream);
 
   int s = statistics_.size();
@@ -123,6 +129,12 @@ StatisticBase::~StatisticBase() { }
 
 void StatisticBase::Save(const String& filename){
   std::ofstream stream(filename.c_str(), std::ios_base::binary);
+  std::stringstream ss;
+  if(! stream){
+    ss<<"Could not write to file '";
+    ss<<filename<<"'";
+    throw ost::io::IOException(ss.str());
+  }   
   io::BinaryDataSink ds(stream);
   this->OnSave(ds);
 }
