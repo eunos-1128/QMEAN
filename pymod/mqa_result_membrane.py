@@ -16,8 +16,7 @@ References:
 
   Studer, G., Biasini, M. and Schwede, T. (2014). "Assessing the local 
   structural quality of transmembrane protein models using statistical 
-  potentials (QMEANBrane)" Bioinformatics, 30(17): i505–i511.
-
+  potentials (QMEANBrane)" Bioinformatics, 30(17): i505-i511
 Description of columns:
 
   chain         Chainname as written in the PDB file
