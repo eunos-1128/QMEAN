@@ -251,7 +251,7 @@ class LocalResult:
     self.model = model
     self.score_table = data
 
-  def PlotlDDTProfile(self, chain=None, plot_disco=True):
+  def PlotlDDTProfile(self, chain=None, plot_disco=False):
 
     from matplotlib import pyplot
     pyplot.clf()
