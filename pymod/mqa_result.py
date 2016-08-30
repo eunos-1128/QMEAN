@@ -251,7 +251,7 @@ class LocalResult:
     self.model = model
     self.score_table = data
 
-  def PlotlDDTProfile(self, chain=None):
+  def PlotlDDTProfile(self, chain=None, plot_disco=True):
 
     from matplotlib import pyplot
     pyplot.clf()
@@ -265,7 +265,12 @@ class LocalResult:
 
     chain_idx = self.score_table.GetColIndex('chain')
     rnum_idx = self.score_table.GetColIndex('rnum')
-    lddt_idx = self.score_table.GetColIndex('lDDT')
+    qmean_idx = None
+    if plot_disco:
+      qmean_idx = self.score_table.GetColIndex('QMEANDisCo')
+    else:
+      qmean_idx = self.score_table.GetColIndex('QMEAN')
+
 
     chains = list()
     chains.append(self.score_table.rows[0][chain_idx])
@@ -282,11 +287,11 @@ class LocalResult:
       for i,ch in enumerate(chains):
         chain_tab = self.score_table.Filter(chain=ch)  
         res_num = list()
-        lddt = list()
+        predicted_lddt = list()
         for r in chain_tab.rows:
           res_num.append(r[rnum_idx])
-          lddt.append(r[lddt_idx])
-        pyplot.plot(res_num,lddt,color=color_scheme[i%len(color_scheme)],linewidth=2.0)
+          predicted_lddt.append(r[qmean_idx])
+        pyplot.plot(res_num,predicted_lddt,color=color_scheme[i%len(color_scheme)],linewidth=2.0)
       return pyplot
          
     else:
@@ -294,12 +299,12 @@ class LocalResult:
       pyplot.title('Local Quality Estimate: Chain %s'%(chain),size='x-large')
       chain_tab = self.score_table.Filter(chain=chain)
       res_num = list()
-      lddt = list()
+      predicted_lddt = list()
       for r in chain_tab.rows:
         res_num.append(r[rnum_idx])
-        lddt.append(r[lddt_idx])
+        predicted_lddt.append(r[qmean_idx])
       color_idx = chains.index(chain)
-      pyplot.plot(res_num,lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
+      pyplot.plot(res_num,predicted_lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
 
 
       return pyplot
@@ -368,9 +373,15 @@ class LocalResult:
     data['QMEAN'] = scores
 
     if assign_bfactors:
-      for r,s in zip(model.residues,data['lDDT']):
-        for a in r.atoms:
-          a.b_factor = s
+      if dc:
+        for r,s in zip(model.residues,data['QMEANDisCo']):
+          for a in r.atoms:
+            a.b_factor = s
+      else:
+        for r,s in zip(model.residues,data['QMEAN']):
+          for a in r.atoms:
+            a.b_factor = s
+
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'all_atom',
                    'cbeta', 'solvation', 'torsion', 'exposed',
@@ -461,9 +472,9 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
     tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
     if plots:
       for ch in model.chains:
-        p=local_result.PlotlDDTProfile(chain=ch.name)
+        p=local_result.PlotlDDTProfile(chain=ch.name, plot_disco=(dc!=None))
         p.savefig(os.path.join(plot_dir,'local_quality_estimate_%s.png' % (ch.name)))
-      p=local_result.PlotlDDTProfile()
+      p=local_result.PlotlDDTProfile(plot_disco=(dc!=None))
       p.savefig(os.path.join(plot_dir,'local_quality_estimate.png'))
     results.append(local_result)
 

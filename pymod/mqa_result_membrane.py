@@ -16,7 +16,8 @@ References:
 
   Studer, G., Biasini, M. and Schwede, T. (2014). "Assessing the local 
   structural quality of transmembrane protein models using statistical 
-  potentials (QMEANBrane)" Bioinformatics, 30(17): i505-i511
+  potentials (QMEANBrane)" Bioinformatics, 30(17): i505-i511.
+
 Description of columns:
 
   chain         Chainname as written in the PDB file
@@ -71,7 +72,7 @@ class LocalMembraneResult:
 
     chain_idx = self.score_table.GetColIndex('chain')
     rnum_idx = self.score_table.GetColIndex('rnum')
-    lddt_idx = self.score_table.GetColIndex('lDDT')
+    qmean_idx = self.score_table.GetColIndex('QMEAN')
 
     chains = list()
     chains.append(self.score_table.rows[0][chain_idx])
@@ -88,11 +89,11 @@ class LocalMembraneResult:
       for i,ch in enumerate(chains):
         chain_tab = self.score_table.Filter(chain=ch)  
         res_num = list()
-        lddt = list()
+        predicted_lddt = list()
         for r in chain_tab.rows:
           res_num.append(r[rnum_idx])
-          lddt.append(r[lddt_idx])
-        pyplot.plot(res_num,lddt,color=color_scheme[i%len(color_scheme)],linewidth=2.0)
+          predicted_lddt.append(r[qmean_idx])
+        pyplot.plot(res_num,predicted_lddt,color=color_scheme[i%len(color_scheme)],linewidth=2.0)
       return pyplot
          
     else:
@@ -100,12 +101,12 @@ class LocalMembraneResult:
       pyplot.title('Local Quality Estimate: Chain %s'%(chain),size='x-large')
       chain_tab = self.score_table.Filter(chain=chain)
       res_num = list()
-      lddt = list()
+      predicted_lddt = list()
       for r in chain_tab.rows:
         res_num.append(r[rnum_idx])
-        lddt.append(r[lddt_idx])
+        predicted_lddt.append(r[qmean_idx])
       color_idx = chains.index(chain)
-      pyplot.plot(res_num,lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
+      pyplot.plot(res_num,predicted_lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
 
 
       return pyplot
@@ -202,7 +203,7 @@ class LocalMembraneResult:
 
 
     if assign_bfactors:
-      for r,s in zip(model.residues,data['lDDT']):
+      for r,s in zip(model.residues,data['QMEAN']):
         for a in r.atoms:
           a.b_factor = s
 
