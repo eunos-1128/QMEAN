@@ -17,9 +17,9 @@ def AlignChainToSEQRES(chain, seqres):
   except Exception, e:
     print e
 
-  chain_seq = seq.SequenceFromChain('atom_seq', chain)
+  chain_seq = ''.join([r.one_letter_code for r in chain.residues])
   aln = seq.alg.SemiGlobalAlign(seq.CreateSequence('seqres',seqres),
-                            chain_seq, seq.alg.BLOSUM100)[0]
+                                chain_seq, seq.alg.BLOSUM100)[0]
 
   #the seqres must not contain gaps...
   if str(aln.sequences[0]).find('-') != -1:

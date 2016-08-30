@@ -14,14 +14,9 @@ This file contains local scores calculated by the QMEAN scoring function.
 
 References:
 
-  Benkert, P., Tosatto, S.C.E. and Schomburg, D. (2008). "QMEAN: A comprehensive
-  scoring function for model quality assessment." Proteins: Structure, Function,
-  and Bioinformatics, 71(1):261-277.
-
-
-  Benkert, P., Biasini, M. and Schwede, T. (2011). "Toward the estimation of the
-  absolute quality of individual protein structure models." Bioinformatics
-  doi: 10.1093/bioinformatics/btq662
+  Studer, G., Biasini, M. and Schwede, T. (2014). "Assessing the local 
+  structural quality of transmembrane protein models using statistical 
+  potentials (QMEANBrane)" Bioinformatics, 30(17): i505–i511.
 
 Description of columns:
 
@@ -53,7 +48,8 @@ Description of columns:
 
   membrane      Assignment of the membrane part. 1 for membrane residues, 0 otherwise
 
-  lDDT          Predicted local lDDT value 
+  QMEAN         Predicted local quality. A value describing the expected local
+                similarity to the target structure with a range of [0,1]. 
 '''
 
 
@@ -203,7 +199,7 @@ class LocalMembraneResult:
           raise RuntimeError("Invalid membrane state encountered")
           
 
-    data['lDDT'] = scores
+    data['QMEAN'] = scores
 
 
     if assign_bfactors:
@@ -223,7 +219,7 @@ class LocalMembraneResult:
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'membrane','all_atom',
                    'cbeta', 'solvation', 'torsion', 'exposed',
-                   'ss_agreement', 'acc_agreement', 'lDDT'],
+                   'ss_agreement', 'acc_agreement', 'QMEAN'],
                    'siisiffffffff')
 
     for i, res in enumerate(model.residues):
@@ -239,7 +235,7 @@ class LocalMembraneResult:
                       'exposed' : data['exposed'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
-                      'lDDT' : data['lDDT'][i]})
+                      'QMEAN' : data['QMEAN'][i]})
 
     lscores.comment=LSCORES_TABLE_HEADER
     return LocalMembraneResult(model,lscores)

@@ -54,14 +54,17 @@ only the subset of single scores not being NaN are considered.
     :param features:    Name of the features as they are stored in **tab**
     :param tab:         Table containing the training information. Several
                         columns are mandatory: 
+
                           * "AA": one letter code for data points
                           * "target": target value for data points
                           * Column for every element in **features**
+
     :param residue_type: Every scorer can train several score combinations
                          you might want to distinct between secondary
                          structure of whatever
     :param method:       Method to generate the linear combination.
                          possible values are:
+
                            * "leastsqr": uses lstsq functionality from the
                              scipy.linalg module
                            * "robust": uses the robustfit function 
@@ -140,12 +143,15 @@ only the subset of single scores not being NaN are considered.
     :param features:    Name of the features as they are stored in **tab**
     :param tab:         Table containing the training information. Several
                         columns are mandatory: 
+
                           * "target": target value for data points
                           * Column for every element in **features**
+
     :param structure_type: Every scorer can train several score combinations,
                          this string is the according identifier
     :param method:       Method to generate the linear combination.
                          possible values are:
+
                            * "leastsqr": uses lstsq functionality from the
                              scipy.linalg module
                            * "robust": uses the robustfit function 
