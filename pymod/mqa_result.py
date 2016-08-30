@@ -59,8 +59,11 @@ Description of columns:
                 Distance constraints are obtained from distances between residue pairs
                 in homologous templates.
 
-  lddt          Predicted local lDDT value. A value describing the expected local
+  QMEAN         Predicted local quality. A value describing the expected local
                 similarity to the target structure with a range of [0,1]. 
+
+  QMEANDisCo    Predicted local quality by combining QMEAN, dist_const and sequence 
+                based features using a random forest. The range remains [0,1].  
 '''
 
 
@@ -357,10 +360,12 @@ class LocalResult:
     if dc:
       if not global_result:
         global_result=GlobalResult.Create(model,settings, psipred=psipred, accpro=accpro) 
-      scores = local_mqa.UpdateScores(scores,settings,global_result.qmean4.norm) 
+      qmeandisco_scores = local_mqa.UpdateScores(scores,settings,global_result.qmean4.norm) 
+      data["QMEANDisCo"] = qmeandisco_scores
+    else:
+      data["QMEANDisCo"] = model.residue_count*[float('NaN')]
 
-
-    data['lDDT'] = scores
+    data['QMEAN'] = scores
 
     if assign_bfactors:
       for r,s in zip(model.residues,data['lDDT']):
@@ -369,8 +374,8 @@ class LocalResult:
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'all_atom',
                    'cbeta', 'solvation', 'torsion', 'exposed',
-                   'ss_agreement', 'acc_agreement', 'dist_const', 'lDDT',],
-                   'siisfffffffff')
+                   'ss_agreement', 'acc_agreement', 'dist_const', 'QMEAN','QMEANDisCo'],
+                   'siisffffffffff')
 
     for i, res in enumerate(model.residues):
       lscores.AddRow({ 'chain' : res.chain.name,
@@ -385,7 +390,8 @@ class LocalResult:
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
                       'dist_const' :data['dist_const'][i],
-                      'lDDT' : data['lDDT'][i]})
+                      'QMEAN' : data['QMEAN'][i],
+                      'QMEANDisCo' : data['QMEANDisCo'][i]})
 
     lscores.comment=LSCORES_TABLE_HEADER
     return LocalResult(model,lscores)
