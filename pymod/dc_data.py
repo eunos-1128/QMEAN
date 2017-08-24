@@ -34,9 +34,12 @@ class TemplateInformation:
     os.system(cmd)
     prj = Project(sm_prj_path+'.sm')
     tpls = prj.GetTemplates()
+    alns = ost.seq.AlignmentList()
+    tpl_list = list()
+
 
     # align template sequences with seqres and find SMTL filename of templates
-    aln_dict = dict()      
+    
 
     if len(tpls) > 65500:
       print "Too many templates. Only first 65500 templates will be considered."
@@ -51,17 +54,13 @@ class TemplateInformation:
       bio_unit = prj.smtl.Get(pdb_id,ass_id)
       new_aln = HomologyModel.PruneAtomSeqAlignment(bio_unit.GetChainByName(chain_name).ToAtomSeqAlignment(tpl.alignment),2)        
       fn = prj.GetModelRepos().FilenameForModel(pdb_id,ass_id,chain_name)
-      aln_dict[fn] = new_aln 
+      alns.append(new_aln)
+      tpl_list.append(fn)  
 
     # remove Swissmodel project
     shutil.rmtree(sm_prj_path+'.sm')     
 
     # multiple sequence alignment  
-    alns = ost.seq.AlignmentList()
-    tpl_list = list()
-    for k,aln in sorted(aln_dict.items()):
-      alns.append(aln)
-      tpl_list.append(k)  
     ref_seq = seq.CreateSequence("ref", self.seqres)
     msaln = ost.seq.alg.MergePairwiseAlignments(alns,ref_seq)
 

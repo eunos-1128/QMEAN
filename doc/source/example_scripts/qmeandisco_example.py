@@ -16,7 +16,7 @@ model05_sele = model05.Select('peptide = true and ligand = false')
 # First the DCData object is loaded
 dc_data_4j32_A = LoadDCData("example_data/4j32_A.dat")
 
-# For computation of QMEANDisCo scores the residue sequence of the model needs
+# For computation of DisCo scores the residue sequence of the model needs
 # to be aligned with the SEQRES and the model has to be attachted to the 
 # alignment
 model01_aln = AlignToSEQRES(model01_sele, dc_data_4j32_A.seq)
@@ -25,13 +25,13 @@ model01_aln.AttachView(1,model01_sele)
 model05_aln = seq.alg.AlignToSEQRES(model05_sele, dc_data_4j32_A.seq)
 model05_aln.AttachView(1,model05_sele) 
 
-# Now we can compute the QMEANDisCo scores for our two models ...
+# Now we can compute the DisCo scores for our two models ...
 model01_score = DCScore(model01_aln, dc_data_4j32_A)
 model05_score = DCScore(model05_aln, dc_data_4j32_A)
 
-print "QMEANDisCo score of model 01:"
+print "DisCo score of model 01:"
 print model01_score
-print "\nQMEANDisCo score of model 05:"
+print "\nDisCo score of model 05:"
 print model05_score
 
 # ... or we can directly compute QMEANDisCo scores
