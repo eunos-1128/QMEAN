@@ -244,9 +244,11 @@ class LocalMembraneResult:
 def AssessMembraneModelQuality(model, mem_param = None, output_dir='.', 
                                plots=True, table_format='ost', psipred=None, 
                                accpro=None, dssp_path=None, 
-                               assign_bfactors=True):
+                               assign_bfactors=True, settings=None):
 
-  settings = conf.MembraneSettings()
+  if settings == None:
+    settings = conf.MembraneSettings()
+
   membrane_query = None
   interface_query = None
 

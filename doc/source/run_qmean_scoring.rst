@@ -22,7 +22,7 @@ Assessing the quality for soluble protein models
                                local_scores=True, global_scores=True \
                                table_format="ost",psipred=None, dc=None \
                                accpro=None, dssp_path=None, \
-                               assign_bfactors=True])
+                               assign_bfactors=True, settings=None])
 
   :param model:         The model you want to assess
   :param output_dir:    The directory where to write the output 
@@ -52,6 +52,25 @@ Assessing the quality for soluble protein models
   :param assign_bfactors: If set to True, the local scores get assigned to the
                           **model** as bfactors
 
+  :param settings:      Object that contains paths to potentials etc.
+                        If set to None, an object with default paths is
+                        generated with: settings=conf.SwissmodelSettings().
+                        Must have following members:
+ 
+                          * local_potentials: path to :class:`PotentialContainer` 
+                                              applied for local scoring.
+                          * global_potentials: path to :class:`PotentialContainer`
+                                               applied for global scoring
+                          * local_scorer: path to :class:`LocalScorer` to 
+                                          linearly combine per-residue scores
+                          * global_scorer: path to :class:`GlobalScorer` to 
+                                           linearly combine global scores
+                          * reference_tab: path to :class:`ost.Table` containing
+                                           reference data.
+                          * disco_tree: path to random forest, that predicts
+                                        local QMEANDisCo scores.
+
+
   :type model:          :class:`ost.mol.EntityHandle` / :class:`ost.mol.EntityView`
   :type output_dir:     :class:`str`
   :type plots:          :class:`bool`
@@ -75,7 +94,8 @@ Assessing the quality for membrane protein models
                                        output_dir='.', \
                                        plots = True, table_format='ost', \
                                        psipred=None, accpro=None, dc=None\
-                                       dssp_path=None, assign_bfactors=True])
+                                       dssp_path=None, assign_bfactors=True,
+                                       settings=None])
 
   :param model:         The model you want to assess
 
@@ -117,6 +137,30 @@ Assessing the quality for membrane protein models
   :param assign_bfactors: If set to True, the local scores get assigned to the
                           **model** as bfactors
 
+  :param settings:      Object that contains paths to potentials etc.
+                        If set to None, an object with default paths is
+                        generated with: settings=conf.MembraneSettings().
+                        Must have following members:
+ 
+                          * local_potentials_soluble: path to :class:`PotentialContainer` 
+                                              applied for soluble local scoring.
+                          * global_potentials_soluble: path to :class:`PotentialContainer`
+                                               applied for soluble global scoring
+                          * local_potentials_membrane: path to :class:`PotentialContainer` 
+                                              applied for local scoring in membrane and interface.
+                          * global_potentials_membrane: path to :class:`PotentialContainer`
+                                               applied for global scoring in membrane and interface.
+                          * local_scorer_soluble: path to :class:`LocalScorer` to 
+                                          linearly combine soluble per-residue scores
+                          * local_scorer_membrane: path to :class:`LocalScorer` to 
+                                          linearly combine membrane and interface per-residue scores
+                          * global_scorer: path to :class:`GlobalScorer` to 
+                                           linearly combine soluble global scores
+                          * global_scorer: path to :class:`GlobalScorer` to 
+                                           linearly combine global scores
+                          * reference_tab: path to :class:`ost.Table` containing
+                                           soluble reference data.
+
 
   :type model:          :class:`ost.mol.EntityHandle` / :class:`ost.mol.EntityView`
   :type mem_param:      :class:`FindMemParam`
@@ -134,3 +178,12 @@ QMEAN/QMEANBrane but rather reproduces a plot based on data produced
 in the last script (Fig4 in QMEANBrane publication).
 
 .. literalinclude:: example_scripts/reproduce_fig4_from_publication.py
+
+
+
+Get Default Settings for Quality Estimation
+--------------------------------------------------------------------------------
+
+class
+
+
