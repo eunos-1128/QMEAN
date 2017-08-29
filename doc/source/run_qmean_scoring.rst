@@ -156,8 +156,6 @@ Assessing the quality for membrane protein models
                                           linearly combine membrane and interface per-residue scores
                           * global_scorer: path to :class:`GlobalScorer` to 
                                            linearly combine soluble global scores
-                          * global_scorer: path to :class:`GlobalScorer` to 
-                                           linearly combine global scores
                           * reference_tab: path to :class:`ost.Table` containing
                                            soluble reference data.
 
