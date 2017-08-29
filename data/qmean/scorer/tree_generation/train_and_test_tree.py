@@ -4,6 +4,14 @@ from sklearn import metrics
 from scipy.stats import pearsonr
 import pickle
 
+# Loads the csv files created by tree_data_extraction.py and trains 
+# a random forest. It directly gets tested on independent test data 
+# using some basic metrics.
+# Pearson correlation of prediction vs target and ROC AUC.
+# Depending on your version of sklearn, the results might slightly differ
+# from the example output below (but should be in the same range!).  
+
+
 training_file_path = "tree_training_data.csv"
 test_file_path = "tree_test_data.csv"
 random_forest_path = "disco_tree.dat"

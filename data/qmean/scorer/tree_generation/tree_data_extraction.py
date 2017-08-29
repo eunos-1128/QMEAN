@@ -6,6 +6,13 @@ from qmean import predicted_sequence_features, mqa_result
 import qmean
 
 
+# This file needs to be dumped into an unpacked version of the massive 
+# qmeandisco_SMset_training_and_evaluation_data.tar.gz that is stored
+# in Christine Rempfers home => better data location required!
+# You simply run by:
+# ost tree_data_extraction.py
+
+
 def DumpCSV(target_file, csv_outfile):
   """
   target_file: file with one smng project name per line (e.g. 1jcd_A)
