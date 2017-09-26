@@ -430,7 +430,8 @@ class Scores:
     if self.dc!=None:
       dist_const = []
       for c,d in zip(self.target.chains, self.dc):
-        entity_view =self.target.Select('cname ='+c.name)
+        entity_view = self.target.CreateEmptyView()
+        entity_view.AddChain(c, mol.INCLUDE_ALL)
         aln = AlignChainToSEQRES(entity_view, d.seq)
         aln.AttachView(1, entity_view)
         dist_const += DCScore(aln,d)
@@ -449,7 +450,8 @@ class Scores:
     chain_start_index = 0
 
     for c,d in zip(self.target.chains, self.dc): 
-      entity_view =self.target.Select('cname ='+c.name)
+      entity_view = self.target.CreateEmptyView()
+      entity_view.AddChain(c, mol.INCLUDE_ALL)
       aln = AlignChainToSEQRES(entity_view, d.seq)
       aln.AttachView(1, entity_view)
       feature_values = DetermineFeatureValues(aln,d)
