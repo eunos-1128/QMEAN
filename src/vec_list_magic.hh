@@ -6,16 +6,17 @@
 
 
 template<typename T>
-boost::python::list VecToList(std::vector<T>& vec){
+boost::python::list VecToList(const std::vector<T>& vec){
   boost::python::list l;
-  for(typename std::vector<T>::iterator it=vec.begin();it!=vec.end();++it){
+  for(typename std::vector<T>::const_iterator it=vec.begin();
+      it!=vec.end(); ++it){
     l.append(*it);
   }
   return l;
 }
 
 template<typename T>
-std::vector<T> ListToVec(boost::python::list& l){
+std::vector<T> ListToVec(const boost::python::list& l){
 
   std::vector<T> vec;
   for (int i = 0; i < boost::python::len(l); ++i){

@@ -27,6 +27,7 @@ vec_list_magic.hh
 membrane.hh
 distance_constraints.hh
 levenberg_marquardt.h
+disco.hh
 impl/reduced_impl.hh
 impl/torsion_impl.hh
 impl/packing_impl.hh
@@ -58,6 +59,7 @@ ss_agreement.cc
 spherical_smoother.cc
 membrane.cc
 distance_constraints.cc
+disco.cc
 impl/reduced_impl.cc
 impl/torsion_impl.cc
 impl/packing_impl.cc
