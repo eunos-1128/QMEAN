@@ -588,8 +588,8 @@ void DisCoContainer::Save(const String& filename) const {
       if(vec != NULL) {
         out_stream.write(reinterpret_cast<char*>(&i), sizeof(uint16_t));
         out_stream.write(reinterpret_cast<char*>(&j), sizeof(uint16_t));
-        for(uint i = 0; i < vec->size(); ++i) {
-          char s = std::floor((*vec)[i] * 100 + 0.5);
+        for(uint bin_idx = 0; bin_idx < vec->size(); ++bin_idx) {
+          char s = std::floor((*vec)[bin_idx] * 100 + 0.5);
           out_stream.write(&s,1);
         }
       }
