@@ -52,6 +52,8 @@ public:
 
 private:
 
+  void ClearConstraints();
+
   bool readonly_;
   bool valid_constraints_;
   ost::seq::SequenceHandle seqres_;

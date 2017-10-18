@@ -141,7 +141,7 @@ struct Cluster {
     members.insert(members.end(), other.members.begin(), other.members.end());
   }
 
-  std::vector<uint> members;
+  std::vector<uint16_t> members;
 };
 
 
@@ -149,7 +149,7 @@ struct Cluster {
 Real ClusterDistanceAVG(const Cluster& one, 
                         const Cluster& two, 
                         const ost::TriMatrix<Real>& dist_matrix) {
-  typedef std::vector<uint>::const_iterator MyIter;
+  typedef std::vector<uint16_t>::const_iterator MyIter;
   Real sum  = 0.0;
   for (MyIter i = one.members.begin(); i != one.members.end(); ++i) {
     for (MyIter j = two.members.begin(); j != two.members.end(); ++j) {
@@ -164,7 +164,7 @@ Real ClusterDistanceAVG(const Cluster& one,
 Real ClusterDistanceMAX(const Cluster& one, 
                         const Cluster& two, 
                         const ost::TriMatrix<Real>& dist_matrix) {
-  typedef std::vector<uint>::const_iterator MyIter;
+  typedef std::vector<uint16_t>::const_iterator MyIter;
   Real max_dist = -std::numeric_limits<Real>::max();
   Real current_dist;
   for (MyIter i = one.members.begin(); i != one.members.end(); ++i) {
@@ -181,7 +181,7 @@ Real ClusterDistanceMAX(const Cluster& one,
 Real ClusterDistanceMIN(const Cluster& one, 
                         const Cluster& two, 
                         const ost::TriMatrix<Real>& dist_matrix) {
-  typedef std::vector<uint>::const_iterator MyIter;
+  typedef std::vector<uint16_t>::const_iterator MyIter;
   Real min_dist = std::numeric_limits<Real>::max();
   Real current_dist;
   for (MyIter i = one.members.begin(); i != one.members.end(); ++i) {
@@ -211,8 +211,10 @@ struct QueueEntry{
   QueueEntry() { }
   QueueEntry(int a, int b, Real d): first(a), second(b), dist(d) { }
 
-  int first;
-  int second;
+  // In case of DisCo, we can be sure, that uint16_t will be sufficient to
+  // describe the cluster idx
+  uint16_t first;
+  uint16_t second;
   Real dist;
 };
 
@@ -237,7 +239,11 @@ void DoClustering(const ost::TriMatrix<Real>& dist_matrix,
 
   output.clear();
 
-  uint num = dist_matrix.GetSize();
+  if(dist_matrix.GetSize() >= std::numeric_limits<uint16_t>::max()) {
+    throw std::runtime_error("Too many elements for clustering observed!");
+  }
+
+  uint16_t num = dist_matrix.GetSize();
 
   // do the stupid cases
   if(num == 0){
@@ -292,7 +298,7 @@ void DoClustering(const ost::TriMatrix<Real>& dist_matrix,
   // The idea is to build up sub trees from the bottom up and only
   // keep their roots (clusters that can be merged)
   std::vector<Cluster*> clusters(2*num - 1, NULL);
-  for (uint i = 0; i < num; ++i) {
+  for (uint16_t i = 0; i < num; ++i) {
     clusters[i] = new Cluster;
     clusters[i]->members.push_back(i);
   }
@@ -306,16 +312,16 @@ void DoClustering(const ost::TriMatrix<Real>& dist_matrix,
   else{
     queue_cmp_ptr = &NegativeCompareQueueEntries;
   } 
-  std::priority_queue<QueueEntry,std::vector<QueueEntry>,queue_cmp_f_ptr> 
+  std::priority_queue<QueueEntry,std::vector<QueueEntry>, queue_cmp_f_ptr> 
   distance_queue(queue_cmp_ptr);
 
-  for(uint i = 0; i < num; ++i){
-    for(uint j = i + 1; j < num; ++j){
+  for(uint16_t i = 0; i < num; ++i){
+    for(uint16_t j = i + 1; j < num; ++j){
       distance_queue.push(QueueEntry(i, j, dist_matrix.Get(i, j)));
     }
   }
 
-  uint merge_iteration = 0;
+  uint16_t merge_iteration = 0;
 
   // there is a maximum of num - 1 merge events
   // after that, everything would be in the same cluster
@@ -364,9 +370,11 @@ void DoClustering(const ost::TriMatrix<Real>& dist_matrix,
   }
 
   //fill the output and clean up
-  for (uint i = 0; i < num + merge_iteration; ++i) {
+  for (uint16_t i = 0; i < num + merge_iteration; ++i) {
     if(clusters[i] != NULL){
-      output.push_back(clusters[i]->members);
+      output.push_back(std::vector<uint>());
+      output.back().assign(clusters[i]->members.begin(), 
+                           clusters[i]->members.end());
       delete clusters[i];
     }
   }
@@ -419,6 +427,7 @@ void FillDistances(const ost::seq::SequenceHandle& seqres,
           pairwise_distances.Get(r_idx_one, r_idx_two);
           if(dist_vec == NULL) {
             dist_vec = new std::vector<std::pair<uint16_t, uint16_t> >;
+            pairwise_distances.Set(r_idx_one, r_idx_two, dist_vec);
           } 
           uint16_t int_dist = 
           static_cast<uint16_t>(1000 * std::sqrt(squared_dist));
@@ -465,7 +474,8 @@ void FillDisCo(const std::vector<std::pair<uint16_t, uint16_t> >& dist,
   // scaled_cluster_weights
   for(uint i = 0; i < dist.size(); ++i) {
 
-    uint cluster_idx = cluster_assignments[dist[i].first];
+    uint16_t templ_idx = dist[i].first;
+    uint cluster_idx = cluster_assignments[templ_idx];
     Real d = static_cast<Real>(dist[i].second) * Real(0.001);
   
     // weighted by number of occurences in cluster
@@ -476,32 +486,35 @@ void FillDisCo(const std::vector<std::pair<uint16_t, uint16_t> >& dist,
     for(uint j = 0; j < num_bins; ++j) {
       Real squared_diff = d - (j * bin_size);
       squared_diff *= squared_diff;
-      disco[j] += weight * std::exp(Real(-0.5) * squared_diff); 
+      disco[j] += (weight * std::exp(Real(-0.5) * squared_diff)); 
     }
   }
 }
 
 
 void FillDisCo(const ost::seq::SequenceHandle& seqres,
-               const ost::TriMatrix<std::vector<std::pair<uint16_t, uint16_t> >* >& distances,
+               ost::TriMatrix<std::vector<std::pair<uint16_t, uint16_t> >* >& distances,
                const std::vector<int>& cluster_assignments,
                const std::vector<Real>& cluster_weights,
                uint num_bins, Real bin_size,
                ost::TriMatrix<std::vector<Real>* >& disco_scores) {
 
-  uint num_templates = seqres.GetLength();
-  for(uint i = 0; i < num_templates; ++i) {
-    for(uint j = i + 1; j < num_templates; ++j) {
+  uint seqres_length = seqres.GetLength();
+  disco_scores = ost::TriMatrix<std::vector<Real>*>(seqres_length, NULL);
+  for(uint i = 0; i < seqres_length; ++i) {
+    for(uint j = i + 1; j < seqres_length; ++j) {
       const std::vector<std::pair<uint16_t, uint16_t> >* dist_vec = 
       distances.Get(i, j);
       if(dist_vec != NULL) {
         std::vector<Real>* disco_vec = disco_scores.Get(i,j);
         if(disco_vec == NULL) {
           disco_vec = new std::vector<Real>(num_bins, Real(0.0));
+          disco_scores.Set(i, j, disco_vec);
         }
         FillDisCo(*dist_vec, cluster_assignments, cluster_weights, 
                   num_bins, bin_size, *disco_vec);
         delete dist_vec;
+        distances.Set(i, j, NULL);
       }
     }
   }
@@ -538,14 +551,7 @@ DisCoContainer::DisCoContainer(const ost::seq::SequenceHandle& seqres):
 
 
 DisCoContainer::~DisCoContainer() {
-  for(int i = 0; i < disco_scores_.GetSize(); ++i) {
-    for(int j = i + 1; j < disco_scores_.GetSize(); ++j) {
-      std::vector<Real>* vec = disco_scores_.Get(i, j);
-      if(vec != NULL) {
-        delete vec;
-      }
-    }
-  }
+  this->ClearConstraints();
 }
 
 
@@ -580,18 +586,24 @@ void DisCoContainer::Save(const String& filename) const {
   out_stream.write(reinterpret_cast<const char*>(&fvalue), sizeof(float));
 
   // dump disco scores
+
   uint16_t N = disco_scores_.GetSize();
-  uint num_bins = std::floor(dist_cutoff_ + 0.5) + 3;
+  std::vector<uint8_t> out_vec(num_bins_, 0);
   for(uint16_t i = 0; i < N; ++i) {
     for(uint16_t j = i + 1; j < N; ++j) {
       std::vector<Real>* vec = disco_scores_.Get(i, j);
       if(vec != NULL) {
         out_stream.write(reinterpret_cast<char*>(&i), sizeof(uint16_t));
         out_stream.write(reinterpret_cast<char*>(&j), sizeof(uint16_t));
-        for(uint bin_idx = 0; bin_idx < vec->size(); ++bin_idx) {
-          char s = std::floor((*vec)[bin_idx] * 100 + 0.5);
-          out_stream.write(&s,1);
+        for(uint bin_idx = 0; bin_idx < num_bins_; ++bin_idx) {
+          ivalue = std::floor((*vec)[bin_idx] * 250 + 0.5);
+          if(ivalue > std::numeric_limits<uint8_t>::max()) {
+            throw std::runtime_error("Overflow observed when saving"
+                                     " DisCoContainer!");
+          }
+          out_vec[bin_idx] = ivalue;
         }
+        out_stream.write(reinterpret_cast<char*>(&out_vec[0]), num_bins_);
       }
     }
   }
@@ -640,16 +652,16 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   // we just read and read until nothing comes anymore...
   uint16_t i;
   uint16_t j;
-  String loaded_string(loaded_container->num_bins_, 'X');
+  std::vector<uint8_t> loaded_vec(loaded_container->num_bins_, 0);
   while(!in_stream.eof()) {
     in_stream.read(reinterpret_cast<char*>(&i), sizeof(uint16_t));
     in_stream.read(reinterpret_cast<char*>(&j), sizeof(uint16_t));
-    in_stream.read(reinterpret_cast<char*>(&loaded_string[0]), 
+    in_stream.read(reinterpret_cast<char*>(&loaded_vec[0]), 
                                            loaded_container->num_bins_);
     std::vector<Real>* loaded_constraint = 
     new std::vector<Real>(loaded_container->num_bins_);
     for(uint k = 0; k < loaded_container->num_bins_; ++k) {
-      (*loaded_constraint)[k] = loaded_string[k] * 0.01;
+      (*loaded_constraint)[k] = loaded_vec[k] * 0.004;
     }
     loaded_container->disco_scores_.Set(i,j,loaded_constraint);
   }
@@ -711,6 +723,9 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
                              "you cannot recalculate the constraints anymore!");
   }
 
+  // clear existing constraints
+  this->ClearConstraints();
+
   dist_cutoff_ = dist_cutoff;
   gamma_ = gamma;
   seqsim_clustering_cutoff_ = seqsim_clustering_cutoff;
@@ -727,9 +742,9 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
   // calculate pairwise sequence similarities
   ost::TriMatrix<Real> pairwise_seqsim(0);
   std::vector<Real> seqsim_to_target;
-  ost::seq::alg::SubstWeightMatrixPtr subst(new ost::seq::alg::SubstWeightMatrix);
-  subst->AssignPreset(ost::seq::alg::SubstWeightMatrix::BLOSUM62);
-  PairwiseSequenceSimilarities(full_aln, subst, pairwise_seqsim, seqsim_to_target);
+  ost::seq::alg::SubstWeightMatrixPtr sub(new ost::seq::alg::SubstWeightMatrix);
+  sub->AssignPreset(ost::seq::alg::SubstWeightMatrix::BLOSUM62);
+  PairwiseSequenceSimilarities(full_aln, sub, pairwise_seqsim, seqsim_to_target);
 
   // do the clustering
   std::vector<std::vector<uint> > clusters;
@@ -742,10 +757,20 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
     }
   }
 
+  //std::cerr<<"clusters:"<<std::endl;
+  //for(uint i = 0; i < clusters.size(); ++i) {
+  //  std::cerr<<"cluster "<<i<<std::endl;
+  //  for(uint j = 0; j < clusters[i].size(); ++j) {
+  //    std::cerr<<clusters[i][j]<<' '<<std::endl;
+  //  }
+  //  std::cerr<<std::endl;
+
+  //}
+
   // estimate the per cluster weights
   std::vector<Real> cluster_weights;
   EstimateClusterWeights(clusters, seqsim_to_target, gamma_, cluster_weights);
-  
+
   // estimate all the distances
   Real squared_dist_cutoff = dist_cutoff_ * dist_cutoff_;
   // the pair describes: (idx in pos_ / aln_, dist multiplied by 1000)
@@ -757,7 +782,7 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
   // fill the disco scores
   // All the pointers to pairwise distances are deleted in 
   // this process... 
-  // we just have to take care of the newly generated pointers in  disco_scores_ 
+  // we just have to take care of the newly generated pointers in disco_scores_
   // in the destructor of DisCoContainer
   FillDisCo(seqres_, pairwise_distances, cluster_assignments, cluster_weights,
             num_bins_, bin_size_, disco_scores_);
@@ -811,7 +836,7 @@ std::vector<Real> DisCoContainer::GetScores(const ost::mol::EntityView& view) co
   geom::Vec3List ca_positions;
   std::vector<uint> res_list_indices;
   std::vector<uint> seqres_indices;
-  uint seqres_length;
+  uint seqres_length = seqres_.GetLength();
 
   for(uint i = 0; i < res_list.size(); ++i) {
 
@@ -826,14 +851,14 @@ std::vector<Real> DisCoContainer::GetScores(const ost::mol::EntityView& view) co
       }
 
       uint idx = num - 1;
-      if(res_list[i].GetOneLetterCode() != seqres_[i]) {
+      if(res_list[i].GetOneLetterCode() != seqres_[idx]) {
         throw std::runtime_error("Observed a residue, that doesnt match the "
                                  "internal SEQRES!");
       }
 
       ca_positions.push_back(at.GetPos());
       res_list_indices.push_back(i);
-      seqres_indices.push_back(num - 1);
+      seqres_indices.push_back(idx);
     }
   }
 
@@ -882,6 +907,19 @@ std::vector<Real> DisCoContainer::GetScores(const ost::mol::EntityView& view) co
   }
 
   return return_vec;
+}
+
+
+void DisCoContainer::ClearConstraints() {
+  for(int i = 0; i < disco_scores_.GetSize(); ++i) {
+    for(int j = i + 1; j < disco_scores_.GetSize(); ++j) {
+      std::vector<Real>* vec = disco_scores_.Get(i, j);
+      if(vec != NULL) {
+        delete vec;
+      }
+    }
+  }
+  disco_scores_ = ost::TriMatrix<std::vector<Real>* >(0, NULL);
 }
 
 } // ns

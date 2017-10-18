@@ -42,14 +42,14 @@ list WrapGetScores(DisCoContainerPtr container,
 
 void export_disco() {
 
-  class_<DisCoContainer> ("DisCoContainer", init<const ost::seq::SequenceHandle&>())
+  class_<DisCoContainer, DisCoContainerPtr> ("DisCoContainer", init<const ost::seq::SequenceHandle&>())
     .def("Load", &DisCoContainer::Load, (arg("filename"))).staticmethod("Load")
     .def("Save", &DisCoContainer::Save, (arg("filename")))
     .def("AddData", &WrapAddData, (arg("aln"), arg("positions"), 
                                    arg("pos_seqres_mapping")))
     .def("CalculateConstraints", &DisCoContainer::CalculateConstraints,
-         (arg("dist_cutoff"), arg("gamma"), arg("seqsim_clustering_cutoff"),
-          arg("bin_size")))
+         (arg("dist_cutoff")=15.0, arg("gamma")=70.0, 
+          arg("seqsim_clustering_cutoff")=0.4, arg("bin_size")=1.0))
     .def("HasConstraint", &DisCoContainer::HasConstraint, (arg("rnum_one"),
                                                            arg("rnum_two")))
     .def("GetConstraint", &WrapGetConstraint, (arg("rnum_one"),
