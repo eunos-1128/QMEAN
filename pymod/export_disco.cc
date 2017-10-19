@@ -32,9 +32,30 @@ list WrapGetConstraint(DisCoContainerPtr container,
 
 list WrapGetScores(DisCoContainerPtr container,
                    ost::mol::EntityView& view) {
-  std::vector<Real> scores = container->GetScores(view);
+  std::vector<Real> scores;
+  container->FillData(view, scores);
   return VecToList<Real>(scores);
 }
+
+dict WrapGetScoresWithData(DisCoContainerPtr container,
+                           ost::mol::EntityView& view) {
+  std::vector<Real> scores;
+  std::vector<uint> counts;
+  std::vector<Real> avg_max_seqsim;
+  std::vector<Real> avg_max_seqid;
+  std::vector<Real> avg_variance;
+  container->FillData(view, scores, counts, avg_max_seqsim, 
+                      avg_max_seqid, avg_variance);
+
+  dict return_dict;
+  return_dict["scores"] = VecToList<Real>(scores);
+  return_dict["counts"] = VecToList<uint>(counts);
+  return_dict["avg_max_seqsim"] = VecToList<Real>(avg_max_seqsim);
+  return_dict["avg_max_seqid"] = VecToList<Real>(avg_max_seqid);
+  return_dict["avg_variance"] = VecToList<Real>(avg_variance);  
+  return return_dict;
+}
+
 
 } // ns
 
@@ -49,12 +70,13 @@ void export_disco() {
                                    arg("pos_seqres_mapping")))
     .def("CalculateConstraints", &DisCoContainer::CalculateConstraints,
          (arg("dist_cutoff")=15.0, arg("gamma")=70.0, 
-          arg("seqsim_clustering_cutoff")=0.4, arg("bin_size")=1.0))
+          arg("seqsim_clustering_cutoff")=0.5, arg("bin_size")=1.0))
     .def("HasConstraint", &DisCoContainer::HasConstraint, (arg("rnum_one"),
                                                            arg("rnum_two")))
     .def("GetConstraint", &WrapGetConstraint, (arg("rnum_one"),
                                                arg("rnum_two")))
     .def("GetScores", &WrapGetScores, (arg("view")))
+    .def("GetScoresWithData", &WrapGetScoresWithData, (arg("view")))
     .def("GetDistCutoff", &DisCoContainer::GetDistCutoff)
     .def("GetGamma", &DisCoContainer::GetGamma)
     .def("GetSeqSimClusteringCutoff", &DisCoContainer::GetSeqSimClusteringCutoff)

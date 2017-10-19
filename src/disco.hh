@@ -14,6 +14,19 @@ class DisCoContainer;
 typedef boost::shared_ptr<DisCoContainer> DisCoContainerPtr;
 
 
+// struct to contain the constraint for a certain residue pair i,j
+// plus some additional information
+struct ConstraintInfo{
+
+  Real max_seqsim;               // max avg sequence similarity of any of
+                                 // the involved clusters
+  Real max_seqid;                // max avg sequence identity of any of the
+                                 // involved clusters
+  Real variance;                 // variance calculated on ALL observed dists
+  uint16_t num_clusters;         // number of involved clusters
+  std::vector<Real> constraint;  // the actual constraint
+};
+
 class DisCoContainer{
   
 public:
@@ -38,7 +51,16 @@ public:
 
   const std::vector<Real>& GetConstraint(uint i , uint j) const;
 
-  std::vector<Real> GetScores(const ost::mol::EntityView& view) const;
+  void FillData(const ost::mol::EntityView& view, 
+                std::vector<Real>& scores) const;
+
+  void FillData(const ost::mol::EntityView& view, 
+                std::vector<Real>& scores,
+                std::vector<uint>& counts,
+                std::vector<Real>& avg_max_seqsim,
+                std::vector<Real>& avg_max_seqid,
+                std::vector<Real>& avg_variance) const;
+
 
   Real GetDistCutoff() const { return dist_cutoff_; }
 
@@ -54,13 +76,18 @@ private:
 
   void ClearConstraints();
 
+  void FillViewData(const ost::mol::ResidueViewList& res_list,
+                    geom::Vec3List& ca_positions,
+                    std::vector<uint>& res_list_indices,
+                    std::vector<uint>& seqres_indices) const;
+
   bool readonly_;
   bool valid_constraints_;
   ost::seq::SequenceHandle seqres_;
   ost::seq::AlignmentList aln_;
   std::vector<geom::Vec3List> pos_;
   std::vector<std::vector<uint> > pos_seqres_mapping_;
-  ost::TriMatrix<std::vector<Real>* > disco_scores_;
+  ost::TriMatrix<ConstraintInfo*> constraint_infos_;
   // info on how the disco scores have been generated:
   Real dist_cutoff_;
   Real gamma_;
