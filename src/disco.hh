@@ -57,6 +57,7 @@ public:
   void FillData(const ost::mol::EntityView& view, 
                 std::vector<Real>& scores,
                 std::vector<uint>& counts,
+                std::vector<Real>& avg_num_clusters,
                 std::vector<Real>& avg_max_seqsim,
                 std::vector<Real>& avg_max_seqid,
                 std::vector<Real>& avg_variance) const;

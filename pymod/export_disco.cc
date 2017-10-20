@@ -41,15 +41,17 @@ dict WrapGetScoresWithData(DisCoContainerPtr container,
                            ost::mol::EntityView& view) {
   std::vector<Real> scores;
   std::vector<uint> counts;
+  std::vector<Real> avg_num_clusters;
   std::vector<Real> avg_max_seqsim;
   std::vector<Real> avg_max_seqid;
   std::vector<Real> avg_variance;
-  container->FillData(view, scores, counts, avg_max_seqsim, 
+  container->FillData(view, scores, counts, avg_num_clusters, avg_max_seqsim, 
                       avg_max_seqid, avg_variance);
 
   dict return_dict;
   return_dict["scores"] = VecToList<Real>(scores);
   return_dict["counts"] = VecToList<uint>(counts);
+  return_dict["avg_num_clusters"] = VecToList<Real>(avg_num_clusters);
   return_dict["avg_max_seqsim"] = VecToList<Real>(avg_max_seqsim);
   return_dict["avg_max_seqid"] = VecToList<Real>(avg_max_seqid);
   return_dict["avg_variance"] = VecToList<Real>(avg_variance);  

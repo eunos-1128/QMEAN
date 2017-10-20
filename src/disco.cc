@@ -996,6 +996,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
 void DisCoContainer::FillData(const ost::mol::EntityView& view,
                               std::vector<Real>& scores,
                               std::vector<uint>& counts,
+                              std::vector<Real>& avg_num_clusters,
                               std::vector<Real>& avg_max_seqsim,
                               std::vector<Real>& avg_max_seqid,
                               std::vector<Real>& avg_variance) const {
@@ -1025,10 +1026,11 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
 
   uint num_pos = ca_positions.size();
   std::vector<Real> relevant_scores(num_pos, 0.0);
-  std::vector<uint> relevant_counts(ca_positions.size(), 0);
-  std::vector<Real> relevant_avg_max_seqsim(ca_positions.size(), 0.0);
-  std::vector<Real> relevant_avg_max_seqid(ca_positions.size(), 0.0);
-  std::vector<Real> relevant_avg_variance(ca_positions.size(), 0.0);
+  std::vector<uint> relevant_counts(num_pos, 0);
+  std::vector<Real> relevant_avg_num_clusters(num_pos, 0.0);
+  std::vector<Real> relevant_avg_max_seqsim(num_pos, 0.0);
+  std::vector<Real> relevant_avg_max_seqid(num_pos, 0.0);
+  std::vector<Real> relevant_avg_variance(num_pos, 0.0);
 
   Real squared_dist_cutoff = dist_cutoff_ * dist_cutoff_;
 
@@ -1058,6 +1060,8 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
           relevant_scores[j] += score;
           relevant_counts[i] += 1;
           relevant_counts[j] += 1;
+          relevant_avg_num_clusters[i] += constraint_info->num_clusters;
+          relevant_avg_num_clusters[j] += constraint_info->num_clusters;
           relevant_avg_max_seqsim[i] += constraint_info->max_seqsim;
           relevant_avg_max_seqsim[j] += constraint_info->max_seqsim;
           relevant_avg_max_seqid[i] += constraint_info->max_seqid;
@@ -1072,6 +1076,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
   uint res_list_size = res_list.size();
   scores.assign(res_list_size, std::numeric_limits<Real>::quiet_NaN());
   counts.assign(res_list_size, 0);
+  avg_num_clusters.assign(res_list_size, 0.0);
   avg_max_seqsim.assign(res_list_size, 0.0);
   avg_max_seqid.assign(res_list_size, 0.0);
   avg_variance.assign(res_list_size, 0.0);
@@ -1080,6 +1085,8 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
     if(relevant_counts[i] > 0) {
       scores[res_list_indices[i]] = relevant_scores[i] / relevant_counts[i];
       counts[res_list_indices[i]] = relevant_counts[i]; 
+      avg_num_clusters[res_list_indices[i]] = relevant_avg_num_clusters[i] /
+                                              relevant_counts[i];
       avg_max_seqsim[res_list_indices[i]] = relevant_avg_max_seqsim[i] /
                                             relevant_counts[i];
       avg_max_seqid[res_list_indices[i]] = relevant_avg_max_seqid[i] /
