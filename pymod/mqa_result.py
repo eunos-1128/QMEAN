@@ -5,7 +5,9 @@ from qmean import reference_set
 from qmean import conf
 from ost.table import *
 from ost.bindings import dssp
-import os
+from sklearn.ensemble import RandomForestRegressor
+import os, pickle
+import numpy as np
 
 
 sm_conversions = {'QMEAN4':'qmean4','QMEAN6':'qmean6','interaction':'all_atom','cbeta':'cbeta','packing':'solvation','torsion':'torsion','ss_agreement':'ss_agreement','acc_agreement':'acc_agreement'}
@@ -314,7 +316,8 @@ class LocalResult:
 
 
   @staticmethod
-  def Create(model, settings, assign_bfactors, psipred=None, accpro=None,dc=None, global_result=None):
+  def Create(model, settings, assign_bfactors, psipred=None, accpro=None,dc=None, 
+             global_result=None):
 
     pot = PotentialContainer.Load(settings.local_potentials)
     scorer = score_calculator.LocalScorer.Load(settings.local_scorer)
@@ -342,8 +345,8 @@ class LocalResult:
       temp = local_mqa.GetLocalData(['dist_const'])     
       data['dist_const'] = temp['dist_const']    
     except:
-      data['dist_const'] = model.residue_count*[float('NaN')]      
-
+      data['dist_const'] = dict() 
+      data['dist_const']['disco'] = model.residue_count*[float('NaN')]    
 
 
     scores = list()
@@ -364,8 +367,48 @@ class LocalResult:
 
     if dc:
       if not global_result:
-        global_result=GlobalResult.Create(model,settings, psipred=psipred, accpro=accpro) 
-      qmeandisco_scores = local_mqa.UpdateScores(scores,settings,global_result.qmean4.norm) 
+        global_result=GlobalResult.Create(model,settings, psipred=psipred, 
+                                          accpro=accpro) 
+
+
+      dist_const_data = data["dist_const"]
+
+      disco = dist_const_data["disco"]
+      counts = dist_const_data["counts"]
+      avg_num_clusters = dist_const_data["avg_num_clusters"]
+      avg_max_seqsim = dist_const_data["avg_max_seqsim"]
+      avg_max_seqid = dist_const_data["avg_max_seqid"]
+      avg_variance = dist_const_data["avg_variance"]
+
+      infile = open(settings.disco_tree, 'rb')
+      random_forest = pickle.load(infile)
+      infile.close()
+
+      qmeandisco_scores = list()
+
+      for i, r in enumerate(model.residues):
+
+        if disco[i] != disco[i]:
+          # Fallback if no scores have been observed
+          qmeandisco_scores.append(scores[i])
+
+        else:
+          # the ordering of the variables is determined in the
+          # training procedure of the random forest!!!
+          # check out the scripts in 
+          # <PATH_TO_QMEAN>/data/qmean/scorer/tree_generation
+          rf_input = np.zeros((1, 8))
+          rf_input[0][0] = global_result.qmean4.norm
+          rf_input[0][1] = avg_max_seqsim[i]
+          rf_input[0][2] = avg_num_clusters[i]
+          rf_input[0][3] = avg_variance[i]
+          rf_input[0][4] = counts[i]
+          rf_input[0][5] = avg_max_seqid[i]
+          rf_input[0][6] = scores[i]
+          rf_input[0][7] = disco[i]
+
+          qmeandisco_scores.append(random_forest.predict(rf_input)[0])
+      
       data["QMEANDisCo"] = qmeandisco_scores
     else:
       data["QMEANDisCo"] = model.residue_count*[float('NaN')]
@@ -400,7 +443,7 @@ class LocalResult:
                       'exposed' : data['exposed'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
-                      'dist_const' :data['dist_const'][i],
+                      'dist_const' :data['dist_const']['disco'][i],
                       'QMEAN' : data['QMEAN'][i],
                       'QMEANDisCo' : data['QMEANDisCo'][i]})
 
@@ -411,13 +454,14 @@ class LocalResult:
 
 def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
                        global_scores=True, table_format='ost', psipred=None, 
-                       accpro=None,dc=None, dssp_path=None,
+                       accpro=None, dc=None, dssp_path=None,
                        assign_bfactors=True, settings=None):
   #hack, that torsion handles get assigned
-  processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,assign_torsions=True)
+  processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,
+                                       assign_torsions=True)
   processor.Process(model.handle,False)
 
-  dssp.AssignDSSP(model, extract_burial_status=True,dssp_bin=dssp_path)
+  dssp.AssignDSSP(model, extract_burial_status=True, dssp_bin = dssp_path)
 
   results = []
 
@@ -468,7 +512,8 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
           p.close("all")
     results.append(global_result)
   if local_scores:
-    local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,accpro=accpro,dc=dc, global_result=global_result)
+    local_result=LocalResult.Create(model,settings,assign_bfactors,psipred=psipred,
+                                    accpro=accpro,dc=dc, global_result=global_result)
     tab=local_result.score_table
     tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
     if plots:
@@ -480,8 +525,3 @@ def AssessModelQuality(model, output_dir='.', plots=True, local_scores=True,
     results.append(local_result)
 
   return results
-
-
-
-
-

@@ -44,7 +44,8 @@ class Scores:
         self.dc = dc
       else:
         self.dc = len(self.target.chains) * [dc]
-
+    else:
+      self.dc = None
 
 
     #set all the other parameters
@@ -428,48 +429,32 @@ class Scores:
 
   def GetConstraints(self):
     if self.dc!=None:
-      dist_const = []
+
+      dist_const_data = dict()
+      dist_const_data["disco"] = list()
+      dist_const_data["counts"] = list()
+      dist_const_data["avg_num_clusters"] = list()
+      dist_const_data["avg_max_seqsim"] = list()
+      dist_const_data["avg_max_seqid"] = list()
+      dist_const_data["avg_variance"] = list()
+
       for c,d in zip(self.target.chains, self.dc):
         entity_view = self.target.CreateEmptyView()
         entity_view.AddChain(c, mol.INCLUDE_ALL)
-        aln = AlignChainToSEQRES(entity_view, d.seq)
-        aln.AttachView(1, entity_view)
-        dist_const += DCScore(aln,d)
-      self.data['avg_dist_const'] = self.GetAverage(dist_const)
-      self.data['dist_const'] = dist_const
-      # if self.smooth_std!=None:
-      #   self.data['dist_const'] = self.spherical_smoother.Smooth(dist_const)
-      # else:  
-      #   self.data['dist_const'] = dist_const      
+
+        chain_data = d.GetScoresWithData(entity_view)
+        dist_const_data["disco"] += chain_data["scores"]
+        dist_const_data["counts"] += chain_data["counts"]
+        dist_const_data["avg_num_clusters"] += chain_data["avg_num_clusters"]
+        dist_const_data["avg_max_seqsim"] += chain_data["avg_max_seqsim"]
+        dist_const_data["avg_max_seqid"] += chain_data["avg_max_seqid"]
+        dist_const_data["avg_variance"] += chain_data["avg_variance"]
+ 
+      self.data["dist_const"] = dist_const_data
+      self.data["avg_dist_const"] = self.GetAverage(dist_const_data["disco"])   
     else:   
       raise ValueError("Cannot calculate dist_const term without DCData information!")
     
-  def UpdateScores(self,scores,settings,qmean4_score):
-    updated_scores = list()
-    disco_tree = pickle.load(open(settings.disco_tree)) 
-    chain_start_index = 0
-
-    for c,d in zip(self.target.chains, self.dc): 
-      entity_view = self.target.CreateEmptyView()
-      entity_view.AddChain(c, mol.INCLUDE_ALL)
-      aln = AlignChainToSEQRES(entity_view, d.seq)
-      aln.AttachView(1, entity_view)
-      feature_values = DetermineFeatureValues(aln,d)
-      feature_values = [list(x)  for x in feature_values] #convert to python lists
-      for i in range(len(c.residues)):
-        try:  
-          feature_values[i].extend([scores[i], self.data['dist_const'][i+chain_start_index]])
-          feature_values[i] = [qmean4_score] + feature_values[i]
-          qmean_disco_score = disco_tree.predict([feature_values[i]])[0]
-          updated_scores.append(qmean_disco_score)
-        except:
-          if scores[i+chain_start_index] == scores[i+chain_start_index]:
-            updated_scores.append(scores[i+chain_start_index])
-          else: 
-            updated_scores.append(self.data['dist_const'][i+chain_start_index]) 
-      chain_start_index += len(c.residues)      
-    return updated_scores      
-
   def GetAverage(self, value_list):
     temp = list()
     for item in value_list:
