@@ -44,8 +44,8 @@ public:
                const std::vector<uint>& pos_seqres_mapping);
 
   void CalculateConstraints(Real dist_cutoff = 15.0, Real gamma = 70.0,
-                            Real seqsim_clustering_cutoff = 0.4, 
-                            Real bin_size = 1.0);
+                            Real seqsim_clustering_cutoff = 0.5, 
+                            Real bin_size = 0.5);
 
   bool HasConstraint(uint i, uint j) const;
 
