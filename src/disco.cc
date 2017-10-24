@@ -847,11 +847,7 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
   // a special function is therefore not implemented
   std::vector<Real> seqid_to_target(aln_.size(), 0.0);
   for(uint i = 0; i < aln_.size(); ++i) {
-    // using the LONGER_SEQUENCE ref mode here is stupid but thats
-    // what Christine used in her implementation. Let's first reproduce 
-    // the scores and then do the improvements
-    seqid_to_target[i] = ost::seq::alg::SequenceIdentity(aln_[i],
-                         ost::seq::alg::RefMode::LONGER_SEQUENCE) * 0.01;
+    seqid_to_target[i] = ost::seq::alg::SequenceIdentity(aln_[i]) * 0.01;
   }     
 
   // do the clustering
