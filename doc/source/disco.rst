@@ -68,7 +68,8 @@ constraints extracted from templates homologous to the target structure.
     :raises:            :class:`RuntimeError` if you already loaded this 
                         :class:`DisCoContainer` from disk (the thing is readonly)
                         or when an element in *pos_seqres* contains an invalid
-                        residue number.
+                        residue number or when the first sequence in *aln* does
+                        not exactly match the internal SEQRES.
 
 
   .. method:: CalculateConstraints([dist_cutoff=15.0, gamma=70.0, \

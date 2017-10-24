@@ -778,6 +778,11 @@ void DisCoContainer::AddData(const ost::seq::AlignmentHandle& aln,
                              "must be consistent in size!");
   }
 
+  if(aln.GetSequence(0).GetGaplessString() != seqres_.GetString()) {
+    throw std::runtime_error("The first sequence in the provided alignment must "
+                             "exactly match with the internal SEQRES!");
+  }
+
   int max_idx = seqres_.GetLength();
   for(uint i = 0; i < pos_seqres_mapping.size(); ++i) {
     if(pos_seqres_mapping[i] < 1 || pos_seqres_mapping[i] > max_idx) {
