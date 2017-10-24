@@ -828,8 +828,8 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
 
   // DisCo sums up gaussians with a standard deviation of one
   // to represent everything, we add a padding of three to allow
-  // the constraint function to flatten out
-  num_bins_ = std::ceil((dist_cutoff + 3.0) / bin_size_);
+  // the constraint function to fade out
+  num_bins_ = std::ceil((dist_cutoff_ + 3.0) / bin_size_);
 
   ost::seq::AlignmentHandle full_aln = 
   ost::seq::alg::MergePairwiseAlignments(aln_, seqres_);
@@ -924,7 +924,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
 
 
   // ATTENTION PLEASE
-  // THERES A LOT OF CODE DUPLICATION TO OTHE OTHER FILLDATA FUNCTION
+  // THERES A LOT OF CODE DUPLICATION TO THE OTHER FILLDATA FUNCTION
 
   if(!valid_constraints_) {
     throw std::runtime_error("You must call the CalculateConstraints function "
@@ -1002,7 +1002,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
                               std::vector<Real>& avg_variance) const {
 
   // ATTENTION PLEASE
-  // THERES A LOT OF CODE DUPLICATION TO OTHE OTHER FILLDATA FUNCTION
+  // THERES A LOT OF CODE DUPLICATION TO THE OTHER FILLDATA FUNCTION
 
   if(!valid_constraints_) {
     throw std::runtime_error("You must call the CalculateConstraints function "
