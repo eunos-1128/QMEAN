@@ -227,15 +227,3 @@ constraints extracted from templates homologous to the target structure.
 
 
 
-
-
-
-
-
-    
-
-
-
-    
-
-
