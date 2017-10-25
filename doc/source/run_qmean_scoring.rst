@@ -44,8 +44,8 @@ Assessing the quality for soluble protein models
                         through without it being set but for optimal performance
                         this variable must be set.
 
-  :param dc:            Information from homologous templates with known 
-                        structure, QMEAN will run through without it being set but for optimal performance this variable must be set.                         
+  :param dc:            Thats what let QMEAN evolve to QMEANDisCo. 
+                                            
   :param dssp_path:     Path to your dssp executable, expects an executable to
                         be in your PATH if set to None
 
@@ -68,7 +68,12 @@ Assessing the quality for soluble protein models
                           * reference_tab: path to :class:`ost.Table` containing
                                            reference data.
                           * disco_tree: path to random forest, that predicts
-                                        local QMEANDisCo scores.
+                                        local QMEANDisCo scores. The tree is pickled
+                                        and dependent on the version of sklearn
+                                        it has been generated with. It's highly 
+                                        recommended to retrain it on your system using
+                                        the data provided in 
+                                        <path_to_qmean>/data/qmean/scorer/tree_generation
 
 
   :type model:          :class:`ost.mol.EntityHandle` / :class:`ost.mol.EntityView`
@@ -77,9 +82,12 @@ Assessing the quality for soluble protein models
   :type local_scores:   :class:`bool`
   :type global_scores:  :class:`bool`
   :type table_format:   :class:`str`
-  :type psipred:        :class:`PSIPREDHandler`
-  :type accpro:         :class:`ACCPROHandler`
-  :type dc:             :class:`DCData`
+  :type psipred:        :class:`PSIPREDHandler` or a :class:`list` 
+                        thereof (one element per chain)
+  :type accpro:         :class:`ACCPROHandler` or a :class:`list`
+                        thereof (one element per chain)
+  :type dc:             :class:`DisCoContainer` or a :class:`list`
+                        thereof
   :type dssp_path:      :class:`str`
   :type assign_bfactors: :class:`bool`
 
