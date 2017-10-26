@@ -12,25 +12,24 @@ import pickle
 # from the example output below (but should be in the same range!).  
 
 
-training_file_path = "tree_training_data.csv"
-test_file_path = "tree_test_data.csv"
-random_forest_path = "disco_tree.dat"
-
+training_file_path = "training_data.csv"
+test_file_path = "test_data.csv"
+random_forest_path = "disco_tree.pkl"
 
 training_data = open(training_file_path,'r').readlines()
 
-features = training_data[0].strip().split(',')
-required_features = ["GlobalQMEAN4", "Avg.Max.SeqSim", "NumClust",
-                     "Variance", "NumInter", "Avg.Max.SeqId", "QMEAN", 
-                     "DisCo"]
+features = [item.strip() for item in training_data[0].strip().split(',')]
+required_features = ["qmean4", "avg_max_seqsim", "avg_num_cluster",
+                     "avg_variance", "counts", "avg_max_seqid", "local_qmean", 
+                     "disco"]
 
 feature_indices = list()
 for f in required_features:
   # This will raise an error if f is not there
   feature_indices.append(features.index(f))
-target_idx = features.index("lDDT")
-local_qmean_idx = features.index("QMEAN")
-local_disco_idx = features.index("DisCo")
+target_idx = features.index("lddt")
+local_qmean_idx = features.index("local_qmean")
+local_disco_idx = features.index("disco")
 
 
 print "START TO FILL DATA"
@@ -177,6 +176,7 @@ print "ROC AUC:"
 print "QMEAN:", ROCAUC(qmean_target_values, qmean_values)
 print "DISCO:", ROCAUC(disco_target_values, disco_values)
 print "QMEANDISCO:", ROCAUC(qmeandisco_target_values, qmeandisco_values)
+
 
 # THIS IS THE EXPECTED OUTPUT OF THE ABOVE
 # ALL GOOD IF ITS SIMILAR

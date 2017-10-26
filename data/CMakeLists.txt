@@ -11,7 +11,7 @@ set(SCORER
 qmean/scorer/promod_local_scorer.dat
 qmean/scorer/promod_global_scorer.dat
 qmean/scorer/membrane_local_scorer.dat
-qmean/scorer/disco_tree_0141.dat
+qmean/scorer/disco_tree.pkl
 )
 
 add_custom_target(qmean_data_files ALL)

@@ -24,7 +24,7 @@ class SwissmodelSettings:
     self.local_scorer = os.path.join(SCORER_DIR, 'promod_local_scorer.dat')
     self.global_scorer = os.path.join(SCORER_DIR, 'promod_global_scorer.dat')
     self.reference_tab = os.path.join(REFERENCE_DIR, 'reference_tab_promod_scorer.txt') 
-    self.disco_tree = os.path.join(SCORER_DIR, 'disco_tree_0141.dat')
+    self.disco_tree = os.path.join(SCORER_DIR, 'disco_tree.pkl')
 
 class MembraneSettings:
   def __init__(self):

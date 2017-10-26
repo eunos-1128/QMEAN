@@ -20,7 +20,8 @@ Contents:
    Spherical Smoothing <spherical_smoother>
    Combining Scores <score_combination>
    Membrane Detection <membrane>
-   Distance Constraints (DisCo) <distance_constraints>
+   Distance Constraints (DisCo) <disco>
+
 
 
 

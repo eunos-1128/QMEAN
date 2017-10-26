@@ -40,9 +40,10 @@ In case you want to use QMEANBrane, you also need:
 
 Additionally, following Python modules are required:
 
-* Numpy
-* Scipy
-* Matplotlib
+* numpy
+* scipy
+* matplotlib
+* sklearn
 
 To compile QMEAN, change to the QMEAN directory and run CMake
 by giving it the path to your openstructure installation 
