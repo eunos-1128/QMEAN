@@ -690,8 +690,13 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   std::ifstream in_stream(filename.c_str(), std::ios::binary);
   if(!in_stream){
     throw std::runtime_error("Could not open file " + filename);
-  }  
+  } 
 
+  // number of bytes of the whole file
+  // this will be relevant to determine how many constraints there are to load
+  in_stream.seekg (0, in_stream.end);
+  long int total_num_bytes = in_stream.tellg();
+  in_stream.seekg (0, in_stream.beg); 
 
   // the variables to load
   char cvalue;
@@ -730,12 +735,22 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   loaded_container->constraint_infos_ = 
   ost::TriMatrix<ConstraintInfo*>(loaded_container->seqres_.GetLength(), NULL);
   
-  // we just read and read until nothing comes anymore...
+  // estimate how many bytes there are per constraint
+  long int constraint_num_bytes = 2 * sizeof(uint16_t); // the indices i,j 
+  constraint_num_bytes += cvalue_size; // max_seqid
+  constraint_num_bytes += fvalue_size; // variance
+  constraint_num_bytes += ivalue_size; // num clusters
+  constraint_num_bytes += cvalue_size; // max_seqsim
+  constraint_num_bytes += loaded_container->num_bins_; // the actual constraint
+
   uint16_t i;
   uint16_t j;
   std::vector<uint8_t> loaded_vec(loaded_container->num_bins_, 0);
 
-  while(!in_stream.eof()) {
+  // always check whether there are enough bytes to read for one more constraint
+  while(in_stream.good() && 
+        in_stream.tellg() + constraint_num_bytes <= total_num_bytes) {
+
     in_stream.read(reinterpret_cast<char*>(&i), sizeof(uint16_t));
     in_stream.read(reinterpret_cast<char*>(&j), sizeof(uint16_t));
     
@@ -745,7 +760,6 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
     constraint_info->max_seqsim = static_cast<Real>(cvalue) * Real(0.01);
     in_stream.read(reinterpret_cast<char*>(&cvalue), cvalue_size);
     constraint_info->max_seqid = static_cast<Real>(cvalue) * Real(0.01);
-
     in_stream.read(reinterpret_cast<char*>(&fvalue), fvalue_size);
     constraint_info->variance = fvalue;
     in_stream.read(reinterpret_cast<char*>(&ivalue), ivalue_size);
@@ -758,11 +772,13 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
     for(uint k = 0; k < loaded_container->num_bins_; ++k) {
       constraint_info->constraint[k] = loaded_vec[k] * 0.004;
     }
+
     loaded_container->constraint_infos_.Set(i,j,constraint_info);
   }
 
   return loaded_container;
 }
+
 
 void DisCoContainer::AddData(const ost::seq::AlignmentHandle& aln,
                              const geom::Vec3List& positions,
@@ -1145,3 +1161,4 @@ void DisCoContainer::ClearConstraints() {
 }
 
 } // ns
+
