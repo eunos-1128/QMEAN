@@ -79,6 +79,7 @@ void export_disco() {
                                                arg("rnum_two")))
     .def("GetScores", &WrapGetScores, (arg("view")))
     .def("GetScoresWithData", &WrapGetScoresWithData, (arg("view")))
+    .def("GetSeqres", &DisCoContainer::GetSeqres)
     .def("GetDistCutoff", &DisCoContainer::GetDistCutoff)
     .def("GetGamma", &DisCoContainer::GetGamma)
     .def("GetSeqSimClusteringCutoff", &DisCoContainer::GetSeqSimClusteringCutoff)

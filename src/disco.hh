@@ -62,6 +62,7 @@ public:
                 std::vector<Real>& avg_max_seqid,
                 std::vector<Real>& avg_variance) const;
 
+  ost::seq::SequenceHandle GetSeqres() const { return seqres_; }
 
   Real GetDistCutoff() const { return dist_cutoff_; }
 

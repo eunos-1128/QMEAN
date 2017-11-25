@@ -197,6 +197,11 @@ constraints extracted from templates homologous to the target structure.
                         when any of the residues has a residue number / one 
                         letter that is inconsistent with the internal SEQRES.
 
+
+  .. method:: GetSeqres()
+
+    Getter for the SEQRES that has been set at initialization
+
   .. method:: GetDistCutoff()
 
     Getter for the *dist_cutoff* parameter you passed at the CalculateConstraints 
