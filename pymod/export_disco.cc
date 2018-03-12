@@ -45,8 +45,9 @@ dict WrapGetScoresWithData(DisCoContainerPtr container,
   std::vector<Real> avg_max_seqsim;
   std::vector<Real> avg_max_seqid;
   std::vector<Real> avg_variance;
+  std::vector<uint> num_constraints;
   container->FillData(view, scores, counts, avg_num_clusters, avg_max_seqsim, 
-                      avg_max_seqid, avg_variance);
+                      avg_max_seqid, avg_variance, num_constraints);
 
   dict return_dict;
   return_dict["scores"] = VecToList<Real>(scores);
@@ -55,6 +56,7 @@ dict WrapGetScoresWithData(DisCoContainerPtr container,
   return_dict["avg_max_seqsim"] = VecToList<Real>(avg_max_seqsim);
   return_dict["avg_max_seqid"] = VecToList<Real>(avg_max_seqid);
   return_dict["avg_variance"] = VecToList<Real>(avg_variance);  
+  return_dict["num_constraints"] = VecToList<uint>(num_constraints);
   return return_dict;
 }
 

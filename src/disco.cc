@@ -1016,7 +1016,8 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
                               std::vector<Real>& avg_num_clusters,
                               std::vector<Real>& avg_max_seqsim,
                               std::vector<Real>& avg_max_seqid,
-                              std::vector<Real>& avg_variance) const {
+                              std::vector<Real>& avg_variance,
+                              std::vector<uint>& num_constraints) const {
 
   // ATTENTION PLEASE
   // THERES A LOT OF CODE DUPLICATION TO THE OTHER FILLDATA FUNCTION
@@ -1048,23 +1049,21 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
   std::vector<Real> relevant_avg_max_seqsim(num_pos, 0.0);
   std::vector<Real> relevant_avg_max_seqid(num_pos, 0.0);
   std::vector<Real> relevant_avg_variance(num_pos, 0.0);
+  std::vector<uint> relevant_num_constraints(num_pos, 0);
 
   Real squared_dist_cutoff = dist_cutoff_ * dist_cutoff_;
 
   for(uint i = 0; i < num_pos; ++i) {
     for(uint j = i + 1; j < num_pos; ++j) {
-      Real d = geom::Length2(ca_positions[i] - ca_positions[j]);
-      if(d < squared_dist_cutoff) {
-        
-        ConstraintInfo* constraint_info = 
-        constraint_infos_.Get(seqres_indices[i], seqres_indices[j]);
-
-        if(constraint_info != NULL) {
-
+      ConstraintInfo* constraint_info = 
+      constraint_infos_.Get(seqres_indices[i], seqres_indices[j]);
+      if(constraint_info != NULL) {
+        ++relevant_num_constraints[i];
+        ++relevant_num_constraints[j];
+        Real d = geom::Length2(ca_positions[i] - ca_positions[j]);
+        if(d < squared_dist_cutoff) {
           const std::vector<Real>& constraint = constraint_info->constraint;
-
           d = std::sqrt(d);
-
           // we perform a linear interpolation
           uint bin_lower = static_cast<uint>(d / bin_size_);
           uint bin_upper = bin_lower + 1; 
@@ -1072,7 +1071,6 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
           Real w_two = Real(1.0) - w_one;
           Real score = w_one * constraint[bin_lower] + 
                        w_two * constraint[bin_upper];
-
           relevant_scores[i] += score;
           relevant_scores[j] += score;
           relevant_counts[i] += 1;
@@ -1097,6 +1095,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
   avg_max_seqsim.assign(res_list_size, 0.0);
   avg_max_seqid.assign(res_list_size, 0.0);
   avg_variance.assign(res_list_size, 0.0);
+  num_constraints.assign(res_list_size, 0);
 
   for(uint i = 0; i < num_pos; ++i) {
     if(relevant_counts[i] > 0) {
@@ -1110,6 +1109,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
                                            relevant_counts[i];      
       avg_variance[res_list_indices[i]] = relevant_avg_variance[i] /
                                           relevant_counts[i];
+      num_constraints[res_list_indices[i]] = relevant_num_constraints[i];
     }
   }
 }
