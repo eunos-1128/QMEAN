@@ -145,6 +145,11 @@ class Scores:
           return_data['packing']=self.data['packing']
         except:
           raise ValueError("Did not calculate the packing feature!")
+      elif f == 'cb_packing':
+        try:
+          return_data['cb_packing']=self.data['cb_packing']
+        except:
+          raise ValueError("Did not calculate the cb_packing feature!")
       elif f == 'ss_agreement':
         try:
           return_data['ss_agreement'] = self.data['ss_agreement']
@@ -203,6 +208,11 @@ class Scores:
           return_data['packing']=self.data['avg_packing']
         except:
           raise ValueError("Did not calculate the packing feature!")
+      elif f == 'cb_packing':
+        try:
+          return_data['cb_packing']=self.data['avg_cb_packing']
+        except:
+          raise ValueError("Did not calculate the cb_packing feature!")
       elif f == 'ss_agreement':
         try:
           return_data['ss_agreement'] = self.data['avg_ss_agreement']
@@ -240,18 +250,20 @@ class Scores:
   def GetAssignedSS(self):
     return self.data['sec_structure']
 
-  def CalculateScores(self, features):
+  def CalculateScores(self, features, ss_dependent = True):
     for f in features:
       if f == 'torsion':
         self.GetTorsion()
       elif f == 'interaction':
-        self.GetInteraction()
+        self.GetInteraction(ss_dependent = ss_dependent)
       elif f == 'cbeta':
-        self.GetCBeta()
+        self.GetCBeta(ss_dependent = ss_dependent)
       elif f == 'reduced':
-        self.GetReduced()
+        self.GetReduced(ss_dependent = ss_dependent)
       elif f == 'packing':
-        self.GetPacking()
+        self.GetPacking(ss_dependent = ss_dependent)
+      elif f == 'cb_packing':
+        self.GetCBPacking(ss_dependent = ss_dependent)
       elif f == 'ss_agreement':
         if self.psipred!=None:
           self.GetSSAgreement()
@@ -282,20 +294,26 @@ class Scores:
     else:
       self.data['torsion'] = torsion
 
-  def GetInteraction(self):
-    interaction=list()
+  def GetInteraction(self, ss_dependent = True):
 
-    helix_interaction = self.potential_container['interaction_helix'].GetEnergies(self.helix_selection, self.environment, normalize=self.norm)
-    extended_interaction = self.potential_container['interaction_extended'].GetEnergies(self.extended_selection, self.environment, normalize=self.norm)
-    coil_interaction = self.potential_container['interaction_coil'].GetEnergies(self.coil_selection, self.environment, normalize=self.norm)
+    interaction = None
 
-    for r in self.target.residues:
-      if r.GetIntProp('SS')==0:
-        interaction.append(helix_interaction.pop(0))
-      elif r.GetIntProp('SS')==1:
-        interaction.append(extended_interaction.pop(0))
-      else:
-        interaction.append(coil_interaction.pop(0))
+    if ss_dependent:
+      helix_interaction = self.potential_container['interaction_helix'].GetEnergies(self.helix_selection, self.environment, normalize=self.norm)
+      extended_interaction = self.potential_container['interaction_extended'].GetEnergies(self.extended_selection, self.environment, normalize=self.norm)
+      coil_interaction = self.potential_container['interaction_coil'].GetEnergies(self.coil_selection, self.environment, normalize=self.norm)
+
+      interaction = list()
+
+      for r in self.target.residues:
+        if r.GetIntProp('SS')==0:
+          interaction.append(helix_interaction.pop(0))
+        elif r.GetIntProp('SS')==1:
+          interaction.append(extended_interaction.pop(0))
+        else:
+          interaction.append(coil_interaction.pop(0))
+    else:
+      interaction = self.potential_container['interaction'].GetEnergies(self.target, self.environment, normalize = self.norm)
 
     self.data['avg_interaction'] = self.GetAverage(interaction)
 
@@ -304,20 +322,27 @@ class Scores:
     else:
       self.data['interaction'] = interaction
 
-  def GetCBeta(self):
-    cbeta=list()
+  def GetCBeta(self, ss_dependent = True):
 
-    helix_cbeta = self.potential_container['cbeta_helix'].GetEnergies(self.helix_selection, self.environment, normalize=self.norm)
-    extended_cbeta = self.potential_container['cbeta_extended'].GetEnergies(self.extended_selection, self.environment, normalize=self.norm)
-    coil_cbeta = self.potential_container['cbeta_coil'].GetEnergies(self.coil_selection, self.environment, normalize=self.norm)
+    cbeta = None
 
-    for r in self.target.residues:
-      if r.GetIntProp('SS')==0:
-        cbeta.append(helix_cbeta.pop(0))
-      elif r.GetIntProp('SS')==1:
-        cbeta.append(extended_cbeta.pop(0))
-      else:
-        cbeta.append(coil_cbeta.pop(0))
+    if ss_dependent:
+      helix_cbeta = self.potential_container['cbeta_helix'].GetEnergies(self.helix_selection, self.environment, normalize=self.norm)
+      extended_cbeta = self.potential_container['cbeta_extended'].GetEnergies(self.extended_selection, self.environment, normalize=self.norm)
+      coil_cbeta = self.potential_container['cbeta_coil'].GetEnergies(self.coil_selection, self.environment, normalize=self.norm)
+
+      cbeta = list()
+
+      for r in self.target.residues:
+        if r.GetIntProp('SS')==0:
+          cbeta.append(helix_cbeta.pop(0))
+        elif r.GetIntProp('SS')==1:
+          cbeta.append(extended_cbeta.pop(0))
+        else:
+          cbeta.append(coil_cbeta.pop(0))
+
+    else:
+      cbeta = self.potential_container['cbeta'].GetEnergies(self.target, self.environment, normalize = self.norm)
 
     self.data['avg_cbeta'] = self.GetAverage(cbeta)
 
@@ -326,20 +351,27 @@ class Scores:
     else:
       self.data['cbeta'] = cbeta
 
-  def GetReduced(self):
-    reduced=list()
+  def GetReduced(self, ss_dependent = True):
 
-    helix_reduced = self.potential_container['reduced_helix'].GetEnergies(self.helix_selection, self.environment, normalize=self.norm)
-    extended_reduced = self.potential_container['reduced_extended'].GetEnergies(self.extended_selection, self.environment, normalize=self.norm)
-    coil_reduced = self.potential_container['reduced_coil'].GetEnergies(self.coil_selection, self.environment, normalize=self.norm)
+    reduced = None
 
-    for r in self.target.residues:
-      if r.GetIntProp('SS')==0:
-        reduced.append(helix_reduced.pop(0))
-      elif r.GetIntProp('SS')==1:
-        reduced.append(extended_reduced.pop(0))
-      else:
-        reduced.append(coil_reduced.pop(0))
+    if ss_dependent:
+      helix_reduced = self.potential_container['reduced_helix'].GetEnergies(self.helix_selection, self.environment, normalize=self.norm)
+      extended_reduced = self.potential_container['reduced_extended'].GetEnergies(self.extended_selection, self.environment, normalize=self.norm)
+      coil_reduced = self.potential_container['reduced_coil'].GetEnergies(self.coil_selection, self.environment, normalize=self.norm)
+
+      reduced = list()
+
+      for r in self.target.residues:
+        if r.GetIntProp('SS')==0:
+          reduced.append(helix_reduced.pop(0))
+        elif r.GetIntProp('SS')==1:
+          reduced.append(extended_reduced.pop(0))
+        else:
+          reduced.append(coil_reduced.pop(0))
+    else:
+      reduced = self.potential_container['reduced'].GetEnergies(self.target, self.environment, normalize = self.norm)
+      
 
     self.data['avg_reduced'] = self.GetAverage(reduced)
 
@@ -348,20 +380,27 @@ class Scores:
     else:
       self.data['reduced'] = reduced
 
-  def GetPacking(self):
-    packing=list()
+  def GetPacking(self, ss_dependent = True):
 
-    helix_packing = self.potential_container['packing_helix'].GetEnergies(self.helix_selection, self.environment,normalize=self.norm)
-    extended_packing = self.potential_container['packing_extended'].GetEnergies(self.extended_selection, self.environment,normalize=self.norm)
-    coil_packing = self.potential_container['packing_coil'].GetEnergies(self.coil_selection, self.environment,normalize=self.norm)
+    packing=None
 
-    for r in self.target.residues:
-      if r.GetIntProp('SS')==0:
-        packing.append(helix_packing.pop(0))
-      elif r.GetIntProp('SS')==1:
-        packing.append(extended_packing.pop(0))
-      else:
-        packing.append(coil_packing.pop(0))
+    if ss_dependent:
+      helix_packing = self.potential_container['packing_helix'].GetEnergies(self.helix_selection, self.environment,normalize=self.norm)
+      extended_packing = self.potential_container['packing_extended'].GetEnergies(self.extended_selection, self.environment,normalize=self.norm)
+      coil_packing = self.potential_container['packing_coil'].GetEnergies(self.coil_selection, self.environment,normalize=self.norm)
+
+      packing = list()
+
+      for r in self.target.residues:
+        if r.GetIntProp('SS')==0:
+          packing.append(helix_packing.pop(0))
+        elif r.GetIntProp('SS')==1:
+          packing.append(extended_packing.pop(0))
+        else:
+          packing.append(coil_packing.pop(0))
+    else:
+      packing = self.potential_container['packing'].GetEnergies(self.target, self.environment, normalize = self.norm)
+
 
     self.data['avg_packing'] = self.GetAverage(packing)
 
@@ -369,6 +408,35 @@ class Scores:
       self.data['packing'] = self.spherical_smoother.Smooth(packing)
     else:
       self.data['packing'] = packing
+
+  def GetCBPacking(self, ss_dependent = True):
+
+    cb_packing=None
+
+    if ss_dependent:
+      helix_cb_packing = self.potential_container['cb_packing_helix'].GetEnergies(self.helix_selection, self.environment)
+      extended_cb_packing = self.potential_container['cb_packing_extended'].GetEnergies(self.extended_selection, self.environment)
+      coil_cb_packing = self.potential_container['cb_packing_coil'].GetEnergies(self.coil_selection, self.environment)
+
+      cb_packing = list()
+
+      for r in self.target.residues:
+        if r.GetIntProp('SS')==0:
+          cb_packing.append(helix_cb_packing.pop(0))
+        elif r.GetIntProp('SS')==1:
+          cb_packing.append(extended_cb_packing.pop(0))
+        else:
+          cb_packing.append(coil_cb_packing.pop(0))
+    else:
+      cb_packing = self.potential_container['cb_packing'].GetEnergies(self.target, self.environment)
+
+
+    self.data['avg_cb_packing'] = self.GetAverage(cb_packing)
+
+    if self.smooth_std!=None:
+      self.data['cb_packing'] = self.spherical_smoother.Smooth(cb_packing)
+    else:
+      self.data['cb_packing'] = cb_packing
 
   def GetExposed(self):
     exposed=list()
