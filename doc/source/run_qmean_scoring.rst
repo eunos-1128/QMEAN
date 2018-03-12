@@ -186,10 +186,3 @@ in the last script (Fig4 in QMEANBrane publication).
 .. literalinclude:: example_scripts/reproduce_fig4_from_publication.py
 
 
-
-Get Default Settings for Quality Estimation
---------------------------------------------------------------------------------
-
-class
-
-
