@@ -505,6 +505,7 @@ class Scores:
       dist_const_data["avg_max_seqsim"] = list()
       dist_const_data["avg_max_seqid"] = list()
       dist_const_data["avg_variance"] = list()
+      dist_const_data["num_constraints"] = list()
 
       for c,d in zip(self.target.chains, self.dc):
         entity_view = self.target.CreateEmptyView()
@@ -517,6 +518,7 @@ class Scores:
         dist_const_data["avg_max_seqsim"] += chain_data["avg_max_seqsim"]
         dist_const_data["avg_max_seqid"] += chain_data["avg_max_seqid"]
         dist_const_data["avg_variance"] += chain_data["avg_variance"]
+        dist_const_data["num_constraints"] += chain_data["num_constraints"]
  
       self.data["dist_const"] = dist_const_data
       self.data["avg_dist_const"] = self.GetAverage(dist_const_data["disco"])   
