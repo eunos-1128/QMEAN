@@ -138,134 +138,6 @@ class Scorer():
     return cPickle.load(stream)
 
 
-class LocalScorer():
-
-  def __init__(self):
-    self.scorer=dict()
-    self.feature_combinations=dict()
-    self.trained_types=list()
-    self.AANames=['A', 'R', 'N', 'D', 'Q', 'E', 'K', 'S', 'C', 'M', 'W', 'Y', 'T', 'V', 'I', 'L', 'G', 'P', 'H', 'F']
-    self.last_used_features=list()
-
-  def TrainNewType(self, features, tab, residue_type, method='leastsqr'):
-
-    import itertools
-
-    #do some checks
-    try:
-      tab.GetColIndex('target')
-    except:
-      raise ValueError('training table requires a column named target to train against!')
-    for f in features:
-      try:
-        tab.GetColIndex(f)
-      except:
-        raise ValueError('cannot train with feature '+f+', since it is not present in the training table!')
- 
-    self.feature_combinations[residue_type]=list()
-
-    #build all possible permutations of the features
-    for i in range(1,len(features)+1):
-      combinations=itertools.combinations(features,i)
-      for c in combinations:
-        self.feature_combinations[residue_type].append(c)
-
-    #select the tabs for single amino acids
-    subtabs=dict()
-    for AA in self.AANames:
-      subtabs[AA]=tab.Select('AA='+AA)
-
-    self.scorer[residue_type]=dict()
-
-    for AA in self.AANames:
-      self.scorer[residue_type][AA]=list()
-      for c in self.feature_combinations[residue_type]:
-        print "train tab with features ", c," for residue_type ",residue_type," and amino acid ",AA
-        self.scorer[residue_type][AA].append(Scorer())
-        self.scorer[residue_type][AA][-1].TrainWeights(subtabs[AA], list(c), method)
-
-    self.trained_types.append(residue_type)
-
-
-  def GetLocalScore(self, residue_type, AA, data):
-
-    if residue_type not in self.trained_types:
-      print "provided residue type is not trained! returned NaN for local score!"
-      return float('NaN')
-    if AA not in self.AANames:
-      print "provided amino acid name is not trained! returned NaN for local score!"
-      return float('NaN')
-
-    #remove NaN and None values
-    processed_data=dict()
-    for k,v in data.iteritems():
-      if v!=v or v==None:
-        continue
-      processed_data[k]=v
-
-    #find the right feature combination to get corresponding scorer
-    for i, c in enumerate(self.feature_combinations[residue_type]):
-      if len(c)!=len(processed_data):
-        continue
-
-      match=True
-
-      for k,v in processed_data.iteritems():
-        if k not in c:
-          match=False
-
-      if match==False:
-        continue
-
-      self.last_used_features=list(c)
-      return self.scorer[residue_type][AA][i].GetScore(processed_data) 
-    print "could not find appropriate scorer for provided data. return NaN for local score"
-    return float('NaN')
-
-  def GetWeights(self, residue_type, AA, features):
-
-    if residue_type not in self.trained_types:
-      raise ValueError("provided residue type is not trained")
-    if AA not in self.AANames:
-      raise ValueError("provided amino acid name is not trained")
-
-    for i, c in enumerate(self.feature_combinations[residue_type]):
-      if len(c)!=len(features):
-        continue
-
-      match=True
-
-      for k in features:
-        if k not in c:
-          match=False
-
-      if match==False:
-        continue
-
-      return self.scorer[residue_type][AA][i].GetWeights() 
-
-  def GetLastUsedFeatures(self):
-    return
-
-
-  def Save(self, stream_or_filename):
-    if not hasattr(stream_or_filename, 'write'):
-      stream=open(stream_or_filename, 'wb')
-    else:
-      stream=stream_or_filename
-    cPickle.dump(self, stream, cPickle.HIGHEST_PROTOCOL)
-
-
-  @staticmethod
-  def Load(stream_or_filename):
-    if not hasattr(stream_or_filename, 'read'):
-      stream=open(stream_or_filename, 'rb')
-    else:
-      stream=stream_or_filename
-    return cPickle.load(stream)
-
-
-
 class GlobalScorer():
 
   def __init__(self):
@@ -373,4 +245,34 @@ class GlobalScorer():
     else:
       stream=stream_or_filename
     return cPickle.load(stream)
+
+
+#placeholder, will be removed during refactoring
+class LocalScorer:
+
+  def __init__(self):
+    pass
+
+class LocalNNScorer:
+
+  def __init__(self):
+
+    # the features that MUST be there if you try to calculate a score and one 
+    # of those is missing, you get an error
+    self.mandatory_features = list()
+
+    # Additional groups of features that have been used to train the underlying 
+    # neural networks (nn). When deciding for the right neural network to use,
+    # this list is iterated. Every entry contains a list of features. The index
+    # of the first entry for which we have all features defines the used neural 
+    # network. 
+    # The ordering of the nn input is defined by: the mandatory features 
+    # and then by the ordering in the corresponding entry.
+    self.feature_groups = list()
+
+    # list of neural networks that directly relates to self.feature_groups
+    self.nn = list()
+
+
+
 

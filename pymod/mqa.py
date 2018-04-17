@@ -7,7 +7,7 @@ from predicted_sequence_features import AlignChainToSEQRES
 
 class Scores:
 
-  def __init__(self, target, environment, potential_container, smooth_std=None, psipred=None, accpro=None, dc=None, assign_dssp=True, norm=True):
+  def __init__(self, target, environment, potential_container, smooth_std=None, psipred=None, accpro=None, dc=None, assign_dssp=True, norm=True, count_radius=15.0):
     self.data=dict()
 
     #set structural data
@@ -54,6 +54,7 @@ class Scores:
     self.norm=norm
     self.ca_positions=None
     self.spherical_smoother=None
+    self.count_radius = count_radius
     
     if target.handle != environment.handle:
       raise RuntimeError('Target and Environment must be views of the same handle!')
@@ -175,6 +176,11 @@ class Scores:
           return_data['exposed'] = self.data['exposed']
         except:
           raise ValueError("Did not calculate the exposed feature!")
+      elif f == 'counts':
+        try:
+          return_data['counts'] = self.data['counts']
+        except:
+          raise ValueError("Did not calculate the counts feature!")
       else:
         raise ValueError('Requested feature is not supported!')
         
@@ -233,6 +239,11 @@ class Scores:
           return_data['exposed'] = self.data['avg_exposed']
         except:
           raise ValueError("Did not calculate the exposed feature!")
+      elif f == 'counts':
+        try:
+          return_data['counts'] = self.data['avg_counts']
+        except:
+          raise ValueError("Did not calculate the counts feature!")
       else:
         raise ValueError('Requested feature \"%s\" is not supported!' %(f))
         
@@ -283,6 +294,8 @@ class Scores:
         self.GetFractionLoops()
       elif f == 'exposed':
         self.GetExposed()
+      elif f == 'counts':
+        self.GetCounts()
       else:
         raise ValueError('Requested feature \"%s\" is not supported!' %(f))
 
@@ -468,6 +481,24 @@ class Scores:
       self.data['fraction_loops']=self.spherical_smoother.Smooth(fraction_loops)
     else:
       self.data['fraction_loops']=fraction_loops
+
+  def GetCounts(self):
+    counts=list()
+
+    ca_selection = self.environment.Select("aname=CA")
+    for r in self.target.residues:
+      ca = r.FindAtom("CA")
+      if ca.IsValid():
+        close_stuff = ca_selection.FindWithin(ca.GetPos(), self.count_radius)
+        counts.append(float(len(close_stuff) - 1))
+      else:
+        counts.append(float("NaN"))
+    self.data['avg_counts'] = self.GetAverage(counts)
+    if self.smooth_std!=None:
+      self.data['counts'] = self.spherical_smoother.Smooth(counts)
+    else:
+      self.data['counts'] = counts
+
 
   def GetSSAgreement(self):
     if self.psipred!=None:
