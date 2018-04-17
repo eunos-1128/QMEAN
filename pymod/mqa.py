@@ -368,10 +368,8 @@ class Scores:
       else:
         counts.append(float("NaN"))
     self.data['avg_counts'] = self.GetAverage(counts)
-    if self.smooth_std!=None:
-      self.data['counts'] = self.spherical_smoother.Smooth(counts)
-    else:
-      self.data['counts'] = counts
+
+    self.data['counts'] = counts
 
   def DoSSAgreement(self):
     if self.psipred!=None:
