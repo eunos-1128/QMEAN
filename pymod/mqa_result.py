@@ -99,11 +99,13 @@ class MQAScore:
   def __repr__(self):
     return 'MQAScore("%s",%f,%f)' % (self.name, self.norm, self.z_score)
 
+
 class GlobalResult:
-  def __init__(self, model, tab, ref_set):
+  def __init__(self, model, tab, ref_set, global_mqa):
 
     self.model = model
     self.ref_set = ref_set
+    self.global_mqa = global_mqa
      
     try:
       name_idx = tab.GetColIndex('name')
@@ -188,9 +190,6 @@ class GlobalResult:
     else:
       features = ['interaction','cbeta','packing','torsion']
 
-
-    global_mqa.CalculateScores(features)
-
     data = global_mqa.GetAVGData(['interaction','cbeta','torsion','packing'])
     s = min(max(scorer.GetGlobalScore('soluble', data),0.0),1.0)
     z = ref_set.ZScoreFromNormScore('QMEAN4',model.residue_count,s)
@@ -228,7 +227,7 @@ class GlobalResult:
       tab.AddRow({'name':'acc_agreement','norm':float('NaN'),'z_score':float('NaN')})
 
     tab.comment=GSCORES_TABLE_HEADER
-    return GlobalResult(model, tab, ref_set)
+    return GlobalResult(model, tab, ref_set, global_mqa)
 
   def __str__(self):
     return '\n'.join([str(score) for score in self.all_scores])
@@ -249,9 +248,10 @@ class GlobalResult:
 
 
 class LocalResult:
-  def __init__(self,model,data):
+  def __init__(self, model, data, local_mqa):
     self.model = model
     self.score_table = data
+    self.local_mqa = local_mqa
 
   def PlotlDDTProfile(self, chain=None, plot_disco=False):
 
@@ -262,7 +262,6 @@ class LocalResult:
     pyplot.xlabel('Residue Number',size='large')
     pyplot.ylabel('Predicted Local Similarity to Target',size='large')
 
-#    color_scheme = ['#D55E00','#0072B2','#F0E442','#009E73','#56B4E9','#E69F00','#999999','#000000']
     color_scheme = ['#ff420e','#004586','#ffd320','#578d1c','#7e0021']
 
     chain_idx = self.score_table.GetColIndex('chain')
@@ -308,147 +307,94 @@ class LocalResult:
       color_idx = chains.index(chain)
       pyplot.plot(res_num,predicted_lddt,color=color_scheme[color_idx%len(color_scheme)],linewidth=2.0)
 
-
       return pyplot
 
-
-
-
-
   @staticmethod
-  def Create(model, settings, assign_bfactors, psipred=None, accpro=None,dc=None, 
-             global_result=None):
+  def Create(model, settings, assign_bfactors, 
+             psipred = None, accpro = None, dc = None, global_result = None):
 
     pot = PotentialContainer.Load(settings.local_potentials)
-    scorer = score_calculator.LocalScorer.Load(settings.local_scorer)
+    scorer = score_calculator.NNScorer.Load(settings.local_scorer)
     local_mqa = mqa.Scores(model, model, pot, smooth_std=5.0, psipred=psipred, 
-                            accpro=accpro, dc=dc, assign_dssp=False)
+                           accpro=accpro, dc=dc, assign_dssp=False)
 
-    local_mqa.CalculateScores(['interaction','cbeta','packing','torsion','exposed'])
+    if global_result == None:
+      global_result = GlobalResult.Create(model, settings, 
+                                          psipred = psipred, accpro = accpro) 
+    global_mqa = global_result.global_mqa
 
-    data = local_mqa.GetLocalData(['interaction','cbeta','packing','torsion','exposed'])
+    global_features = ['torsion', 'reduced', 'interaction', 'cbeta', 
+                       'packing', 'cb_packing']
 
-    try:
-      local_mqa.CalculateScores(['ss_agreement'])
-      temp = local_mqa.GetLocalData(['ss_agreement'])
-      data['ss_agreement'] = temp['ss_agreement']
-    except:
-      data['ss_agreement'] = model.residue_count*[float('NaN')]
-    try:
-      local_mqa.CalculateScores(['acc_agreement'])
-      temp = local_mqa.GetLocalData(['acc_agreement'])
-      data['acc_agreement'] = temp['acc_agreement']
-    except:
-      data['acc_agreement'] = model.residue_count*[float('NaN')]
-    try:
-      local_mqa.CalculateScores(['dist_const'])
-      temp = local_mqa.GetLocalData(['dist_const'])     
-      data['dist_const'] = temp['dist_const']    
-    except:
-      data['dist_const'] = dict() 
-      data['dist_const']['disco'] = model.residue_count*[float('NaN')]    
+    local_features = ['counts', 'packing', 'cb_packing', 'torsion', 'reduced', 
+                      'interaction', 'cbeta', 'ss_agreement', 'acc_agreement', 
+                      'dist_const']
 
+    data = local_mqa.GetLocalData(local_features)
+    global_data = global_mqa.GetAVGData(global_features)
 
-    scores = list()
-    dssp_ss = local_mqa.GetDSSPSS()
+    qmean_scores = list()
+    for i, r in enumerate(model.residues):
 
-    for i ,r in enumerate(model.residues):
-      residue_data=dict()
-      for f in ['interaction','cbeta','packing','torsion','exposed','ss_agreement','acc_agreement']:
-        residue_data[f]=data[f][i]
-      ss = ''
-      if dssp_ss[i]=='H':
-        ss = 'helical'
-      elif dssp_ss[i]=='E':
-        ss = 'extended'
-      else:
-        ss = 'coil'
-      scores.append(min(max(scorer.GetLocalScore(ss, r.one_letter_code, residue_data),0.0),1.0))
+      f_dict = dict()
 
-    if dc:
-      if not global_result:
-        global_result=GlobalResult.Create(model,settings, psipred=psipred, 
-                                          accpro=accpro) 
+      # do the global features
+      for f in global_features:
+        f_dict["avg_" + f] = global_data[f]
 
+      # do the local features
+      for f in local_features:
+        # dist const requires special treatment
+        if f == "dist_const":
+          continue
+        f_dict[f] = data[f][i]
 
-      dist_const_data = data["dist_const"]
+      # do dist_const
+      dist_const = data["dist_const"]
+      s = dist_const["disco"][i]
+      if s == s:
+        f_dict["disco"] = s
+        f_dict["disco_counts"] = dist_const["counts"][i]
+        f_dict["disco_avg_num_clusters"] = dist_const["avg_num_clusters"][i]
+        f_dict["disco_avg_max_seqsim"] = dist_const["avg_max_seqsim"][i]
+        f_dict["disco_avg_max_seqid"] = dist_const["avg_max_seqid"][i]
+        f_dict["disco_avg_variance"] = dist_const["avg_variance"][i]
+        f_dict["disco_num_constraints"] = dist_const["num_constraints"][i]
+        f_dict["disco_fraction_observed"] = \
+        f_dict["disco_counts"] / f_dict["disco_num_constraints"]
 
-      disco = dist_const_data["disco"]
-      counts = dist_const_data["counts"]
-      avg_num_clusters = dist_const_data["avg_num_clusters"]
-      avg_max_seqsim = dist_const_data["avg_max_seqsim"]
-      avg_max_seqid = dist_const_data["avg_max_seqid"]
-      avg_variance = dist_const_data["avg_variance"]
+      scores.append(scorer.Predict(f_dict))
 
-      infile = open(settings.disco_tree, 'rb')
-      random_forest = pickle.load(infile)
-      infile.close()
-
-      qmeandisco_scores = list()
-
-      for i, r in enumerate(model.residues):
-
-        if disco[i] != disco[i]:
-          # Fallback if no scores have been observed
-          qmeandisco_scores.append(scores[i])
-
-        else:
-          # the ordering of the variables is determined in the
-          # training procedure of the random forest!!!
-          # check out the scripts in 
-          # <PATH_TO_QMEAN>/data/qmean/scorer/tree_generation
-          rf_input = np.zeros((1, 8))
-          rf_input[0][0] = global_result.qmean4.norm
-          rf_input[0][1] = avg_max_seqsim[i]
-          rf_input[0][2] = avg_num_clusters[i]
-          rf_input[0][3] = avg_variance[i]
-          rf_input[0][4] = counts[i]
-          rf_input[0][5] = avg_max_seqid[i]
-          rf_input[0][6] = scores[i]
-          rf_input[0][7] = disco[i]
-
-          qmeandisco_scores.append(random_forest.predict(rf_input)[0])
-      
-      data["QMEANDisCo"] = qmeandisco_scores
-    else:
-      data["QMEANDisCo"] = model.residue_count*[float('NaN')]
-
-    data['QMEAN'] = scores
-
-    if assign_bfactors:
-      if dc:
-        for r,s in zip(model.residues,data['QMEANDisCo']):
-          for a in r.atoms:
-            a.b_factor = s
-      else:
-        for r,s in zip(model.residues,data['QMEAN']):
-          for a in r.atoms:
-            a.b_factor = s
-
-
-    lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'all_atom',
-                   'cbeta', 'solvation', 'torsion', 'exposed',
-                   'ss_agreement', 'acc_agreement', 'dist_const', 'QMEAN','QMEANDisCo'],
-                   'siisffffffffff')
+    lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'counts', 'packing', 
+                   'cb_packing', 'interaction', 'cbeta', 'reduced', 'torsion', 
+                   'ss_agreement', 'acc_agreement', 'dist_const', 'QMEAN'],
+                   'siisfffffffffff')
 
     for i, res in enumerate(model.residues):
-      lscores.AddRow({ 'chain' : res.chain.name,
+      lscores.AddRow({'chain' : res.chain.name,
                       'rindex' : res.index,
                       'rnum' : res.number.num,
                       'rname' : res.name,
-                      'all_atom' : data['interaction'][i],
+                      'counts' : data['counts'][i],
+                      'packing' : data['packing'][i],
+                      'cb_packing' : data['cb_packing'][i],
+                      'interaction' : data['interaction'][i],
                       'cbeta' : data['cbeta'][i],
-                      'solvation' : data['packing'][i],
+                      'reduced' : data['reduced'][i],
                       'torsion' : data['torsion'][i],
-                      'exposed' : data['exposed'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
                       'dist_const' :data['dist_const']['disco'][i],
-                      'QMEAN' : data['QMEAN'][i],
-                      'QMEANDisCo' : data['QMEANDisCo'][i]})
+                      'QMEAN' : qmean_scores[i]})
 
     lscores.comment=LSCORES_TABLE_HEADER
-    return LocalResult(model,lscores)
+
+    if assign_bfactors:
+      for r,s in zip(model.residues, qmean_scores):
+        for a in r.atoms:
+          a.b_factor = s
+
+    return LocalResult(model, lscores, local_mqa)
 
 
 

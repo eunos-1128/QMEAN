@@ -1,7 +1,6 @@
 from qmean import *
 from ost.bindings import dssp
 from ost import mol
-import pickle
 from predicted_sequence_features import AlignChainToSEQRES
 
 
@@ -46,7 +45,6 @@ class Scores:
         self.dc = len(self.target.chains) * [dc]
     else:
       self.dc = None
-
 
     #set all the other parameters
     self.potential_container=potential_container
@@ -118,136 +116,51 @@ class Scores:
     self.data['sec_structure'] = self.sec_structure
     self.data['dssp_ss'] = dssp_ss
 
-  def GetLocalData(self,features):
+  def GetLocalData(self, features):
+
     return_data = dict()
     for f in features:
-      if f == 'torsion':
-        try:
-          return_data['torsion']=self.data['torsion']
-        except:
-          raise ValueError("Did not calculate the torsion feature!")
-      elif f == 'interaction':
-        try:
-          return_data['interaction']=self.data['interaction']
-        except:
-          raise ValueError("Did not calculate the interaction feature!")
-      elif f == 'cbeta':
-        try:
-          return_data['cbeta']=self.data['cbeta']
-        except:
-          raise ValueError("Did not calculate the cbeta feature!")
-      elif f == 'reduced':
-        try:
-          return_data['reduced']=self.data['reduced']
-        except:
-          raise ValueError("Did not calculate the reduced feature!")
-      elif f == 'packing':
-        try:
-          return_data['packing']=self.data['packing']
-        except:
-          raise ValueError("Did not calculate the packing feature!")
-      elif f == 'cb_packing':
-        try:
-          return_data['cb_packing']=self.data['cb_packing']
-        except:
-          raise ValueError("Did not calculate the cb_packing feature!")
-      elif f == 'ss_agreement':
-        try:
-          return_data['ss_agreement'] = self.data['ss_agreement']
-        except:
-          raise ValueError("Did not calculate the ss_agreement feature!")
-      elif f == 'acc_agreement':
-        try:
-          return_data['acc_agreement'] = self.data['acc_agreement']
-        except:
-          raise ValueError("Did not calculate the acc_agreement feature!")
-      elif f == 'dist_const':
-        try:
-          return_data['dist_const'] = self.data['dist_const']
-        except:
-          raise ValueError("Did not calculate the dist_const feature!")          
-      elif f == 'fraction_loops':
-        try:
-          return_data['fraction_loops'] = self.data['fraction_loops']
-        except:
-          raise ValueError("Did not calculate the fraction_loops feature!")
-      elif f == 'exposed':
-        try:
-          return_data['exposed'] = self.data['exposed']
-        except:
-          raise ValueError("Did not calculate the exposed feature!")
-      elif f == 'counts':
-        try:
-          return_data['counts'] = self.data['counts']
-        except:
-          raise ValueError("Did not calculate the counts feature!")
-      else:
-        raise ValueError('Requested feature is not supported!')
-        
+      if f not in self.data:
+        self.Calculate(f)
+      return_data[f] = self.data[f]
     return return_data
 
-  def GetAVGData(self,features):
+  def GetAVGData(self, features):
+
     return_data = dict()
     for f in features:
-      if f == 'torsion':
-        try:
-          return_data['torsion']=self.data['avg_torsion']
-        except:
-          raise ValueError("Did not calculate the torsion feature!")
-      elif f == 'interaction':
-        try:
-          return_data['interaction']=self.data['avg_interaction']
-        except:
-          raise ValueError("Did not calculate the interaction feature!")
-      elif f == 'cbeta':
-        try:
-          return_data['cbeta']=self.data['avg_cbeta']
-        except:
-          raise ValueError("Did not calculate the cbeta feature!")
-      elif f == 'reduced':
-        try:
-          return_data['reduced']=self.data['avg_reduced']
-        except:
-          raise ValueError("Did not calculate the reduced feature!")
-      elif f == 'packing':
-        try:
-          return_data['packing']=self.data['avg_packing']
-        except:
-          raise ValueError("Did not calculate the packing feature!")
-      elif f == 'cb_packing':
-        try:
-          return_data['cb_packing']=self.data['avg_cb_packing']
-        except:
-          raise ValueError("Did not calculate the cb_packing feature!")
-      elif f == 'ss_agreement':
-        try:
-          return_data['ss_agreement'] = self.data['avg_ss_agreement']
-        except:
-          raise ValueError("Did not calculate the ss_agreement feature!")
-      elif f == 'acc_agreement':
-        try:
-          return_data['acc_agreement'] = self.data['avg_acc_agreement']
-        except:
-          raise ValueError("Did not calculate the acc_agreement feature!")
-      elif f == 'fraction_loops':
-        try:
-          return_data['fraction_loops'] = self.data['avg_fraction_loops']
-        except:
-          raise ValueError("Did not calculate the fraction_loops feature!")
-      elif f == 'exposed':
-        try:
-          return_data['exposed'] = self.data['avg_exposed']
-        except:
-          raise ValueError("Did not calculate the exposed feature!")
-      elif f == 'counts':
-        try:
-          return_data['counts'] = self.data['avg_counts']
-        except:
-          raise ValueError("Did not calculate the counts feature!")
-      else:
-        raise ValueError('Requested feature \"%s\" is not supported!' %(f))
-        
+      if f not in self.data:
+        self.Calculate(f)
+      return_data[f] = self.data["avg_" + f]
     return return_data
+
+  def Calculate(self, feature):
+    if feature == 'torsion':
+      self.DoTorsion()
+    elif feature == 'interaction':
+      self.DoInteraction()
+    elif feature == 'cbeta':
+      self.DoCBeta()
+    elif feature == 'reduced':
+      self.DoReduced()
+    elif feature == 'packing':
+      self.DoPacking()
+    elif feature == 'cb_packing':
+      self.DoCBPacking()
+    elif feature == 'ss_agreement':
+      self.DoSSAgreement()
+    elif feature == 'acc_agreement':
+      self.DoACCAgreement()
+    elif feature == 'dist_const':
+      self.DoConstraints()
+    elif feature == 'fraction_loops':
+      self.DoFractionLoops()
+    elif feature == 'exposed':
+      self.DoExposed()
+    elif feature == 'counts':
+      self.DoCounts()
+    else:
+      raise ValueError('Requested feature \"%s\" is not supported!' %(f))
 
   def GetTarget(self):
     return self.target
@@ -261,45 +174,7 @@ class Scores:
   def GetAssignedSS(self):
     return self.data['sec_structure']
 
-  def CalculateScores(self, features, ss_dependent = True):
-    for f in features:
-      if f == 'torsion':
-        self.GetTorsion()
-      elif f == 'interaction':
-        self.GetInteraction(ss_dependent = ss_dependent)
-      elif f == 'cbeta':
-        self.GetCBeta(ss_dependent = ss_dependent)
-      elif f == 'reduced':
-        self.GetReduced(ss_dependent = ss_dependent)
-      elif f == 'packing':
-        self.GetPacking(ss_dependent = ss_dependent)
-      elif f == 'cb_packing':
-        self.GetCBPacking(ss_dependent = ss_dependent)
-      elif f == 'ss_agreement':
-        if self.psipred!=None:
-          self.GetSSAgreement()
-        else:
-          raise ValueError("you must provide psipred data for the secondary structure agreement term!")
-      elif f == 'acc_agreement':
-        if self.accpro!=None:
-          self.GetACCAgreement()
-        else:
-          raise ValueError("you must provide accpro data for ACC Agree term!")
-      elif f == 'dist_const':
-        if self.dc!=None:
-          self.GetConstraints()
-        else:
-          raise ValueError("you must provide dc data for Distance Constraints term!")      
-      elif f == 'fraction_loops':
-        self.GetFractionLoops()
-      elif f == 'exposed':
-        self.GetExposed()
-      elif f == 'counts':
-        self.GetCounts()
-      else:
-        raise ValueError('Requested feature \"%s\" is not supported!' %(f))
-
-  def GetTorsion(self):
+  def DoTorsion(self):
     torsion = self.potential_container['torsion'].GetEnergies(self.target)
     self.data['avg_torsion'] = self.GetAverage(torsion)
     if self.smooth_std!=None:
@@ -307,7 +182,7 @@ class Scores:
     else:
       self.data['torsion'] = torsion
 
-  def GetInteraction(self, ss_dependent = True):
+  def DoInteraction(self, ss_dependent = True):
 
     interaction = None
 
@@ -335,7 +210,7 @@ class Scores:
     else:
       self.data['interaction'] = interaction
 
-  def GetCBeta(self, ss_dependent = True):
+  def DoCBeta(self, ss_dependent = True):
 
     cbeta = None
 
@@ -364,7 +239,7 @@ class Scores:
     else:
       self.data['cbeta'] = cbeta
 
-  def GetReduced(self, ss_dependent = True):
+  def DoReduced(self, ss_dependent = True):
 
     reduced = None
 
@@ -393,7 +268,7 @@ class Scores:
     else:
       self.data['reduced'] = reduced
 
-  def GetPacking(self, ss_dependent = True):
+  def DoPacking(self, ss_dependent = True):
 
     packing=None
 
@@ -422,7 +297,7 @@ class Scores:
     else:
       self.data['packing'] = packing
 
-  def GetCBPacking(self, ss_dependent = True):
+  def DoCBPacking(self, ss_dependent = True):
 
     cb_packing=None
 
@@ -451,7 +326,7 @@ class Scores:
     else:
       self.data['cb_packing'] = cb_packing
 
-  def GetExposed(self):
+  def DoExposed(self):
     exposed=list()
 
     for r in self.target.residues:
@@ -467,7 +342,7 @@ class Scores:
     else:
       self.data['exposed']=exposed
 
-  def GetFractionLoops(self):
+  def DoFractionLoops(self):
     fraction_loops=list()
 
     for r in self.target.residues:
@@ -482,7 +357,7 @@ class Scores:
     else:
       self.data['fraction_loops']=fraction_loops
 
-  def GetCounts(self):
+  def DoCounts(self):
     counts=list()
 
     ca_selection = self.environment.Select("aname=CA")
@@ -499,8 +374,7 @@ class Scores:
     else:
       self.data['counts'] = counts
 
-
-  def GetSSAgreement(self):
+  def DoSSAgreement(self):
     if self.psipred!=None:
       ss_agreement = []
       for c, p in zip(self.target.chains, self.psipred):
@@ -511,9 +385,10 @@ class Scores:
       else:
         self.data['ss_agreement']=ss_agreement
     else:
-      raise ValueError("Cannot calculate ss_agreement term without psipred information!")
+      self.data["avg_ss_agreement"] = float("NaN")
+      self.data["ss_agreement"] = [float("NaN")] * len(target.residues)
 
-  def GetACCAgreement(self):
+  def DoACCAgreement(self):
     if self.accpro!=None:
       acc_agreement = []
       for c,a in zip(self.target.chains, self.accpro):
@@ -524,9 +399,10 @@ class Scores:
       else:
         self.data['acc_agreement']=acc_agreement
     else:
-      raise ValueError("Cannot calculate acc_agreement term without accpro information!")
+      self.data["avg_acc_agreement"] = float("NaN")
+      self.data["acc_agreement"] = [float("NaN")] * len(target.residues)
 
-  def GetConstraints(self):
+  def DoConstraints(self):
     if self.dc!=None:
 
       dist_const_data = dict()
@@ -541,7 +417,6 @@ class Scores:
       for c,d in zip(self.target.chains, self.dc):
         entity_view = self.target.CreateEmptyView()
         entity_view.AddChain(c, mol.INCLUDE_ALL)
-
         chain_data = d.GetScoresWithData(entity_view)
         dist_const_data["disco"] += chain_data["scores"]
         dist_const_data["counts"] += chain_data["counts"]
@@ -553,8 +428,18 @@ class Scores:
  
       self.data["dist_const"] = dist_const_data
       self.data["avg_dist_const"] = self.GetAverage(dist_const_data["disco"])   
+
     else:   
-      raise ValueError("Cannot calculate dist_const term without DCData information!")
+      dist_const_data = dict()
+      dist_const_data["disco"] = [float("NaN")] * len(target.residues)
+      dist_const_data["counts"] = [float("NaN")] * len(target.residues)
+      dist_const_data["avg_num_clusters"] = [float("NaN")] * len(target.residues)
+      dist_const_data["avg_max_seqsim"] = [float("NaN")] * len(target.residues)
+      dist_const_data["avg_max_seqid"] = [float("NaN")] * len(target.residues)
+      dist_const_data["avg_variance"] = [float("NaN")] * len(target.residues)
+      dist_const_data["num_constraints"] = [float("NaN")] * len(target.residues)
+      self.data["dist_const"] = dist_const_data
+      self.data["avg_dist_const"] = float("NaN")
     
   def GetAverage(self, value_list):
     temp = list()
