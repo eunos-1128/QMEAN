@@ -10,6 +10,7 @@ set(QMEAN_MODULES
   crap_checker.py
   score_calculator.py
   reference_set.py
+  mlp_regressor.py
 )
 
 set(QMEAN_PYMOD

@@ -5,12 +5,12 @@
 #
 #In case of the local scorer, the ost table MUST contain the column AA (AminoAcid one letter code)
 
-
-
 from ost.table import *
 import numpy as np
 import sys
 import traceback
+import os
+from mlp_regressor import Regressor
 
 class Scorer():
 
@@ -374,26 +374,77 @@ class GlobalScorer():
     return cPickle.load(stream)
 
 
-class LocalNNScorer:
+class NNScorer:
 
-  def __init__(self):
+  def __init__(self, scorer_dir):
 
-    # the features that MUST be there if you try to calculate a score and one 
-    # of those is missing, you get an error
-    self.mandatory_features = list()
+    # The scorer assumes to get a data directory containing following files:
+    #
+    # feature_groups.txt: Every line represents a list of features that are
+    #                     separated by spaces. Every list of features is
+    #                     appended to self.feature_groups. Whenever you call
+    #                     GetScore(score_dict), the feature groups are iterated 
+    #                     and the index of the FIRST feature group for which 
+    #                     all datapoints are valid in score_dict is used to 
+    #                     select the corresponding neural network.
+    #                     IF NO FEATURE GROUP MATCHES THE INPUT FEATURES WE
+    #                     RETURN 0.0!!!
+    #
+    # nn_<idx>.dat: Neural networks, one for each entry in self.feature_groups.
+    #               idx relates to the corresponding entry. The ordering of the 
+    #               nodes in the input layer of every neural network is defined 
+    #               in the corresponding entry in self.feature_groups.
 
-    # Additional groups of features that have been used to train the underlying 
-    # neural networks (nn). When deciding for the right neural network to use,
-    # this list is iterated. Every entry contains a list of features. The index
-    # of the first entry for which we have all features defines the used neural 
-    # network. 
-    # The ordering of the nn input is defined by: the mandatory features 
-    # and then by the ordering in the corresponding entry.
     self.feature_groups = list()
-
-    # list of neural networks that directly relates to self.feature_groups
     self.nn = list()
 
+    feature_groups_path = os.path.join(scorer_dir)
+    if not os.path.exists(feature_group_path):
+      raise RuntimeError("Specified NNScorer directory does not contain the "\
+                         "required feature_groups.txt file!")
 
+    data = open(feature_groups_path).readlines()
+    for line in data:
+      self.feature_groups.append([item.strip() for item in line.split()])
 
+    for fg_idx, fg in enumerate(self.feature_groups):
+      nn_path = os.path.join(scorer_dir, "nn_%i.dat"%(fg_idx))
+      if not os.path.exists(nn_path):
+        raise RuntimeError("Specified NNScorer directory does not contain "\
+                           "a neural network for every line in "\
+                           "feature_groups.txt")
+      self.nn.append(Regressor(nn_path))
+
+      if self.nn[-1].layer_sizes[0] != len(fg):
+        raise RuntimeError("Input layer of loaded NN is inconsistent with "\
+                           "number of features as defined in "\
+                           "feature_groups.txt!")
+
+  def GetScore(self, score_dict):
+
+    valid_scores = dict()
+
+    for k, v in score_dict.iteritems():
+      if v == v:
+        valid_scores[k] = v
+
+    final_fg_idx = -1
+    for fg_idx, fg in enumerate(self.feature_groups):
+      all_there = True
+      for f in fg:
+        if f not in valid_scores:
+          all_there = False
+          break
+      if all_there:
+        final_fg_idx = fg_idx
+        break
+
+    if final_fg_idx == -1:
+      return 0.0
+
+    input_features = list()
+    for f in self.feature_groups[final_fg_idx]:
+      input_features.append(valid_scores[f])
+
+    return self.nn[final_fg_idx].Predict(input_features)
 
