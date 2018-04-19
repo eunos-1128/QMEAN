@@ -6,6 +6,7 @@ from qmean import conf
 from ost.table import *
 import os, pickle
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 sm_conversions = {'QMEAN4':'qmean4', 'QMEAN6':'qmean6', 'interaction':'all_atom',
@@ -273,12 +274,11 @@ class LocalResult:
 
   def DumplDDTProfile(self, out_path, chain=None):
 
-    from matplotlib import pyplot
-    pyplot.clf()
-    pyplot.figure(figsize=[8,6],dpi=80)
-    pyplot.ylim((-0.1,1.1))
-    pyplot.xlabel('Residue Number',size='large')
-    pyplot.ylabel('Predicted Local Similarity to Target', size='large')
+    plt.clf()
+    plt.figure(figsize=[8,6],dpi=80)
+    plt.ylim((-0.1,1.1))
+    plt.xlabel('Residue Number',size='large')
+    plt.ylabel('Predicted Local Similarity to Target', size='large')
 
     color_scheme = ['#ff420e', '#004586', '#ffd320', '#578d1c', '#7e0021']
 
@@ -294,7 +294,7 @@ class LocalResult:
         chains.append(r[chain_idx])
 
     if chain == None:
-      pyplot.title('Local Quality Estimate',size='x-large')
+      plt.title('Local Quality Estimate',size='x-large')
       for i,ch in enumerate(chains):
         chain_tab = self.score_table.Filter(chain=ch)  
         res_num = list()
@@ -302,10 +302,10 @@ class LocalResult:
         for r in chain_tab.rows:
           res_num.append(r[rnum_idx])
           predicted_lddt.append(r[qmean_idx])
-        pyplot.plot(res_num, predicted_lddt, 
+        plt.plot(res_num, predicted_lddt, 
                     color = color_scheme[i%len(color_scheme)], linewidth = 2.0)         
     else:
-      pyplot.title('Local Quality Estimate: Chain %s'%(chain), size = 'x-large')
+      plt.title('Local Quality Estimate: Chain %s'%(chain), size = 'x-large')
       chain_tab = self.score_table.Filter(chain = chain)
       res_num = list()
       predicted_lddt = list()
@@ -313,11 +313,11 @@ class LocalResult:
         res_num.append(r[rnum_idx])
         predicted_lddt.append(r[qmean_idx])
       color_idx = chains.index(chain)
-      pyplot.plot(res_num, predicted_lddt, 
+      plt.plot(res_num, predicted_lddt, 
                   color=color_scheme[color_idx%len(color_scheme)], 
                   linewidth = 2.0)
 
-    pyplot.savefig(out_path)
+    plt.savefig(out_path)
 
   @staticmethod
   def Create(model, settings, assign_bfactors, 
