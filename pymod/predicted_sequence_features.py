@@ -1,7 +1,6 @@
 from ost import seq
 from ost import mol
 from qmean import *
-from ost.bindings import dssp
 import traceback
 
 def AlignChainToSEQRES(chain, seqres):
@@ -148,16 +147,9 @@ class PSIPREDHandler:
 
     return return_list
 
-  def GetSSAgreementFromChain(self,chain, dssp_assigned=False):
+  def GetSSAgreementFromChain(self,chain):
 
     psipred_ss, psipred_conf, psipred_seq = self.CutPsiPredStuff(chain)
-
-    if dssp_assigned==False:
-      if type(chain) == mol.ChainHandle or type(chain) == mol.ChainView:
-        dssp.AssignDSSP(chain.GetEntity(),extract_burial_status=True)
-      else:
-        dssp.AssignDSSP(chain, extract_burial_status=True)
-
 
     observed_ss=''
     for r in chain.residues:
@@ -258,23 +250,23 @@ class ACCPROHandler:
     return return_list
 
 
-  def GetACCAgreementFromChain(self,chain, dssp_assigned=False):
+  def GetACCAgreementFromChain(self, chain):
 
     accpro_ss, accpro_acc, accpro_seq = self.CutACCPROStuff(chain)
 
-    if dssp_assigned==False:
-      if type(chain) == mol.ChainHandle or type(chain) == mol.ChainView:
-        dssp.AssignDSSP(chain.GetEntity(),extract_burial_status=True)
-      else:
-        dssp.AssignDSSP(chain, extract_burial_status=True)
+    observed_acc = ['X'] * len(chain.residues)
 
-    observed_acc=''
-
-    for r in chain.residues:
+    for idx, r in enumerate(chain.residues):
       try:
-        observed_acc+=r.GetStringProp("burial_status")
+        if r.GetFloatProp("asaRel") < 0.25:
+          observed_acc[idx] = 'b'
+        else:
+          observed_acc[idx] = 'e'
       except:
-        observed_acc+='X'
+        # value remains 'X' => gives NaN in the end
+        pass
+
+    observed_acc = ''.join(observed_acc)
 
     return self.GetACCAgreement(observed_acc, accpro_acc)
 

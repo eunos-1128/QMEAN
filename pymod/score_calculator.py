@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import traceback
 import os
+import json
 from mlp_regressor import Regressor
 
 class Scorer():
@@ -380,15 +381,17 @@ class NNScorer:
 
     # The scorer assumes to get a data directory containing following files:
     #
-    # feature_groups.txt: Every line represents a list of features that are
-    #                     separated by spaces. Every list of features is
-    #                     appended to self.feature_groups. Whenever you call
-    #                     GetScore(score_dict), the feature groups are iterated 
-    #                     and the index of the FIRST feature group for which 
-    #                     all datapoints are valid in score_dict is used to 
-    #                     select the corresponding neural network.
-    #                     IF NO FEATURE GROUP MATCHES THE INPUT FEATURES WE
-    #                     RETURN 0.0!!!
+    # feature_groups.json: Json file containing a list.
+    #                      Every list represents a list of features and the 
+    #                      whole thing is assigned to the internal feature
+    #                      groups variable.
+    #                      Whenever you call GetScore(score_dict), the feature 
+    #                      groups are iterated and the index of the FIRST 
+    #                      feature group for which all datapoints are valid in 
+    #                      score_dict is used to select the corresponding neural 
+    #                      network.
+    #                      IF NO FEATURE GROUP MATCHES THE INPUT FEATURES WE
+    #                      RETURN 0.0!!!
     #
     # nn_<idx>.dat: Neural networks, one for each entry in self.feature_groups.
     #               idx relates to the corresponding entry. The ordering of the 
@@ -398,14 +401,14 @@ class NNScorer:
     self.feature_groups = list()
     self.nn = list()
 
-    feature_groups_path = os.path.join(scorer_dir)
-    if not os.path.exists(feature_group_path):
+    feature_groups_path = os.path.join(scorer_dir, "feature_groups.json")
+    if not os.path.exists(feature_groups_path):
       raise RuntimeError("Specified NNScorer directory does not contain the "\
-                         "required feature_groups.txt file!")
+                         "required feature_groups.json file!")
 
-    data = open(feature_groups_path).readlines()
-    for line in data:
-      self.feature_groups.append([item.strip() for item in line.split()])
+    fh = open(feature_groups_path, 'r')
+    self.feature_groups = json.load(fh)
+    fh.close()
 
     for fg_idx, fg in enumerate(self.feature_groups):
       nn_path = os.path.join(scorer_dir, "nn_%i.dat"%(fg_idx))
@@ -414,7 +417,6 @@ class NNScorer:
                            "a neural network for every line in "\
                            "feature_groups.txt")
       self.nn.append(Regressor(nn_path))
-
       if self.nn[-1].layer_sizes[0] != len(fg):
         raise RuntimeError("Input layer of loaded NN is inconsistent with "\
                            "number of features as defined in "\

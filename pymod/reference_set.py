@@ -62,10 +62,11 @@ class ReferenceSet:
     # have to invert the sign...
     return sign*(mean-norm_score)/stdev
 
-  def ReferenceSetPlot(self, num_residues, qmean_norm_score, score_name):
+  def DumpReferenceSetPlot(self, out_path, num_residues, qmean_norm_score, 
+                           score_name):
     """
-    Plots the qmean_norm_score in relation to QMEAN scores for a non-redundant
-    set of X-ray structures.
+    Plots and dumps the qmean_norm_score in relation to QMEAN scores for a 
+    non-redundant set of X-ray structures.
     """
     if score_name not in self.nice_titles:
       raise ValueError('invalid score: '+score_name)
@@ -104,17 +105,20 @@ class ReferenceSet:
     if(num_residues>600):
       text = 'Number of residues (%i) has been\n'%(num_residues)
       text += 'capped at 600 for visualisation\nand Z-score calculation!'
-      p.text(35,-0.365,text,color='black',bbox=dict(facecolor='red',alpha=0.3,edgecolor='black',
-                                                  boxstyle='round,pad=1'))
+      p.text(35,-0.365,text,color='black',bbox=dict(facecolor='red', alpha=0.3,
+                                                    edgecolor='black',
+                                                    boxstyle='round,pad=1'))
 
-    return p
+    p.savefig(out_path)
 
-  def ZScoreSliders(self, qmean_norm_scores, score_names, num_residues, score_labels=None, **kwargs):
+  def DumpZScoreSliders(self, out_path, qmean_norm_scores, score_names, 
+                        num_residues, score_labels=None, **kwargs):
     """
-    Plots QMEAN scores as sliders.
+    Plots and dumps QMEAN scores as sliders.
     """
     import matplotlib as mpl
     from matplotlib import pyplot
+    pyplot.clf()
 
     if len(qmean_norm_scores)!=len(score_names):
       raise ValueError('Number of scores and score names is not consistent!')
@@ -198,4 +202,4 @@ class ReferenceSet:
         ax.set_xticklabels([])
       slider+=1
 
-    return pyplot
+    pyplot.savefig(out_path)

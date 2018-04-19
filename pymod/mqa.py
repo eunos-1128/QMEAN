@@ -1,12 +1,13 @@
 from qmean import *
-from ost.bindings import dssp
 from ost import mol
 from predicted_sequence_features import AlignChainToSEQRES
 
 
 class Scores:
 
-  def __init__(self, target, environment, potential_container, smooth_std=None, psipred=None, accpro=None, dc=None, assign_dssp=True, norm=True, count_radius=15.0):
+  def __init__(self, target, environment, potential_container, smooth_std=None, 
+               psipred=None, accpro=None, dc=None, norm=True, count_radius=15.0):
+
     self.data=dict()
 
     #set structural data
@@ -57,16 +58,13 @@ class Scores:
     if target.handle != environment.handle:
       raise RuntimeError('Target and Environment must be views of the same handle!')
 
-    if assign_dssp:
-      dssp.AssignDSSP(environment, extract_burial_status=True)
-
     #if psipred data is provided, take secondary information from there. Particularly in models with
     #low quality, the secondary structure assignment of DSSP srews up. In case of membrane proteins,
     #the secondary structure of the membrane spanning region is either set to helical or extended, 
     #depending on the majority of residues.
 
     dssp_ss = list()
-
+    mol.alg.AssignSecStruct(environment) # assigns dssp style sec struct
     for r in target.residues:
       if r.GetSecStructure().IsHelical():
         dssp_ss+='H'
@@ -318,7 +316,6 @@ class Scores:
     else:
       cb_packing = self.potential_container['cb_packing'].GetEnergies(self.target, self.environment)
 
-
     self.data['avg_cb_packing'] = self.GetAverage(cb_packing)
 
     if self.smooth_std!=None:
@@ -329,9 +326,11 @@ class Scores:
   def DoExposed(self):
     exposed=list()
 
+    mol.alg.Accessibility(self.environment, algorithm = mol.alg.DSSP)
+
     for r in self.target.residues:
       try:
-        exposed.append(r.GetFloatProp('relative_solvent_accessibility'))
+        exposed.append(r.GetFloatProp('asaRel'))
       except:
         exposed.append(float('NaN'))
 
@@ -378,7 +377,7 @@ class Scores:
     if self.psipred!=None:
       ss_agreement = []
       for c, p in zip(self.target.chains, self.psipred):
-        ss_agreement += p.GetSSAgreementFromChain(c, dssp_assigned=True)
+        ss_agreement += p.GetSSAgreementFromChain(c)
       self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
@@ -389,10 +388,12 @@ class Scores:
       self.data["ss_agreement"] = [float("NaN")] * len(target.residues)
 
   def DoACCAgreement(self):
+
+    mol.alg.Accessibility(self.environment, algorithm = mol.alg.DSSP)
     if self.accpro!=None:
       acc_agreement = []
       for c,a in zip(self.target.chains, self.accpro):
-        acc_agreement += a.GetACCAgreementFromChain(c, dssp_assigned=True)
+        acc_agreement += a.GetACCAgreementFromChain(c)
       self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)
@@ -431,13 +432,14 @@ class Scores:
 
     else:   
       dist_const_data = dict()
-      dist_const_data["disco"] = [float("NaN")] * len(target.residues)
-      dist_const_data["counts"] = [float("NaN")] * len(target.residues)
-      dist_const_data["avg_num_clusters"] = [float("NaN")] * len(target.residues)
-      dist_const_data["avg_max_seqsim"] = [float("NaN")] * len(target.residues)
-      dist_const_data["avg_max_seqid"] = [float("NaN")] * len(target.residues)
-      dist_const_data["avg_variance"] = [float("NaN")] * len(target.residues)
-      dist_const_data["num_constraints"] = [float("NaN")] * len(target.residues)
+      nan_list = [float("NaN")] * len(target.residues)
+      dist_const_data["disco"] = nan_list
+      dist_const_data["counts"] = nan_list
+      dist_const_data["avg_num_clusters"] = nan_list
+      dist_const_data["avg_max_seqsim"] = nan_list
+      dist_const_data["avg_max_seqid"] = nan_list
+      dist_const_data["avg_variance"] = nan_list
+      dist_const_data["num_constraints"] = nan_list
       self.data["dist_const"] = dist_const_data
       self.data["avg_dist_const"] = float("NaN")
     
