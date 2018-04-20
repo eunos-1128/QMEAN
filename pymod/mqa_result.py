@@ -370,8 +370,7 @@ class LocalResult:
         f_dict["disco_avg_max_seqid"] = dist_const["avg_max_seqid"][i]
         f_dict["disco_avg_variance"] = dist_const["avg_variance"][i]
         f_dict["disco_num_constraints"] = dist_const["num_constraints"][i]
-        f_dict["disco_fraction_observed"] = \
-        f_dict["disco_counts"] / f_dict["disco_num_constraints"]
+        f_dict["disco_fraction_observed"] = dist_const["fraction_observed"][i]
 
       qmean_scores.append(scorer.GetScore(f_dict))
 
