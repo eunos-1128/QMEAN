@@ -1,5 +1,6 @@
 from qmean import *
 from ost import mol
+from ost.bindings import dssp
 from predicted_sequence_features import AlignChainToSEQRES
 
 
@@ -63,8 +64,19 @@ class Scores:
     #the secondary structure of the membrane spanning region is either set to helical or extended, 
     #depending on the majority of residues.
 
+    # THIS HAS TO BE CHANGED BACK TO OST INTERNAL IMPLEMENTATION AS SOON AS 
+    # THE ACCESSIBILITY IS NOT SEGFAULTING ANYMORE
+    dssp.AssignDSSP(environment, extract_burial_status=True)
+
+    # stupid mapping... will go away as well
+    for r in self.environment.residues:
+      if r.HasProp("relative_solvent_accessibility"):
+        r.SetFloatProp("asaRel", r.GetFloatProp("relative_solvent_accessibility"))
+
     dssp_ss = list()
-    mol.alg.AssignSecStruct(environment) # assigns dssp style sec struct
+
+    # THATS WHAT WE ACTUALLY WANT!!! MAKE SURE TO ALSO ADD ACCESSIBILITY HERE!
+    #mol.alg.AssignSecStruct(environment) # assigns dssp style sec struct
     for r in target.residues:
       if r.GetSecStructure().IsHelical():
         dssp_ss+='H'
@@ -325,17 +337,12 @@ class Scores:
 
   def DoExposed(self):
     exposed=list()
-
-    mol.alg.Accessibility(self.environment, algorithm = mol.alg.DSSP)
-
     for r in self.target.residues:
       try:
         exposed.append(r.GetFloatProp('asaRel'))
       except:
         exposed.append(float('NaN'))
-
     self.data['avg_exposed'] = self.GetAverage(exposed)
-
     if self.smooth_std!=None:
       self.data['exposed']=self.spherical_smoother.Smooth(exposed)
     else:
@@ -368,7 +375,6 @@ class Scores:
       else:
         counts.append(float("NaN"))
     self.data['avg_counts'] = self.GetAverage(counts)
-
     self.data['counts'] = counts
 
   def DoSSAgreement(self):
@@ -383,11 +389,9 @@ class Scores:
         self.data['ss_agreement']=ss_agreement
     else:
       self.data["avg_ss_agreement"] = float("NaN")
-      self.data["ss_agreement"] = [float("NaN")] * len(target.residues)
+      self.data["ss_agreement"] = [float("NaN")] * len(self.target.residues)
 
   def DoACCAgreement(self):
-
-    mol.alg.Accessibility(self.environment, algorithm = mol.alg.DSSP)
     if self.accpro!=None:
       acc_agreement = []
       for c,a in zip(self.target.chains, self.accpro):
@@ -399,7 +403,7 @@ class Scores:
         self.data['acc_agreement']=acc_agreement
     else:
       self.data["avg_acc_agreement"] = float("NaN")
-      self.data["acc_agreement"] = [float("NaN")] * len(target.residues)
+      self.data["acc_agreement"] = [float("NaN")] * len(self.target.residues)
 
   def DoConstraints(self):
     if self.dc!=None:
