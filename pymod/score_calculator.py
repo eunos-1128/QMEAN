@@ -400,6 +400,7 @@ class NNScorer:
 
     self.feature_groups = list()
     self.nn = list()
+    self.aa_string = "ACDEFGHIKLMNPQRSTVWY"
 
     feature_groups_path = os.path.join(scorer_dir, "feature_groups.json")
     if not os.path.exists(feature_groups_path):
@@ -414,15 +415,20 @@ class NNScorer:
       nn_path = os.path.join(scorer_dir, "nn_%i.dat"%(fg_idx))
       if not os.path.exists(nn_path):
         raise RuntimeError("Specified NNScorer directory does not contain "\
-                           "a neural network for every line in "\
-                           "feature_groups.txt")
+                           "a neural network for every entry in "\
+                           "feature_groups.json")
       self.nn.append(Regressor(nn_path))
-      if self.nn[-1].layer_sizes[0] != len(fg):
+      if self.nn[-1].layer_sizes[0] != len(fg) + len(self.aa_string):
         raise RuntimeError("Input layer of loaded NN is inconsistent with "\
                            "number of features as defined in "\
-                           "feature_groups.txt!")
+                           "feature_groups.json!")
 
-  def GetScore(self, score_dict):
+  def GetScore(self, score_dict, olc):
+
+    aa_idx = self.aa_string.index(olc)
+
+    if aa_idx == -1:
+      return 0.0
 
     valid_scores = dict()
 
@@ -444,7 +450,8 @@ class NNScorer:
     if final_fg_idx == -1:
       return 0.0
 
-    input_features = list()
+    input_features = list([0.0] * len(self.aa_string))
+    input_features[aa_idx] = 1.0
     for f in self.feature_groups[final_fg_idx]:
       input_features.append(valid_scores[f])
 

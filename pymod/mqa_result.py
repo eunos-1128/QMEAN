@@ -321,26 +321,21 @@ class LocalResult:
 
   @staticmethod
   def Create(model, settings, assign_bfactors, 
-             psipred = None, accpro = None, dc = None, global_result = None):
+             psipred = None, accpro = None, dc = None):
 
     pot = PotentialContainer.Load(settings.local_potentials)
     local_mqa = mqa.Scores(model, model, pot, smooth_std=5.0, psipred=psipred, 
                            accpro=accpro, dc=dc)
 
-    if global_result == None:
-      global_result = GlobalResult.Create(model, settings, 
-                                          psipred = psipred, accpro = accpro) 
-    global_mqa = global_result.global_mqa
+    local_features = ['counts', 'packing', 'cb_packing', 'exposed', 'torsion', 
+                      'reduced', 'interaction', 'cbeta', 'ss_agreement', 
+                      'acc_agreement', 'dist_const']
 
-    global_features = ['torsion', 'reduced', 'interaction', 'cbeta', 
-                       'packing', 'cb_packing']
-
-    local_features = ['counts', 'packing', 'cb_packing', 'torsion', 'reduced', 
-                      'interaction', 'cbeta', 'ss_agreement', 'acc_agreement', 
-                      'dist_const']
+    avg_features = ['torsion', 'reduced', 'interaction', 'cbeta', 
+                    'packing', 'cb_packing', 'ss_agreement', 'acc_agreement']
 
     data = local_mqa.GetLocalData(local_features)
-    global_data = global_mqa.GetAVGData(global_features)
+    avg_data = local_mqa.GetAVGData(local_features)
 
     scorer = score_calculator.NNScorer(settings.local_scorer)
     qmean_scores = list()
@@ -348,9 +343,9 @@ class LocalResult:
 
       f_dict = dict()
 
-      # do the global features
-      for f in global_features:
-        f_dict["avg_" + f] = global_data[f]
+      # do the avg features
+      for f in avg_features:
+        f_dict["avg_" + f] = avg_data[f]
 
       # do the local features
       for f in local_features:
@@ -372,7 +367,7 @@ class LocalResult:
         f_dict["disco_num_constraints"] = dist_const["num_constraints"][i]
         f_dict["disco_fraction_observed"] = dist_const["fraction_observed"][i]
 
-      qmean_scores.append(scorer.GetScore(f_dict))
+      qmean_scores.append(scorer.GetScore(f_dict, r.one_letter_code))
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'counts', 'packing', 
                    'cb_packing', 'interaction', 'cbeta', 'reduced', 'torsion', 
@@ -463,8 +458,7 @@ def AssessModelQuality(model, output_dir='.', plots = True, local_scores = True,
 
   if local_scores:
     local_result=LocalResult.Create(model, settings, assign_bfactors, 
-                                    psipred = psipred, accpro = accpro,
-                                    dc = dc, global_result = global_result)
+                                    psipred = psipred, accpro = accpro, dc = dc)
     tab = local_result.score_table
     tab.Save(os.path.join(output_dir, 'local_scores.txt'), 
              format = table_format)
