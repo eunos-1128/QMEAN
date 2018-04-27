@@ -452,7 +452,7 @@ class Scores:
 
     else:   
       dist_const_data = dict()
-      nan_list = [float("NaN")] * len(target.residues)
+      nan_list = [float("NaN")] * len(self.target.residues)
       dist_const_data["disco"] = nan_list
       dist_const_data["counts"] = nan_list
       dist_const_data["avg_num_clusters"] = nan_list
