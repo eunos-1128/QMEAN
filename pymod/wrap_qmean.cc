@@ -13,6 +13,7 @@ void export_Membrane();
 void export_CBPacking();
 void export_HBond();
 void export_disco();
+void export_clash();
 
 using namespace boost::python;
 
@@ -30,5 +31,6 @@ BOOST_PYTHON_MODULE(_qmean)
   export_CBPacking();
   export_HBond();
   export_disco();
+  export_clash();
 }
 

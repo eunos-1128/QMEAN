@@ -26,6 +26,7 @@ export_base.cc
 export_spherical_smoother.cc
 export_membrane.cc
 export_disco.cc
+export_clash.cc
 wrap_qmean.cc
 )
 

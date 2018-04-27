@@ -169,6 +169,8 @@ class Scores:
       self.DoExposed()
     elif feature == 'counts':
       self.DoCounts()
+    elif feature == 'clash':
+      self.DoClash()
     else:
       raise ValueError('Requested feature \"%s\" is not supported!' %(f))
 
@@ -404,6 +406,12 @@ class Scores:
     else:
       self.data["avg_acc_agreement"] = float("NaN")
       self.data["acc_agreement"] = [float("NaN")] * len(self.target.residues)
+
+  def DoClash(self):
+    clash_scores = GetClashScores(self.target, self.environment)
+    self.data["clash"] = clash_scores
+    self.data["avg_clash"] = self.GetAverage(clash_scores)
+    
 
   def DoConstraints(self):
     if self.dc!=None:
