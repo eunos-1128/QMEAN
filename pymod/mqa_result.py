@@ -367,7 +367,10 @@ class LocalResult:
         f_dict["disco_num_constraints"] = dist_const["num_constraints"][i]
         f_dict["disco_fraction_observed"] = dist_const["fraction_observed"][i]
 
-      qmean_scores.append(scorer.GetScore(f_dict, r.one_letter_code))
+      # predict score and make sure that the range is in [0.0, 1.0]
+      s = scorer.GetScore(f_dict, r.one_letter_code)
+      s = min(1.0, max(0.0, s))
+      qmean_scores.append(s)
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'counts', 'packing', 
                    'cb_packing', 'interaction', 'cbeta', 'reduced', 'torsion', 
