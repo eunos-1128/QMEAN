@@ -329,7 +329,7 @@ class LocalResult:
 
     local_features = ['counts', 'packing', 'cb_packing', 'exposed', 'torsion', 
                       'reduced', 'interaction', 'cbeta', 'ss_agreement', 
-                      'acc_agreement', 'dist_const']
+                      'acc_agreement', 'dist_const', 'clash']
 
     avg_features = ['torsion', 'reduced', 'interaction', 'cbeta', 
                     'packing', 'cb_packing', 'ss_agreement', 'acc_agreement']
@@ -374,8 +374,8 @@ class LocalResult:
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'counts', 'packing', 
                    'cb_packing', 'interaction', 'cbeta', 'reduced', 'torsion', 
-                   'ss_agreement', 'acc_agreement', 'dist_const', 'QMEAN'],
-                   'siisfffffffffff')
+                   'ss_agreement', 'acc_agreement', 'clash', 'dist_const', 'QMEAN'],
+                   'siisffffffffffff')
 
     for i, res in enumerate(model.residues):
       lscores.AddRow({'chain' : res.chain.name,
@@ -391,6 +391,7 @@ class LocalResult:
                       'torsion' : data['torsion'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
+                      'clash' : data['clash'][i],
                       'dist_const' :data['dist_const']['disco'][i],
                       'QMEAN' : qmean_scores[i]})
 
