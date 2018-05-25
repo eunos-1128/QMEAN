@@ -22,7 +22,8 @@ class ReferenceSet:
             'acc_agreement': 'Normalized ACC Agreement Score',
             'reduced':'Normalized Reduced Score',
             'QMEAN4': 'Normalized QMEAN4 Score',
-            'QMEAN6': 'Normalized QMEAN6 Score'}
+            'QMEAN6': 'Normalized QMEAN6 Score',
+            'FAENNZ': 'Normalized FAENNZ Score'}
 
   def ZScoreFromNormScore(self, score_name, num_residues, norm_score):
     """
@@ -37,7 +38,7 @@ class ReferenceSet:
     """
 
     inverted_scores = set(['QMEAN4', 'QMEAN6', 'ss_agreement', 
-                           'acc_agreement'])
+                           'acc_agreement', 'FAENNZ'])
     if score_name not in self.nice_titles:
       raise ValueError('unknown score term "%s"' % score_name)
     num_residues=max(40, min(num_residues, 600))
