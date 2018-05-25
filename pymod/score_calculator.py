@@ -425,9 +425,9 @@ class NNScorer:
 
   def GetScore(self, score_dict, olc):
 
-    aa_idx = self.aa_string.index(olc)
-
-    if aa_idx == -1:
+    try:
+      aa_idx = self.aa_string.index(olc)
+    except:
       return 0.0
 
     valid_scores = dict()
