@@ -388,8 +388,8 @@ class LocalResult:
 
       for i, r in enumerate(model.residues):
 
-        if disco[i] != disco[i]:
-          # Fallback if no scores have been observed
+        if scores[i] != scores[i] or scores[i] == None or disco[i] != disco[i]:
+          # Fallback for invalid scores
           qmeandisco_scores.append(scores[i])
 
         else:
