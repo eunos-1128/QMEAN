@@ -79,7 +79,10 @@ class Scores:
     if psipred != None:
       self.sec_structure = ''
       for c,p in zip(self.target.chains, self.psipred):
-        self.sec_structure+= p.GetPSIPREDSS(c)
+        if p != None:
+          self.sec_structure+= p.GetPSIPREDSS(c)
+        else:
+          self.sec_structure+=''.join(str(r.GetSecStructure()) for r in c.residues)
     else:
       self.sec_structure = dssp_ss
  
@@ -473,7 +476,10 @@ class Scores:
     if self.psipred!=None:
       ss_agreement = []
       for c, p in zip(self.target.chains, self.psipred):
-        ss_agreement += p.GetSSAgreementFromChain(c, dssp_assigned=True)
+        if p != None:
+          ss_agreement += p.GetSSAgreementFromChain(c, dssp_assigned=True)
+        else:
+          ss_agreement += list([float("NaN")] * len(c.residues))
       self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
@@ -486,7 +492,10 @@ class Scores:
     if self.accpro!=None:
       acc_agreement = []
       for c,a in zip(self.target.chains, self.accpro):
-        acc_agreement += a.GetACCAgreementFromChain(c, dssp_assigned=True)
+        if a != None:
+          acc_agreement += a.GetACCAgreementFromChain(c, dssp_assigned=True)
+        else:
+          acc_agreement += list([float("NaN")] * len(c.residues))
       self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)
@@ -508,18 +517,26 @@ class Scores:
       dist_const_data["num_constraints"] = list()
 
       for c,d in zip(self.target.chains, self.dc):
-        entity_view = self.target.CreateEmptyView()
-        entity_view.AddChain(c, mol.INCLUDE_ALL)
+        if d != None:
+          entity_view = self.target.CreateEmptyView()
+          entity_view.AddChain(c, mol.INCLUDE_ALL)
+          chain_data = d.GetScoresWithData(entity_view)
+          dist_const_data["disco"] += chain_data["scores"]
+          dist_const_data["counts"] += chain_data["counts"]
+          dist_const_data["avg_num_clusters"] += chain_data["avg_num_clusters"]
+          dist_const_data["avg_max_seqsim"] += chain_data["avg_max_seqsim"]
+          dist_const_data["avg_max_seqid"] += chain_data["avg_max_seqid"]
+          dist_const_data["avg_variance"] += chain_data["avg_variance"]
+          dist_const_data["num_constraints"] += chain_data["num_constraints"]
+        else:
+          dist_const_data["disco"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["counts"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_num_clusters"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_max_seqsim"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_max_seqid"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_variance"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["num_constraints"] += list([float("NaN")] * len(c.residues))
 
-        chain_data = d.GetScoresWithData(entity_view)
-        dist_const_data["disco"] += chain_data["scores"]
-        dist_const_data["counts"] += chain_data["counts"]
-        dist_const_data["avg_num_clusters"] += chain_data["avg_num_clusters"]
-        dist_const_data["avg_max_seqsim"] += chain_data["avg_max_seqsim"]
-        dist_const_data["avg_max_seqid"] += chain_data["avg_max_seqid"]
-        dist_const_data["avg_variance"] += chain_data["avg_variance"]
-        dist_const_data["num_constraints"] += chain_data["num_constraints"]
- 
       self.data["dist_const"] = dist_const_data
       self.data["avg_dist_const"] = self.GetAverage(dist_const_data["disco"])   
     else:   
