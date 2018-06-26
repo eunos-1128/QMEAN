@@ -690,8 +690,13 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   std::ifstream in_stream(filename.c_str(), std::ios::binary);
   if(!in_stream){
     throw std::runtime_error("Could not open file " + filename);
-  }  
+  } 
 
+  // number of bytes of the whole file
+  // this will be relevant to determine how many constraints there are to load
+  in_stream.seekg (0, in_stream.end);
+  long int total_num_bytes = in_stream.tellg();
+  in_stream.seekg (0, in_stream.beg); 
 
   // the variables to load
   char cvalue;
@@ -730,12 +735,22 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   loaded_container->constraint_infos_ = 
   ost::TriMatrix<ConstraintInfo*>(loaded_container->seqres_.GetLength(), NULL);
   
-  // we just read and read until nothing comes anymore...
+  // estimate how many bytes there are per constraint
+  long int constraint_num_bytes = 2 * sizeof(uint16_t); // the indices i,j 
+  constraint_num_bytes += cvalue_size; // max_seqid
+  constraint_num_bytes += fvalue_size; // variance
+  constraint_num_bytes += ivalue_size; // num clusters
+  constraint_num_bytes += cvalue_size; // max_seqsim
+  constraint_num_bytes += loaded_container->num_bins_; // the actual constraint
+
   uint16_t i;
   uint16_t j;
   std::vector<uint8_t> loaded_vec(loaded_container->num_bins_, 0);
 
-  while(!in_stream.eof()) {
+  // always check whether there are enough bytes to read for one more constraint
+  while(in_stream.good() && 
+        in_stream.tellg() + constraint_num_bytes <= total_num_bytes) {
+
     in_stream.read(reinterpret_cast<char*>(&i), sizeof(uint16_t));
     in_stream.read(reinterpret_cast<char*>(&j), sizeof(uint16_t));
     
@@ -745,7 +760,6 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
     constraint_info->max_seqsim = static_cast<Real>(cvalue) * Real(0.01);
     in_stream.read(reinterpret_cast<char*>(&cvalue), cvalue_size);
     constraint_info->max_seqid = static_cast<Real>(cvalue) * Real(0.01);
-
     in_stream.read(reinterpret_cast<char*>(&fvalue), fvalue_size);
     constraint_info->variance = fvalue;
     in_stream.read(reinterpret_cast<char*>(&ivalue), ivalue_size);
@@ -758,11 +772,13 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
     for(uint k = 0; k < loaded_container->num_bins_; ++k) {
       constraint_info->constraint[k] = loaded_vec[k] * 0.004;
     }
+
     loaded_container->constraint_infos_.Set(i,j,constraint_info);
   }
 
   return loaded_container;
 }
+
 
 void DisCoContainer::AddData(const ost::seq::AlignmentHandle& aln,
                              const geom::Vec3List& positions,
@@ -1000,7 +1016,8 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
                               std::vector<Real>& avg_num_clusters,
                               std::vector<Real>& avg_max_seqsim,
                               std::vector<Real>& avg_max_seqid,
-                              std::vector<Real>& avg_variance) const {
+                              std::vector<Real>& avg_variance,
+                              std::vector<uint>& num_constraints) const {
 
   // ATTENTION PLEASE
   // THERES A LOT OF CODE DUPLICATION TO THE OTHER FILLDATA FUNCTION
@@ -1032,23 +1049,21 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
   std::vector<Real> relevant_avg_max_seqsim(num_pos, 0.0);
   std::vector<Real> relevant_avg_max_seqid(num_pos, 0.0);
   std::vector<Real> relevant_avg_variance(num_pos, 0.0);
+  std::vector<uint> relevant_num_constraints(num_pos, 0);
 
   Real squared_dist_cutoff = dist_cutoff_ * dist_cutoff_;
 
   for(uint i = 0; i < num_pos; ++i) {
     for(uint j = i + 1; j < num_pos; ++j) {
-      Real d = geom::Length2(ca_positions[i] - ca_positions[j]);
-      if(d < squared_dist_cutoff) {
-        
-        ConstraintInfo* constraint_info = 
-        constraint_infos_.Get(seqres_indices[i], seqres_indices[j]);
-
-        if(constraint_info != NULL) {
-
+      ConstraintInfo* constraint_info = 
+      constraint_infos_.Get(seqres_indices[i], seqres_indices[j]);
+      if(constraint_info != NULL) {
+        ++relevant_num_constraints[i];
+        ++relevant_num_constraints[j];
+        Real d = geom::Length2(ca_positions[i] - ca_positions[j]);
+        if(d < squared_dist_cutoff) {
           const std::vector<Real>& constraint = constraint_info->constraint;
-
           d = std::sqrt(d);
-
           // we perform a linear interpolation
           uint bin_lower = static_cast<uint>(d / bin_size_);
           uint bin_upper = bin_lower + 1; 
@@ -1056,7 +1071,6 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
           Real w_two = Real(1.0) - w_one;
           Real score = w_one * constraint[bin_lower] + 
                        w_two * constraint[bin_upper];
-
           relevant_scores[i] += score;
           relevant_scores[j] += score;
           relevant_counts[i] += 1;
@@ -1081,6 +1095,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
   avg_max_seqsim.assign(res_list_size, 0.0);
   avg_max_seqid.assign(res_list_size, 0.0);
   avg_variance.assign(res_list_size, 0.0);
+  num_constraints.assign(res_list_size, 0);
 
   for(uint i = 0; i < num_pos; ++i) {
     if(relevant_counts[i] > 0) {
@@ -1094,6 +1109,7 @@ void DisCoContainer::FillData(const ost::mol::EntityView& view,
                                            relevant_counts[i];      
       avg_variance[res_list_indices[i]] = relevant_avg_variance[i] /
                                           relevant_counts[i];
+      num_constraints[res_list_indices[i]] = relevant_num_constraints[i];
     }
   }
 }
@@ -1145,3 +1161,4 @@ void DisCoContainer::ClearConstraints() {
 }
 
 } // ns
+

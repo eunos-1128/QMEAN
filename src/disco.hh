@@ -60,8 +60,10 @@ public:
                 std::vector<Real>& avg_num_clusters,
                 std::vector<Real>& avg_max_seqsim,
                 std::vector<Real>& avg_max_seqid,
-                std::vector<Real>& avg_variance) const;
+                std::vector<Real>& avg_variance,
+                std::vector<uint>& num_observed_constraints) const;
 
+  ost::seq::SequenceHandle GetSeqres() const { return seqres_; }
 
   Real GetDistCutoff() const { return dist_cutoff_; }
 

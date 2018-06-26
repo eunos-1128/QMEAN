@@ -173,7 +173,7 @@ constraints extracted from templates homologous to the target structure.
 
                         * scores: The DisCo scores
                         * counts: The number of other residues within 15 A in 
-                          the *view*
+                          the *view* with a valid constraint.
                         * avg_num_clusters: Average number of clusters observed
                                             in all the constraints this residue
                                             is involved in.
@@ -188,6 +188,11 @@ constraints extracted from templates homologous to the target structure.
                         * avg_variance:  Average variance of the observed 
                                          distances in all the constraints this
                                          residue is involved in.
+                        * num_constraints: Total number of constraints that are 
+                                           present for this residue.
+                                           Independent from the
+                                           inclusion radius that affects 
+                                           *counts*.
 
 
     :rtype:             :class:`dict` with :class:`str` as keys and 
@@ -196,6 +201,11 @@ constraints extracted from templates homologous to the target structure.
     :raises:            :class:`RuntimeError` if there is more than one chain or
                         when any of the residues has a residue number / one 
                         letter that is inconsistent with the internal SEQRES.
+
+
+  .. method:: GetSeqres()
+
+    Getter for the SEQRES that has been set at initialization
 
   .. method:: GetDistCutoff()
 

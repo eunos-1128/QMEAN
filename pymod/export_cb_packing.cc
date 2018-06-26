@@ -16,7 +16,7 @@ Real GetEnergy(CBPackingPotentialPtr p, ost::conop::AminoAcid aa, int count) { r
 Real GetEnergyResEnv(CBPackingPotentialPtr p, ost::mol::ResidueView& target, ost::mol::EntityView& env) { return p->GetEnergy(target, env); }
 Real GetEnergyRes(CBPackingPotentialPtr p, ost::mol::ResidueView& target) { return p->GetEnergy(target); }
 
-list WrapGetEnergies(CBPackingPotentialPtr p, ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize){
+list WrapGetEnergies(CBPackingPotentialPtr p, ost::mol::EntityView& target, ost::mol::EntityView& env){
   std::vector<Real> energies = p->GetEnergies(target, env);
   list ret_list = VecToList<Real>(energies);
   return ret_list;
