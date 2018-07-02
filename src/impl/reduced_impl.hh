@@ -58,6 +58,21 @@ public:
   int sequence_sep;
   Real sigma;
 
+  inline bool operator == (const ReducedOpts& opts) const {
+    return lower_cutoff == opts.lower_cutoff && 
+           upper_cutoff == opts.upper_cutoff &&
+           num_angle_bins == opts.num_angle_bins && 
+           num_dihedral_bins == opts.num_dihedral_bins &&
+           num_dist_bins == opts.num_dist_bins && 
+           sequence_sep == opts.sequence_sep &&
+           sigma == opts.sigma;
+  }
+
+  inline bool operator != (const ReducedOpts& opts) const {
+    return !(*this == opts);
+  }
+
+
 
   template <typename DS>
   void Serialize(DS& ds)
