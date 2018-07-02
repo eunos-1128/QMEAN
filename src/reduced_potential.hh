@@ -44,6 +44,8 @@ public:
 
   impl::ReducedOpts GetOpts() const { return opts_; }
 
+  ReducedEnergies* Data() { return &energies_; }
+
   template <typename DS>
   void Serialize(DS& ds){
     ds & opts_;

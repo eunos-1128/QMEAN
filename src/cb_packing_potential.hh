@@ -44,6 +44,8 @@ public:
 
   impl::CBPackingOpts GetOpts() const { return opts_; }
 
+  CBPackingEnergies* Data() { return &energies_; } 
+
   template <typename DS>
   void Serialize(DS& ds){
     ds & opts_;

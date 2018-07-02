@@ -49,6 +49,8 @@ public:
 
   impl::InteractionOpts GetOpts() const { return opts_; }
 
+  InteractionEnergies* Data() { return &energies_; }
+
   template <typename DS>
   void Serialize(DS& ds){
     ds & energies_;

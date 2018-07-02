@@ -42,6 +42,8 @@ public:
 
   impl::HBondOpts GetOpts() const { return opts_; }
 
+  HBondEnergies* Data() { return &energies_; }
+
   template <typename DS>
   void Serialize(DS& ds){
     ds & opts_;

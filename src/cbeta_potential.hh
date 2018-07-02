@@ -48,6 +48,8 @@ public:
 
   impl::CBetaOpts GetOpts() const { return opts_; }
 
+  CBetaEnergies* Data() { return &energies_; }
+
   template <typename DS>
   void Serialize(DS& ds){
     ds & energies_;

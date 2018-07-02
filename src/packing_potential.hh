@@ -45,6 +45,8 @@ public:
 
   impl::PackingOpts GetOpts() const { return opts_; }
 
+  PackingEnergies* Data() { return &energies_; }
+
   template <typename DS>
   void Serialize(DS& ds){
     ds & opts_;
