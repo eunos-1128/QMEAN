@@ -245,4 +245,34 @@ void TorsionPotential::Fill(TorsionStatisticPtr stat, const String& reference_st
   }
 }
 
+
+TorsionEnergies* TorsionPotential::Data(std::vector<String>& residue_names){
+
+  if(residue_names.size()!=3){
+    std::stringstream ss;
+    ss<<"requires 3 residue names, only ";
+    ss<<residue_names.size();
+    ss<<" provided.";
+    throw std::runtime_error(ss.str());
+  }
+
+  String group_id=this->FindStat(residue_names);
+
+  if(group_id == "") {
+    String err = "Could not find Torsionenergies for provided residue names!";
+    throw std::runtime_error(err);
+  }
+
+  std::map<String, TorsionEnergies>::iterator it = energies_.find(group_id);
+
+  if(it == energies_.end()) {
+    String err = "Could not find Torsionenergies for provided residue names!";
+    throw std::runtime_error(err);
+  }
+
+  TorsionEnergies* ptr = &(it->second);
+
+  return ptr;
+}
+
 }

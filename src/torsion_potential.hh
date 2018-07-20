@@ -39,6 +39,8 @@ public:
 
   impl::TorsionOpts GetOpts() const { return opts_; }
 
+  TorsionEnergies* Data(std::vector<String>& residue_names);
+
   template <typename DS>
   void Serialize(DS& ds){
 
