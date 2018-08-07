@@ -3,8 +3,8 @@ Container Classes
 
 .. currentmodule:: qmean
 
-The containers simplify the usage of the statistics/potentials. Espe-
-cially if their numbers grow. They are implemented to show a python
+The containers simplify the usage of the statistics/potentials. 
+Especially if their numbers grow. They are implemented to show a python
 dictionary like behaviour and are capable of saving and loading their
 content from/to disk. Note that there is a clear separation of types.
 Only statistic objects can be added to a statistic container. The same
