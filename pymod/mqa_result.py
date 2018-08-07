@@ -35,18 +35,26 @@ References:
 Description of columns:
 
   chain         Chainname as written in the PDB file
+
   rindex        Zero-base index of residue in the chain
+
   rnum          Residue number as written in the PDB file
+
   rname         Residue three-letter-code, e.g. ARG
 
-  all_atom      Normalized all-atom potential energy of the residue calculated from the
-                short-range statistical potentials.
+  counts        Number of other residues within 15 Angstrom, where CA-Carbon 
+                defines residue position.
 
-  cbeta         Normalized cbeta potential energy of the residue calculated from the
-                short-range statistical potentials.
+  packing       Normalized local packing potential energy of the residue.
 
-  solvation     Normalized solvation potential energy of the residue calculated from
-                the short-range statistical potentials.
+  cb_packing    Local CB packing potential energy 
+
+
+  interaction   Normalized local all-atom potential energy of the residue.
+
+  cbeta         Normalized local cbeta potential energy of the residue.
+
+  reduced       Normalized local reduced potential energy of the residue.
 
   torsion       Torsion energy of the residue
 
@@ -60,15 +68,14 @@ Description of columns:
   acc_agreement Agreement score of burial status predicted by accpro, with the
                 the observed burial status in the structure (DSSP).
 
+  clash         Simple clash score based on summed VdW radii
+
   dist_const    Score predicting correctness of pairwise residue distances in the model.
                 Distance constraints are obtained from distances between residue pairs
                 in homologous templates.
 
   QMEAN         Predicted local quality. A value describing the expected local
-                similarity to the target structure with a range of [0,1]. 
-
-  QMEANDisCo    Predicted local quality by combining QMEAN, dist_const and sequence 
-                based features using a random forest. The range remains [0,1].  
+                similarity to the target structure with a range of [0,1].  
 '''
 
 
@@ -374,8 +381,9 @@ class LocalResult:
 
     lscores=Table(['chain', 'rindex', 'rnum', 'rname', 'counts', 'packing', 
                    'cb_packing', 'interaction', 'cbeta', 'reduced', 'torsion', 
-                   'ss_agreement', 'acc_agreement', 'clash', 'dist_const', 'QMEAN'],
-                   'siisffffffffffff')
+                   'exposed', 'ss_agreement', 'acc_agreement', 'clash', 
+                   'dist_const', 'QMEAN'],
+                   'siisfffffffffffff')
 
     for i, res in enumerate(model.residues):
       lscores.AddRow({'chain' : res.chain.name,
@@ -389,6 +397,7 @@ class LocalResult:
                       'cbeta' : data['cbeta'][i],
                       'reduced' : data['reduced'][i],
                       'torsion' : data['torsion'][i],
+                      'exposed' : data['exposed'][i],
                       'ss_agreement' : data['ss_agreement'][i],
                       'acc_agreement' : data['acc_agreement'][i],
                       'clash' : data['clash'][i],

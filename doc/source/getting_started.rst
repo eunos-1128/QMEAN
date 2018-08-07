@@ -29,21 +29,11 @@ installed. Please follow the instructions on
 `openstructure.org <http://www.openstructure.org/>`_ to compile from source. 
 Do not use the precompiled libraries to avoid inconsistencies in architecture 
 and used libraries (e.g. boost). Once you successfully compiled OpenStructure,
-you need following software installed, with a correctly set system path.
-
-* `DSSP <http://swift.cmbi.ru.nl/gv/dssp/>`_ 
-
-In case you want to use QMEANBrane, you also need:
-
-* `NACCESS <http://www.bioinf.manchester.ac.uk/naccess/>`_
-* `MSMS <http://mgltools.scripps.edu/packages/MSMS/>`_
-
-Additionally, following Python modules are required:
+you need following python modules:
 
 * numpy
 * scipy
 * matplotlib
-* sklearn
 
 To compile QMEAN, change to the QMEAN directory and run CMake
 by giving it the path to your openstructure installation 

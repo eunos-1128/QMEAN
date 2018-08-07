@@ -1,8 +1,5 @@
 from qmean import *
 from qmean import conf
-from ost.bindings import dssp
-from ost.bindings import msms
-from ost.bindings import naccess
 from ost import mol
 import pickle
 from predicted_sequence_features import AlignChainToSEQRES
@@ -10,7 +7,7 @@ from predicted_sequence_features import AlignChainToSEQRES
 
 class MembraneScores:
 
-  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, assign_dssp=True, norm=True, mem_param=None,membrane_query = None, interface_query=None):
+  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, norm=True, mem_param=None, membrane_query = None, interface_query=None):
     self.data=dict()
 
     #set structural data
@@ -75,16 +72,7 @@ class MembraneScores:
 
     else:
       if self.mem_param == None:
-        membrane_finder_input = self.target.Select('ele!=H')
-        surf = msms.CalculateSurface(membrane_finder_input,radius=1.4)[0]
-        naccess.CalculateSurfaceArea(membrane_finder_input)
-        asa = list()
-        for a in membrane_finder_input.atoms:
-          if a.HasProp('asaAtom'):
-            asa.append(a.GetFloatProp('asaAtom'))
-          else:
-            asa.append(0.0)
-        self.mem_param = FindMembrane(mol.CreateEntityFromView(membrane_finder_input,False), surf, asa)
+        self.mem_param = mol.alg.FindMembrane(self.target)
 
       membrane_axis = geom.Normalize(self.mem_param.membrane_axis)
       membrane_center = self.mem_param.pos
@@ -124,8 +112,8 @@ class MembraneScores:
     if target.handle != environment.handle:
       raise RuntimeError('Target and Environment must be views of the same handle!')
 
-    if assign_dssp:
-      dssp.AssignDSSP(target, extract_burial_status=True)      
+    mol.alg.AssignSecStruct(target)
+    mol.alg.Accessibility(target, algorithm=mol.alg.DSSP)
 
     #if there is a membrane, check whether the structure has a helical or extended
     #transmembranepart
@@ -495,7 +483,7 @@ class MembraneScores:
     if self.psipred!=None:
       ss_agreement = []
       for c,p in zip(self.target.chains,self.psipred):
-        ss_agreement += p.GetSSAgreementFromChain(c, dssp_assigned=True)
+        ss_agreement += p.GetSSAgreementFromChain(c)
       self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
@@ -508,7 +496,7 @@ class MembraneScores:
     if self.accpro!=None:
       acc_agreement = []
       for c,a in zip(self.target.chains,self.accpro):
-        acc_agreement += a.GetACCAgreementFromChain(c,dssp_assigned=True)
+        acc_agreement += a.GetACCAgreementFromChain(c)
       self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)

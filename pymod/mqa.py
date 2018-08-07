@@ -1,6 +1,5 @@
 from qmean import *
 from ost import mol
-from ost.bindings import dssp
 from predicted_sequence_features import AlignChainToSEQRES
 
 
@@ -63,15 +62,8 @@ class Scores:
     #low quality, the secondary structure assignment of DSSP srews up. In case of membrane proteins,
     #the secondary structure of the membrane spanning region is either set to helical or extended, 
     #depending on the majority of residues.
-
-    # THIS HAS TO BE CHANGED BACK TO OST INTERNAL IMPLEMENTATION AS SOON AS 
-    # THE ACCESSIBILITY IS NOT SEGFAULTING ANYMORE
-    dssp.AssignDSSP(environment, extract_burial_status=True)
-
-    # stupid mapping... will go away as well
-    for r in self.environment.residues:
-      if r.HasProp("relative_solvent_accessibility"):
-        r.SetFloatProp("asaRel", r.GetFloatProp("relative_solvent_accessibility"))
+    mol.alg.AssignSecStruct(environment)
+    mol.alg.Accessibility(environment, algorithm=mol.alg.DSSP)
 
     dssp_ss = list()
 

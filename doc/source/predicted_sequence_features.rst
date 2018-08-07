@@ -142,28 +142,20 @@ Secondary Structure Agreement
     :raises:            :class:`RuntimeError` If **chain** is not None and
                         its sequence cannot be aligned to the internal SEQRES
 
-  .. method:: GetSSAgreementFromChain(chain,[dssp_assigned=False])
+  .. method:: GetSSAgreementFromChain(chain)
 
     :param chain:       A chain view with sequence consistent to the internal
                         SEQRES.
 
-    :param dssp_assigned: Flag, whether secondary structure has already been
-                          assigned using dssp. dssp if set to False, dssp
-                          runs over the chain, this requires the dssp
-                          executable to be in the path.
-
     :type chain:        :class:`ost.mol.ChainView` / :class:`ost.mol.ChainHandle`
-    :type dssp_assigned: :class:`bool`
 
     :returns:           SSAgreement values mapped onto the structure by
                         aligning the structure to the internal SEQRES.
 
     :rtype:             :class:`list` of :class:`float`
 
-    :raises:            :class:`RuntimeError` if dssp has to be 
-                        assigned but the executable cannot be found in the
-                        path or when the chain cannot be aligned
-                        to the SEQRES.           
+    :raises:            :class:`RuntimeError` if the chain cannot be aligned
+                        to the internal SEQRES.           
 
 
 
@@ -209,28 +201,20 @@ Solvent Accessibility Agreement
                         its sequence cannot be aligned to the internal SEQRES
 
 
-  .. method:: GetACCAgreementFromChain(chain,[dssp_assigned=False])
+  .. method:: GetACCAgreementFromChain(chain)
 
     :param chain:       A chain view with sequence consistent to the internal
                         SEQRES.
 
-    :param dssp_assigned: Flag, whether solvent accessibility has already
-                          been assigned using dssp. dssp if set to False,
-                          dssp runs over the chain, this requires the dssp
-                          executable to be in the path.
-
     :type chain:        :class:`ost.mol.ChainView` / :class:`ost.mol.ChainHandle`
-    :type dssp_assigned: :class:`bool`
 
     :returns:           ACCAgreement values mapped onto the structure by
                         aligning the structure to the internal SEQRES.
 
     :rtype:             :class:`list` of :class:`float`
 
-    :raises:            :class:`RuntimeError` if dssp has to be 
-                        assigned but the executable cannot be found in the
-                        path or when the chain cannot be aligned
-                        to the SEQRES.           
+    :raises:            :class:`RuntimeError` if the chain cannot be aligned
+                        to the internal SEQRES.           
 
 
 

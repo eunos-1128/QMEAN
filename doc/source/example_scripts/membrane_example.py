@@ -1,13 +1,5 @@
-#import the required modules
-#Please note, that you need to have executables
-#of dssp, msms and naccess in your path!!!
 import os
 from ost import mol
-from qmean import FindMembrane
-from ost.bindings import dssp
-from ost.bindings import msms
-from ost.bindings import naccess
-
 
 #We use a GPCR example... 
 #Directly after loading we strip of all hydrogens 
@@ -15,23 +7,7 @@ from ost.bindings import naccess
 gpcr_path = os.path.join("example_data","3EML.pdb")
 gpcr = io.LoadPDB(gpcr_path).Select("peptide=true and ele!=H")
 
-#The FindMembrane function requires an entity as an input!
-gpcr = mol.CreateEntityFromView(gpcr,False)
-
-#We need some data produced by msms and naccess
-surf = msms.CalculateSurface(gpcr,radius=1.4)[0]
-naccess.CalculateSurfaceArea(gpcr)
-asa = list()
-for a in gpcr.atoms:
-  if a.HasProp('asaAtom'):
-    asa.append(a.GetFloatProp('asaAtom'))
-  else:
-    asa.append(0.0)
-
-#The FindMembrane function sets up the whole implicit
-#solvation model and returns the estimated membrane parameters
-mem_param = FindMembrane(gpcr, surf, asa)
-
+mem_param = mol.alg.FindMembrane(gpcr)
 
 #The goal of this example is to create a structure only consisting
 #of transmembrane residues. We take the CA position of every residue
@@ -60,3 +36,4 @@ gpcr_path = os.path.join("example_out","gpcr.pdb")
 gpcr_transmem_path = os.path.join("example_out","gpcr_transmembrane_part.pdb")
 io.SavePDB(gpcr,gpcr_path)
 io.SavePDB(transmembrane_part, gpcr_transmem_path)
+

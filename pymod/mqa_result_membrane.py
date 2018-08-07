@@ -4,7 +4,6 @@ from qmean import score_calculator
 from qmean import reference_set
 from qmean import conf
 from ost.table import *
-from ost.bindings import dssp
 import os
 import matplotlib.pyplot as plt
 
@@ -243,8 +242,7 @@ class LocalMembraneResult:
 
 def AssessMembraneModelQuality(model, mem_param = None, output_dir='.', 
                                plots=True, table_format='ost', psipred=None, 
-                               accpro=None, dssp_path=None, 
-                               assign_bfactors=True, settings=None):
+                               accpro=None, assign_bfactors=True, settings=None):
 
   if settings == None:
     settings = conf.MembraneSettings()
@@ -252,12 +250,9 @@ def AssessMembraneModelQuality(model, mem_param = None, output_dir='.',
   membrane_query = None
   interface_query = None
 
-
   #hack, that torsion handles get assigned
   processor = conop.HeuristicProcessor(connect=False,peptide_bonds=False,assign_torsions=True)
   processor.Process(model.handle,False)
-
-  dssp.AssignDSSP(model, extract_burial_status=True,dssp_bin=dssp_path)
 
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -265,7 +260,10 @@ def AssessMembraneModelQuality(model, mem_param = None, output_dir='.',
   if plots:
     if not os.path.exists(plot_dir):
       os.makedirs(plot_dir)
-  local_result=LocalMembraneResult.Create(model,settings,assign_bfactors,membrane_query,interface_query,mem_param,psipred=psipred,accpro=accpro)
+  local_result=LocalMembraneResult.Create(model,settings,assign_bfactors,
+                                          membrane_query, interface_query,
+                                          mem_param, psipred=psipred, 
+                                          accpro=accpro)
   tab=local_result.score_table
   tab.Save(os.path.join(output_dir,'local_scores.txt'),format=table_format)
   if plots:

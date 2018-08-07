@@ -21,8 +21,8 @@ Assessing the quality for soluble protein models
 .. method:: AssessModelQuality(model,[output_dir='.', plots=True,  \
                                local_scores=True, global_scores=True \
                                table_format="ost",psipred=None, dc=None \
-                               accpro=None, dssp_path=None, \
-                               assign_bfactors=True, settings=None])
+                               accpro=None, assign_bfactors=True, \
+                               settings=None])
 
   :param model:         The model you want to assess
   :param output_dir:    The directory where to write the output 
@@ -46,8 +46,6 @@ Assessing the quality for soluble protein models
 
   :param dc:            Thats what let QMEAN evolve to QMEANDisCo. 
                                             
-  :param dssp_path:     Path to your dssp executable, expects an executable to
-                        be in your PATH if set to None
 
   :param assign_bfactors: If set to True, the local scores get assigned to the
                           **model** as bfactors
@@ -88,7 +86,6 @@ Assessing the quality for soluble protein models
                         thereof (one element per chain)
   :type dc:             :class:`DisCoContainer` or a :class:`list`
                         thereof
-  :type dssp_path:      :class:`str`
   :type assign_bfactors: :class:`bool`
 
 
@@ -102,8 +99,7 @@ Assessing the quality for membrane protein models
                                        output_dir='.', \
                                        plots = True, table_format='ost', \
                                        psipred=None, accpro=None, dc=None\
-                                       dssp_path=None, assign_bfactors=True,
-                                       settings=None])
+                                       assign_bfactors=True, settings=None])
 
   :param model:         The model you want to assess
 
@@ -139,9 +135,6 @@ Assessing the quality for membrane protein models
   :param dc:            Information from homologous templates with known 
                         structure, QMEAN will run through without it being set but for optimal performance this variable must be set. 
 
-  :param dssp_path:     Path to your dssp executable, expects an executable to
-                        be in your PATH if set to None
-
   :param assign_bfactors: If set to True, the local scores get assigned to the
                           **model** as bfactors
 
@@ -175,7 +168,6 @@ Assessing the quality for membrane protein models
   :type table_format:   :class:`str`
   :type psipred:        :class:`PSIPREDHandler`
   :type accpro:         :class:`ACCPROHandler`
-  :type dssp_path:      :class:`str`
   :type assign_bfactors: :class:`bool`
 
 
