@@ -7,7 +7,8 @@ from predicted_sequence_features import AlignChainToSEQRES
 
 class MembraneScores:
 
-  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, accpro=None, norm=True, mem_param=None, membrane_query = None, interface_query=None):
+  def __init__(self, target, environment, potential_container_soluble, potential_container_membrane, smooth_std=None, psipred=None, 
+               accpro=None, norm=True, mem_param=None, membrane_query = None, interface_query=None):
     self.data=dict()
 
     #set structural data

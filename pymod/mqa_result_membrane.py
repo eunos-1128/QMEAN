@@ -153,7 +153,8 @@ class LocalMembraneResult:
     scorer_membrane = score_calculator.LocalScorer.Load(settings.local_scorer_membrane)
     scorer_soluble = score_calculator.LocalScorer.Load(settings.local_scorer_soluble)
     local_mqa = mqa_membrane.MembraneScores(model, model, pot_soluble, pot_membrane, smooth_std=5.0, psipred=psipred, 
-                            accpro=accpro, membrane_query = membrane_query, interface_query = interface_query,mem_param = mem_param)
+                                            accpro=accpro, membrane_query = membrane_query, 
+                                            interface_query = interface_query,mem_param = mem_param)
 
 
     features = ['interaction','cbeta','packing','torsion','exposed']
