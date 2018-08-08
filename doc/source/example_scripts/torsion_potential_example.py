@@ -45,5 +45,5 @@ pot = TorsionPotential.Create(stat)
 
 
 #Save the statistic and potential objects
-stat.Save("torsion_statistic.dat")
-pot.Save("torsion_pot.dat")
+stat.Save(os.path.join("example_out", "torsion_statistic.dat"))
+pot.Save(os.path.join("example_out", "torsion_pot.dat"))
