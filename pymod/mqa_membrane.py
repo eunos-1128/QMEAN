@@ -457,7 +457,7 @@ class MembraneScores:
     exposed=list()
     for r in self.target.residues:
       try:
-        exposed.append(r.GetFloatProp('relative_solvent_accessibility'))
+        exposed.append(r.GetFloatProp('asaRel'))
       except:
         exposed.append(float('NaN'))
     if self.smooth_std!=None:
