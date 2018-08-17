@@ -32,3 +32,4 @@ wrap_qmean.cc
 
 pymod(NAME qmean OUTPUT_DIR qmean CPP ${QMEAN_PYMOD} PY ${QMEAN_MODULES}
       PREFIX "")
+

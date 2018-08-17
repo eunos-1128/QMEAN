@@ -70,7 +70,7 @@ impl/hbond_impl.cc
 )
 
 
-module(NAME qmean SOURCES ${QMEAN_SOURCES}
-       HEADERS reduced_impl.hh IN_DIR impl ${QMEAN_HEADERS} 
-       HEADER_OUTPUT_DIR qmean PREFIX ""
+module(NAME qmean SOURCES ${QMEAN_SOURCES} HEADERS ${QMEAN_HEADERS} 
+       PREFIX "" HEADER_OUTPUT_DIR qmean 
        LINK ${OST_LIBRARIES} ${BOOST_LIBRARIES})
+
