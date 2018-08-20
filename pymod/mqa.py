@@ -91,8 +91,6 @@ class Scores:
 
     dssp_ss = list()
 
-    # THATS WHAT WE ACTUALLY WANT!!! MAKE SURE TO ALSO ADD ACCESSIBILITY HERE!
-    #mol.alg.AssignSecStruct(environment) # assigns dssp style sec struct
     for r in target.residues:
       if r.GetSecStructure().IsHelical():
         dssp_ss+='H'
