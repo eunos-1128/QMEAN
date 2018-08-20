@@ -1,37 +1,23 @@
-(1) QMEAN:
+QMEAN:
 ----------
-Copyright (C) 2008-2010 by the QMEAN Developers
 
-This version of the QMEAN scoring function (the "Software") has been developed by
-Pascal Benkert Marco Biasini and Gabriel Studer under the guidance of Torsten 
-Schwede (the "Developers") at the University of Basel and the 
-Swiss Institute of Bioinformatics (SIB).
+Copyright (C) 2018 University of Basel and the Authors.
+Authors: Gabriel Studer, Pascal Benkert, Marco Biasini
 
-The Developers allow researchers to run, display, copy and modify Software 
-on the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+copies of the Software, and to permit persons to whom the Software is 
+furnished to do so, subject to the following conditions:
 
-1. The Software remains at your Institution and is not published, distributed, or 
-otherwise transferred or made available to other than Institution employees and 
-students involved in research under your supervision.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-2. If You wish to obtain Software for any commercial purposes, including fee-based 
-service projects, You will need to contact torsten.schwede@unibas.ch.
-
-3. You retain in Software and any modifications to Software, the copyright, trademark, 
-or other notices pertaining to Software as provided by Developers.
-
-4. You provide the Developers with feedback on the use of the Software in your research. 
-The Developers are permitted to use any information You provide in making changes
-to the Software. All bug reports and technical questions shall be sent to pascal.benkert@unibas.ch.
-
-5. You agree to acknowledge the contribution Developers and Software make to your research, 
-and cite appropriate references about the Software in your publications.
-
-6. Any risk associated with using the Software at your institution is with You and your 
-Institution. Software is experimental in nature and is made available as a research 
-courtesy "AS IS," without obligation by Developers to provide accompanying services or support.
-
-7. THE DEVELOPERS EXPRESSLY DISCLAIM ANY AND ALL WARRANTIES REGARDING THE SOFTWARE, 
-WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES PERTAINING TO 
-NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
-
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+THE SOFTWARE.
