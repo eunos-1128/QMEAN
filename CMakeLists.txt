@@ -57,7 +57,7 @@ find_package(Eigen 3.0.0 REQUIRED)
 
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-set(_BOOST_MIN_VERSION 1.58)
+set(_BOOST_MIN_VERSION 1.53)
 find_package(Boost ${_BOOST_MIN_VERSION} 
              COMPONENTS filesystem iostreams system REQUIRED)
 set(BOOST_LIBRARIES ${Boost_LIBRARIES})
