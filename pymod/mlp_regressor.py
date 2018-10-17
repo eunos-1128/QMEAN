@@ -41,59 +41,52 @@ class Regressor:
 
         self.n_layers = np.fromfile(fh, dtype=np.int32, count=1)[0]
         self.layer_sizes = np.fromfile(fh, dtype=np.int32, count=self.n_layers)
+
+        if self.layer_sizes[-1] != 1:
+            raise RuntimeError("Expect a layer size of 1 for last (output) "\
+                               "layer.")
+
         self.activation_functions = np.fromfile(fh, dtype=np.int32, 
                                                 count=self.n_layers)
 
-        self.mean = np.fromfile(fh, dtype=np.float32, count=self.layer_sizes[0])
-        self.var = np.fromfile(fh, dtype=np.float32, count=self.layer_sizes[0])
+        mean = np.fromfile(fh, dtype=np.float32, count=self.layer_sizes[0])
+        self.mean = np.asmatrix(mean.reshape(self.layer_sizes[0], 1))
+        std = np.fromfile(fh, dtype=np.float32, count=self.layer_sizes[0])
+        self.one_over_std = np.asmatrix(std.reshape(self.layer_sizes[0], 1))
+        for i in range(self.layer_sizes[0]):
+            self.one_over_std[(i, 0)] = 1.0 / self.one_over_std[(i, 0)]
+
 
         self.bias = list()
         for i in range(1, self.n_layers):
-            self.bias.append(np.fromfile(fh, dtype=np.float32, 
-                             count=self.layer_sizes[i]))
+            val = np.fromfile(fh, dtype=np.float32, count = self.layer_sizes[i])
+            self.bias.append(np.asmatrix(val.reshape(self.layer_sizes[i], 1)))
+
 
         self.weights = list()
         for i in range(1, self.n_layers):
-            self.weights.append(list())
-            for j in range(self.layer_sizes[i]):
-                self.weights[-1].append(np.fromfile(fh, dtype=np.float32, 
-                                        count=self.layer_sizes[i - 1]))
+            val = np.fromfile(fh, dtype=np.float32, 
+                              count=self.layer_sizes[i-1] * self.layer_sizes[i])
+            self.weights.append(np.asmatrix(val).reshape(self.layer_sizes[i],
+                                                         self.layer_sizes[i-1]))
 
         fh.close()
 
 
     def Predict(self, features):
 
-        if len(features) != self.layer_sizes[0]:
-            raise ValueError("Number of input features must be consistent with \
-                              nodes in input layer (%i)"%(self.layer_sizes[0]))
-
-        # transform input features
-        prev_layer = np.ndarray(self.layer_sizes[0])
-        for i in range(self.layer_sizes[0]):
-            prev_layer[i] = (features[i] - self.mean[i]) / self.var[i]
-
-        self._Activate(prev_layer, 0)
-
+        features = np.matrix(features).reshape(self.layer_sizes[0], 1)
+        layer = np.multiply(features - self.mean, self.one_over_std)
+        self._Activate(layer, 0)
         for i in range(1, self.n_layers):
+            layer = self.weights[i-1] * layer + self.bias[i-1]
+            self._Activate(layer, i)
 
-            # assign the bias
-            current_layer = self.bias[i-1].copy()
-
-            # do the perceptron magic
-            for j in range(len(current_layer)):              
-                current_layer[j] += prev_layer.dot(self.weights[i-1][j]) 
-        
-            # apply the activation function
-            self._Activate(current_layer, i)
-
-            # this layer is done, lets proceed one layer
-            prev_layer = current_layer
-
-        return prev_layer[0]
+        return layer[(0,0)]
 
 
     def _Activate(self, layer, layer_idx):
+
         if self.activation_functions[layer_idx] == 0:
             return
         elif self.activation_functions[layer_idx] == 1:
@@ -101,3 +94,4 @@ class Regressor:
         else:
             raise RuntimeError("Observed invalid activation function in \
                                 loaded regressor!")
+
