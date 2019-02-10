@@ -878,7 +878,6 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
   PairwiseSequenceSimilarities(full_aln, sub, pairwise_seqsim, seqsim_to_target);
 
   // calculate the sequence identities to the target
-  // (required for random forest features)
   // Please note, that we have no O(n2) here, only O(n)
   // a special function is therefore not implemented
   std::vector<Real> seqid_to_target(aln_.size(), 0.0);
