@@ -5,6 +5,10 @@ DisCo
 
 DisCo evaluates the consistency of pairwise CA distances with an ensemble of 
 constraints extracted from templates homologous to the target structure.
+The following script gives some idea how the underlying object, the
+:class:`DisCoContainer`, works.
+
+.. literalinclude:: example_scripts/disco_example.py
 
 
 .. class:: DisCoContainer(seqres)
@@ -21,7 +25,8 @@ constraints extracted from templates homologous to the target structure.
 
     Saves constraints to disk. So it will throw an error if you never called 
     the CalculateConstraints function on this DisCoContainer instance. 
-    All added positions are lost in this process.
+    All added positions are lost in this process, only the actual constraints
+    are saved.
 
     :param filename:    Name of file to be generated
     :type filename:     :class:`str`
@@ -34,7 +39,7 @@ constraints extracted from templates homologous to the target structure.
 
     Loads a :class:`DisCoContainer` from disk and returns a readonly 
     :class:`DisCoContainer`. No positions can be added to this container 
-    anymore.
+    anymore, it just contains the actual constraints
 
     :param filename:    File to be loaded
     :type filename:     :class:`str` 
@@ -54,7 +59,7 @@ constraints extracted from templates homologous to the target structure.
                         the ATOMSEQ or the SEQRES of the added template. This 
                         only influences the sequence based clustering.
 
-    :param positions:   The CA positions of that templates
+    :param positions:   The CA positions of that template
 
     :param pos_seqres_mapping: A mapping to relate the *positions* to the internal
                                SEQRES. For every element in *positions* you must 
@@ -69,7 +74,8 @@ constraints extracted from templates homologous to the target structure.
                         :class:`DisCoContainer` from disk (the thing is readonly)
                         or when an element in *pos_seqres* contains an invalid
                         residue number or when the first sequence in *aln* does
-                        not exactly match the internal SEQRES.
+                        not exactly match the internal SEQRES (gaps are removed
+                        for this check).
 
 
   .. method:: CalculateConstraints([dist_cutoff=15.0, gamma=70.0, \
@@ -78,7 +84,19 @@ constraints extracted from templates homologous to the target structure.
     Calculates the constraints using all the template information you already 
     added. The final constraints are lookup tables with equidistant bins as given
     by *bin_size*. They not only cover the range defined *dist_cutoff*, but add 
-    3 Angstrom to allow the constraint to fade out.
+    3 Angstroms to allow the constraint to fade out.
+
+    In principle constraint generation follows following steps (check out the paper
+    for detailled information):
+
+    * Generate one big multiple sequence alignment from all templates with the
+      ost.seq.alg.MergePairwiseAlignments functionality using *seqres* as reference
+    * Calculate all pairwise sequence similarities using BLOSUM62 (normalized =>
+      (avg_seq_sim - min(BLOSUM62)) / (max(BLOSUM62) - min(BLOSUM62)))
+    * Hierarchical clustering based on sequence similarities
+    * Construct the distance constraints for every residue pair (*i*,*j*) as described
+      in the paper, no constraint (*i*,*j*) will be generated if no pairwise distance 
+      between (*i*,*j*) < *dist_cutoff* is observed in any template
 
     :param dist_cutoff: All pairwise distance constraints up to this cutoff will be
                         used.
@@ -207,10 +225,15 @@ constraints extracted from templates homologous to the target structure.
 
     Getter for the SEQRES that has been set at initialization
 
+    :rtype:             :class:`ost.seq.SequenceHandle`
+
+
   .. method:: GetDistCutoff()
 
     Getter for the *dist_cutoff* parameter you passed at the CalculateConstraints 
     function
+
+    :rtype:             :class:`float`
 
 
   .. method:: GetGamma()
@@ -218,22 +241,29 @@ constraints extracted from templates homologous to the target structure.
     Getter for the *gamma* parameter you passed at the CalculateConstraints 
     function
 
+    :rtype:             :class:`float`
+
 
   .. method:: GetSeqSimClusteringCutoff()
 
     Getter for the *seqsim_clustering_cutoff* parameter you passed at the 
     CalculateConstraints function
 
+    :rtype:             :class:`float`
+
 
   .. method:: GetBinSize()
 
     Getter for the *bin_size* parameter you passed at the CalculateConstraints 
     function
+
+    :rtype:             :class:`float`
     
+
   .. method:: GetNumBins()
 
     The number of bins for the lookup table of each constraint. Its basically 
     the result of ceil((GetDistCutoff() + 3.0) / GetBinSize())
 
-
+    :rtype:             :class:`int`
 
