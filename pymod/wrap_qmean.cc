@@ -24,7 +24,6 @@ void export_CBeta();
 void export_SSAgreement();
 void export_Base();
 void export_SphericalSmoother();
-void export_Membrane();
 void export_CBPacking();
 void export_HBond();
 void export_disco();
@@ -42,7 +41,6 @@ BOOST_PYTHON_MODULE(_qmean)
   export_CBeta();
   export_SSAgreement();
   export_SphericalSmoother();
-  export_Membrane();
   export_CBPacking();
   export_HBond();
   export_disco();

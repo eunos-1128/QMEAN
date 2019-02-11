@@ -105,8 +105,8 @@ Assessing the quality for membrane protein models
 
   :param mem_param:     Parameters defining the membrane planes, from which
                         the core/interface membrane residues can be identified.
-                        When set to None, the FindMembrane function will
-                        be called with **model** as input.
+                        When set to None, the ost.mol.alg.FindMembrane function 
+                        will be called with **model** as input.
 
   :param output_dir:    The directory where to write the output
 
@@ -162,7 +162,7 @@ Assessing the quality for membrane protein models
 
 
   :type model:          :class:`ost.mol.EntityHandle` / :class:`ost.mol.EntityView`
-  :type mem_param:      :class:`FindMemParam`
+  :type mem_param:      :class:`ost.mol.alg.FindMemParam`
   :type output_dir:     :class:`str`
   :type plots:          :class:`bool`
   :type table_format:   :class:`str`

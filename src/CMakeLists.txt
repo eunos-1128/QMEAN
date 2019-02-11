@@ -24,8 +24,6 @@ hbond_potential.hh
 ss_agreement.hh
 spherical_smoother.hh
 vec_list_magic.hh
-membrane.hh
-levenberg_marquardt.h
 disco.hh
 clash_score.hh
 impl/reduced_impl.hh
@@ -57,7 +55,6 @@ hbond_statistics.cc
 hbond_potential.cc
 ss_agreement.cc
 spherical_smoother.cc
-membrane.cc
 disco.cc
 clash_score.cc
 impl/reduced_impl.cc
