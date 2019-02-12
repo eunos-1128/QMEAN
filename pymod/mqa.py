@@ -43,6 +43,8 @@ class Scores:
         self.psipred = psipred
       else:
         self.psipred = len(self.target.chains) * [psipred]
+    else:
+      self.psipred = None
 
     if accpro != None:
       if isinstance(accpro,list):
@@ -51,6 +53,8 @@ class Scores:
         self.accpro = accpro
       else:
         self.accpro = len(self.target.chains) * [accpro]
+    else:
+      self.accpro = None
 
     if dc != None:  
       if isinstance(dc,list):
