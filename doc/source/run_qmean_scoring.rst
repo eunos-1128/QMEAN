@@ -18,6 +18,12 @@ Assessing the quality for soluble protein models
                               settings=conf.SwissmodelSettings(), \
                               use_nn = True])
 
+  The QMEANScorer allows to calculate various scores from the QMEAN 
+  universe. They can be accessed through the class attributes that 
+  follow a lazy evaluation scheme, i.e. scores are only calculated
+  if they're actually requested. 
+  Plotting functions are also available to visualize the calculated scores.
+
   :param model:         The model you want to assess. Only the selection
                         returned when calling model.Select("peptide=true")
                         will be used for evaluation. Residue numbers are used
