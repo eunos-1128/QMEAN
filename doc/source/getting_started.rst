@@ -35,13 +35,15 @@ you need following python modules:
 * scipy
 * matplotlib
 
-To compile QMEAN, change to the QMEAN directory and run CMake
-by giving it the path to your openstructure installation 
+To compile QMEAN, change to the QMEAN directory, make a build directory and run 
+CMake in there by giving it the path to your openstructure installation 
 (you might also want to activate the optimize flag):
 
   .. code-block:: bash
-    
-    cmake . -DOST_ROOT=path_to_ost/stage -DOPTIMIZE=1
+
+    mkdir build
+    cd build
+    cmake ../ -DOST_ROOT=path_to_ost/stage -DOPTIMIZE=1
 
 If your working on a Debian based system it might be possible,
 that the Python libraries are not found. Before you start googling
@@ -63,14 +65,10 @@ Python. To enable this in your current shell type:
 
   .. code-block:: bash
 
-    export PYTHONPATH=path_to_qmean/stage/lib64/qmean:$PYTHONPATH
+    export PYTHONPATH=path_to_qmean_build_dir/stage/lib64/python2.7/site-packages:$PYTHONPATH
     
 
 Alternatively you can also add this command to .bashrc, so it is
 set permanently.
 If everything is setup correctly, you can test the setup in an
 interactive ost session by typing: from qmean import *
-
-
-
-
