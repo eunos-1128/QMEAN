@@ -1,10 +1,6 @@
-.. QMEAN documentation master file, created by
-   sphinx-quickstart on Tue Jan 26 14:50:17 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to QMEAN's documentation!
-=================================
+QMEAN Documentation
+===================
 
 Contents:
 
@@ -21,14 +17,4 @@ Contents:
    Combining Scores <score_combination>
    Membrane Detection <membrane>
    Distance Constraints (DisCo) <disco>
-
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   License <license>

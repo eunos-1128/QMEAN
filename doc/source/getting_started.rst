@@ -14,14 +14,14 @@ lying in doc/source/example_scripts in the following way in your shell:
 
     ost script_name.py
 
-Building this Documentation
+Build this Documentation
 --------------------------------------------------------------------------------
 
 The documentation is based on Sphinx, so you need Python with Sphinx installed,
 as well as Make. In the doc directory is a Makefile, which you can fire
 with "make html". The documentation should then magically appear in doc/build.
 
-Building QMEAN
+Build QMEAN
 --------------------------------------------------------------------------------
 
 QMEAN requires the OpenStructure framework with all its depencies to be 
