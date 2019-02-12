@@ -5,12 +5,8 @@ Run the QMEAN Scoring Functions
 .. currentmodule:: qmean
 
 
-There are two conventient functions applying the quality assessment to
-protein structure models. One general function and another one specifically
-tailered towards the quality assessment of membrane protein models as
-described in QMEANBrane.
-
-
+We distinguish between classical QMEAN to assess quality of soluble protein 
+models and the membrane specific version QMEANBrane. 
 
 Assessing the quality for soluble protein models
 --------------------------------------------------------------------------------
@@ -18,39 +14,28 @@ Assessing the quality for soluble protein models
 
 .. literalinclude:: example_scripts/assess_model_quality_example.py
 
-.. method:: AssessModelQuality(model,[output_dir='.', plots=True,  \
-                               local_scores=True, global_scores=True \
-                               table_format="ost",psipred=None, dc=None \
-                               accpro=None, assign_bfactors=True, \
-                               settings=None])
+.. class:: QMEANScorer(model,[psipred=None, accpro=None, dc=None, \
+                              settings=conf.SwissmodelSettings(), \
+                              use_nn = True])
 
-  :param model:         The model you want to assess
-  :param output_dir:    The directory where to write the output 
-  :param plots:         Whether you want to create plots of the output
-  :param local_scores:  Whether you want to generate local scores
-  :param global_scores: Whether you want to generate global scores
-  :param table_format:  The format you want to save the results in, can
-                        be one of
-
-                        * "ost"     ost-specific format (human_readable)
-                        * "csv"     comma separated values (human readable)
-                        * "pickle"  pickled byte stream (binary)
-                        * "html"    HTML table
-
+  :param model:         The model you want to assess. Only the selection
+                        returned when calling model.Select("peptide=true")
+                        will be used for evaluation. Residue numbers are used
+                        to refer to local per residue scores. To avoid 
+                        confusion, we only allow the numeric component to be 
+                        present. An error will be thrown if there's an insertion
+                        code.
   :param psipred:       Information from the PSIPRED prediction, QMEAN will run
                         through without it being set but for optimal performance
                         this variable must be set.
   :param accpro:        Information from the ACCPRO prediction, QMEAN will run
                         through without it being set but for optimal performance
                         this variable must be set.
+  :param dc:            Thats what let QMEAN evolve to QMEANDisCo, QMEAN will
+                        run through without it being set but for optimal
+                        performance this variable must be set.
 
-  :param dc:            Thats what let QMEAN evolve to QMEANDisCo. 
-                                            
-
-  :param assign_bfactors: If set to True, the local scores get assigned to the
-                          **model** as bfactors
-
-  :param settings:      Object that contains paths to potentials etc.
+  :param settings:      Contains paths to potentials etc.
                         If set to None, an object with default paths is
                         generated with: settings=conf.SwissmodelSettings().
                         Must have following members:
@@ -58,35 +43,128 @@ Assessing the quality for soluble protein models
                           * local_potentials: path to :class:`PotentialContainer` 
                                               applied for local scoring.
                           * global_potentials: path to :class:`PotentialContainer`
-                                               applied for global scoring
-                          * local_scorer: path to :class:`LocalScorer` to 
-                                          linearly combine per-residue scores
+                                               applied for global scoring 
+                                               (qmean4 / qmean6)
+                          * local_scorer: path to :class:`NNScorer` to estimate
+                                          local scores. this is used if *use_nn*
+                                          is set to True (default)
+                          * linear_local_scorer: path to :class:`LocalScorer` to 
+                                                 linearly combine per-residue scores.
+                                                 this is only used if *use_nn* is set
+                                                 to False. 
                           * global_scorer: path to :class:`GlobalScorer` to 
-                                           linearly combine global scores
+                                           linearly combine global scores 
+                                           (qmean4 / qmean6)
                           * reference_tab: path to :class:`ost.Table` containing
-                                           reference data.
-                          * disco_tree: path to random forest, that predicts
-                                        local QMEANDisCo scores. The tree is pickled
-                                        and dependent on the version of sklearn
-                                        it has been generated with. It's highly 
-                                        recommended to retrain it on your system using
-                                        the data provided in 
-                                        <path_to_qmean>/data/qmean/scorer/tree_generation
+                                           reference data. To calculate the global
+                                           Z-scores 
+  :param use_nn:        Whether to use neural network to calculate local scores. 
+                        This is the prefered way of doing things. Set this to False
+                        if you want to fallback to the good old times when linear
+                        combinations were sufficient.
 
 
   :type model:          :class:`ost.mol.EntityHandle` / :class:`ost.mol.EntityView`
-  :type output_dir:     :class:`str`
-  :type plots:          :class:`bool`
-  :type local_scores:   :class:`bool`
-  :type global_scores:  :class:`bool`
-  :type table_format:   :class:`str`
   :type psipred:        :class:`PSIPREDHandler` or a :class:`list` 
                         thereof (one element per chain)
   :type accpro:         :class:`ACCPROHandler` or a :class:`list`
                         thereof (one element per chain)
-  :type dc:             :class:`DisCoContainer` or a :class:`list`
-                        thereof
-  :type assign_bfactors: :class:`bool`
+  :type dc:             :class:`DisCoContainer` or a :class:`list` thereof
+  :type settings:       Custom object with specified member
+  :type use_nn:         :class:`bool`
+
+
+  .. method:: QMEAN4SliderPlot(out_path)
+
+    Dumps the slider plot representing the QMEAN4 Z-Score and the Z-Scores of
+    its components.
+
+    :param out_path:    Path to dump the plot, must have image format file
+                        ending, e.g. awesome_plot.png
+    :type out_path:     :class:`str`
+
+
+  .. method:: QMEAN6SliderPlot(out_path)
+
+    Dumps the slider plot representing the QMEAN6 Z-Score and the Z-Scores of
+    its components.
+
+    :param out_path:    Path to dump the plot, must have image format file
+                        ending, e.g. awesome_plot.png
+    :type out_path:     :class:`str`
+
+
+  .. method:: QMEAN4ReferencePlot(out_path)
+
+    Dumps the reference plot with the QMEAN4 score of the *model* compared to
+    the QMEAN4 scores of a large set of non-redundant X-ray structures.
+
+    :param out_path:    Path to dump the plot, must have image format file
+                        ending, e.g. awesome_plot.png
+    :type out_path:     :class:`str`
+
+
+  .. method:: QMEAN6ReferencePlot(out_path)
+
+    Dumps the reference plot with the QMEAN6 score of the *model* compared to
+    the QMEAN6 scores of a large set of non-redundant X-ray structures.
+
+    :param out_path:    Path to dump the plot, must have image format file
+                        ending, e.g. awesome_plot.png
+    :type out_path:     :class:`str`
+
+
+  .. method:: LocalProfilePlot(out_path, [chain=None])
+
+    Dumps a line plot representing local per residue scores.
+
+    :param out_path:    Path to dump the plot, must have image format file
+                        ending, e.g. awesome_plot.png
+    :param chain:       If None, the local score profiles of all chains end up
+                        in the same plot. You can specify a chain name to 
+                        only plot the score profile of one chain.
+    :type out_path:     :class:`str`
+    :type chain:        :class:`str`
+
+
+  .. attribute:: qmean4_score
+
+    The QMEAN4 score of *model*, i.e. four statistical potentials linearly combined 
+    to get a global score.
+
+  .. attribute:: qmean4_z_score
+
+    The QMEAN4 Z-score of *model*, i.e. its QMEAN4 score compared to what one would 
+    expect from high resolution X-ray structures
+
+  .. attribute:: qmean6_score
+
+    The QMEAN6 score of *model*, i.e. four statistical potentials and two agreement
+    terms linearly combined to get a global score.
+
+  .. attribute:: qmean6_z_score
+
+    The QMEAN6 Z-score of *model*, i.e. its QMEAN6 score compared to what one would 
+    expect from high resolution X-ray structures
+
+  .. attribute:: local_scores
+
+    Predicted local per residue scores of *model*. This attribute returns a 
+    dictionary with keys being the chain names in *model* and values another
+    set of dictionaries. The key in those per chain dictionaries are the 
+    residue numbers as integers (please note, that insertion codes throw an
+    error if present in *model*) and values the predicted local score.
+
+  .. attribute:: avg_local_score
+
+    The average of the the local scores
+
+
+
+
+
+
+
 
 
 

@@ -19,5 +19,5 @@ from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from qmean.score_calculator import LocalScorer
 from qmean.score_calculator import GlobalScorer
-from qmean.mqa_result import AssessModelQuality
 from qmean.mqa_result_membrane import AssessMembraneModelQuality
+from qmean.mqa_result import QMEANScorer
