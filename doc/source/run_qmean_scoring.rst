@@ -148,6 +148,21 @@ Assessing the quality for soluble protein models
     :type chain:        :class:`str`
 
 
+  .. method:: AssignModelBFactors()
+
+    Assigns local scores to the bfactors of the internally scored model 
+    (the result of *model*.Select("peptide=true")). This operation happens in 
+    place, so *model* is directly modified.
+
+
+  .. method:: GetModel()
+
+    Returns the internally scored model (the result of 
+    *model*.Select("peptide=true"))
+
+    :rtype:             :class:`ost.mol.EntityView` 
+
+
   .. attribute:: qmean4_score
 
     The QMEAN4 score of *model*, i.e. four statistical potentials linearly combined 

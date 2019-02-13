@@ -19,6 +19,7 @@ from qmean import reference_set
 from qmean import conf
 from qmean import PotentialContainer
 from ost.table import Table
+from ost import mol
 import matplotlib.pyplot as plt
 
 class QMEANScorer(object):
@@ -335,3 +336,16 @@ class QMEANScorer(object):
       plt.plot(res_num, scores, color = colors[0], linewidth = 2.0) 
 
     plt.savefig(out_path)
+
+  def GetModel(self):
+    return self._model
+
+  def AssignModelBFactors(self):
+    for chain_name, data in self.local_scores.iteritems():
+      chain = self._model.FindChain(chain_name)
+      for num, score in data.iteritems():
+        res = chain.FindResidue(mol.ResNum(num))
+        for a in res.atoms:
+          a.b_factor = score
+        
+    
