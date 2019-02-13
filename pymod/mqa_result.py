@@ -317,7 +317,7 @@ class QMEANScorer(object):
   def avg_local_score(self):
     if self._avg_local_score == None:
       self._avg_local_score = 0.0
-      for chain_name, residue_scores in self._local_scores.iteritems():
+      for chain_name, residue_scores in self.local_scores.iteritems():
         for rnum, s in residue_scores.iteritems():
           self._avg_local_score += s
       self._avg_local_score /= self._model.residue_count
