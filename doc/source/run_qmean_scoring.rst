@@ -173,6 +173,13 @@ Assessing the quality for soluble protein models
     The QMEAN4 Z-score of *model*, i.e. its QMEAN4 score compared to what one would 
     expect from high resolution X-ray structures
 
+  .. attribute:: qmean4_components
+
+    Dictionary containing scores that contribute to QMEAN4 in their normalized 
+    and Z-score version. Keys of the dictionary: ["interaction", "cbeta", 
+    "packing", "torsion", "interaction_zscore", "cbeta_zscore", 
+    "packing_zscore", "torsion_zscore"]
+
   .. attribute:: qmean6_score
 
     The QMEAN6 score of *model*, i.e. four statistical potentials and two agreement
@@ -182,6 +189,14 @@ Assessing the quality for soluble protein models
 
     The QMEAN6 Z-score of *model*, i.e. its QMEAN6 score compared to what one would 
     expect from high resolution X-ray structures
+
+  .. attribute:: qmean6_components
+
+    Dictionary containing scores that contribute to QMEAN6 in their normalized 
+    and Z-score version. Keys of the dictionary: ["interaction", "cbeta", 
+    "packing", "torsion", "ss_agreement", "acc_agreement", "interaction_zscore", 
+    "cbeta_zscore", "packing_zscore", "torsion_zscore", "ss_agreement_zscore", 
+    "acc_agreement_zscore"]
 
   .. attribute:: local_scores
 

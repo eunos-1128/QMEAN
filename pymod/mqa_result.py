@@ -135,6 +135,32 @@ class QMEANScorer(object):
       self._qmean4_z_score = s
     return self._qmean4_z_score
 
+  @property
+  def qmean4_components(self):
+    # lazy evaluation happens through _global_mqa
+    data = self.global_mqa.GetAVGData(['interaction','cbeta',
+                                       'packing','torsion'])
+
+    # not that lazy but let's hope that this function is not 
+    # called too often...
+    data["interaction_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('interaction', 
+                                                   self._model.residue_count, 
+                                                   data['interaction'])
+    data["cbeta_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('cbeta', 
+                                                   self._model.residue_count, 
+                                                   data['cbeta'])
+    data["packing_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('packing', 
+                                                   self._model.residue_count, 
+                                                   data['packing'])
+    data["torsion_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('torsion', 
+                                                   self._model.residue_count, 
+                                                   data['torsion'])
+    return data
+
 
   @property
   def qmean6_score(self):
@@ -157,6 +183,50 @@ class QMEANScorer(object):
                                       self.qmean6_score)
       self._qmean6_z_score = s
     return self._qmean6_z_score
+
+
+  @property
+  def qmean6_components(self):
+    # lazy evaluation happens through _global_mqa
+    data = self.global_mqa.GetAVGData(['interaction','cbeta', 'packing', 
+                                       'torsion', 'ss_agreement',
+                                       'acc_agreement'])
+
+    # not that lazy but let's hope that this function is not 
+    # called too often...
+    data["interaction_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('interaction', 
+                                                   self._model.residue_count, 
+                                                   data['interaction'])
+    data["cbeta_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('cbeta', 
+                                                   self._model.residue_count, 
+                                                   data['cbeta'])
+    data["packing_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('packing', 
+                                                   self._model.residue_count, 
+                                                   data['packing'])
+    data["torsion_zscore"] = \
+    self.classic_reference_set.ZScoreFromNormScore('torsion', 
+                                                   self._model.residue_count, 
+                                                   data['torsion'])
+    if data["ss_agreement"]:
+      data["ss_agreement_zscore"] = \
+      self.classic_reference_set.ZScoreFromNormScore('ss_agreement', 
+                                                     self._model.residue_count, 
+                                                     data['ss_agreement'])
+    else:
+      data["ss_agreement_zscore"] = float("NaN")
+
+    if data["acc_agreement"]:
+      data["acc_agreement_zscore"] = \
+      self.classic_reference_set.ZScoreFromNormScore('acc_agreement', 
+                                                     self._model.residue_count, 
+                                                     data['acc_agreement'])
+    else:
+      data["acc_agreement_zscore"] = float("NaN")
+
+    return data
 
 
   @property
