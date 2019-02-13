@@ -177,8 +177,8 @@ Assessing the quality for soluble protein models
 
     Dictionary containing scores that contribute to QMEAN4 in their normalized 
     and Z-score version. Keys of the dictionary: ["interaction", "cbeta", 
-    "packing", "torsion", "interaction_zscore", "cbeta_zscore", 
-    "packing_zscore", "torsion_zscore"]
+    "packing", "torsion", "interaction_z_score", "cbeta_z_score", 
+    "packing_z_score", "torsion_z_score"]
 
   .. attribute:: qmean6_score
 
@@ -194,9 +194,9 @@ Assessing the quality for soluble protein models
 
     Dictionary containing scores that contribute to QMEAN6 in their normalized 
     and Z-score version. Keys of the dictionary: ["interaction", "cbeta", 
-    "packing", "torsion", "ss_agreement", "acc_agreement", "interaction_zscore", 
-    "cbeta_zscore", "packing_zscore", "torsion_zscore", "ss_agreement_zscore", 
-    "acc_agreement_zscore"]
+    "packing", "torsion", "ss_agreement", "acc_agreement", 
+    "interaction_z_score", "cbeta_z_score", "packing_z_score", "torsion_z_score", 
+    "ss_agreement_z_score", "acc_agreement_z_score"]
 
   .. attribute:: local_scores
 

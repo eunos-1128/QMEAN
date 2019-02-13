@@ -143,19 +143,19 @@ class QMEANScorer(object):
 
     # not that lazy but let's hope that this function is not 
     # called too often...
-    data["interaction_zscore"] = \
+    data["interaction_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('interaction', 
                                                    self._model.residue_count, 
                                                    data['interaction'])
-    data["cbeta_zscore"] = \
+    data["cbeta_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('cbeta', 
                                                    self._model.residue_count, 
                                                    data['cbeta'])
-    data["packing_zscore"] = \
+    data["packing_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('packing', 
                                                    self._model.residue_count, 
                                                    data['packing'])
-    data["torsion_zscore"] = \
+    data["torsion_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('torsion', 
                                                    self._model.residue_count, 
                                                    data['torsion'])
@@ -194,37 +194,37 @@ class QMEANScorer(object):
 
     # not that lazy but let's hope that this function is not 
     # called too often...
-    data["interaction_zscore"] = \
+    data["interaction_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('interaction', 
                                                    self._model.residue_count, 
                                                    data['interaction'])
-    data["cbeta_zscore"] = \
+    data["cbeta_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('cbeta', 
                                                    self._model.residue_count, 
                                                    data['cbeta'])
-    data["packing_zscore"] = \
+    data["packing_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('packing', 
                                                    self._model.residue_count, 
                                                    data['packing'])
-    data["torsion_zscore"] = \
+    data["torsion_z_score"] = \
     self.classic_reference_set.ZScoreFromNormScore('torsion', 
                                                    self._model.residue_count, 
                                                    data['torsion'])
     if data["ss_agreement"]:
-      data["ss_agreement_zscore"] = \
+      data["ss_agreement_z_score"] = \
       self.classic_reference_set.ZScoreFromNormScore('ss_agreement', 
                                                      self._model.residue_count, 
                                                      data['ss_agreement'])
     else:
-      data["ss_agreement_zscore"] = float("NaN")
+      data["ss_agreement_z_score"] = float("NaN")
 
     if data["acc_agreement"]:
-      data["acc_agreement_zscore"] = \
+      data["acc_agreement_z_score"] = \
       self.classic_reference_set.ZScoreFromNormScore('acc_agreement', 
                                                      self._model.residue_count, 
                                                      data['acc_agreement'])
     else:
-      data["acc_agreement_zscore"] = float("NaN")
+      data["acc_agreement_z_score"] = float("NaN")
 
     return data
 
