@@ -324,6 +324,11 @@ class QMEANScorer(object):
     return self._avg_local_score
 
 
+  @property
+  def model(self):
+    return self._model
+
+
   def QMEAN4SliderPlot(self, out_path):
     data = self.global_mqa.GetAVGData(['interaction','cbeta',
                                        'packing','torsion'])
@@ -407,8 +412,6 @@ class QMEANScorer(object):
 
     plt.savefig(out_path)
 
-  def GetModel(self):
-    return self._model
 
   def AssignModelBFactors(self):
     for chain_name, data in self.local_scores.iteritems():

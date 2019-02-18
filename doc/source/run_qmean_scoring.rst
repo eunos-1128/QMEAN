@@ -155,9 +155,9 @@ Assessing the quality for soluble protein models
     place, so *model* is directly modified.
 
 
-  .. method:: GetModel()
+  .. method:: model
 
-    Returns the internally scored model (the result of 
+    The internally scored model (the result of 
     *model*.Select("peptide=true"))
 
     :rtype:             :class:`ost.mol.EntityView` 
