@@ -20,7 +20,176 @@ from qmean import reference_set
 from qmean import conf
 from ost.table import *
 import os
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+
+def GenerateEnergyGapPlot(energy, path):
+    num_bins = 100
+    min_energy = -514128.625
+    max_energy = 0.0
+
+    membrane_hist = [
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+        0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 4, 0, 1, 0, 0, 1, 0, 2, 1, 0, 1, 0, 0, 1,
+        1, 0, 0, 2, 0, 0, 1, 0, 1, 4, 1, 6, 4, 2, 5, 3, 4, 3, 7, 3, 6, 10, 5,
+        4, 5, 5, 1, 2, 3, 2, 4, 6, 7, 2, 10, 8, 10, 4, 14, 6, 7, 5, 5, 4, 0, 0,
+        0, 0, 0, 0, 0, 1
+    ]
+
+    soluble_hist = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 2, 15, 179
+    ]
+
+    bin_edges = [
+        -514128.625, -508987.33875, -503846.0525, -498704.76625, -493563.48,
+        -488422.19375, -483280.9075, -478139.62125, -472998.335, -467857.04875,
+        -462715.7625, -457574.47625, -452433.19, -447291.90375, -442150.6175,
+        -437009.33125, -431868.045, -426726.75875, -421585.4725, -416444.18625,
+        -411302.9, -406161.61375, -401020.3275, -395879.04125, -390737.755,
+        -385596.46875, -380455.1825, -375313.89625, -370172.61, -365031.32375,
+        -359890.0375, -354748.75125, -349607.465, -344466.17875, -339324.8925,
+        -334183.60625, -329042.32, -323901.03375, -318759.7475, -313618.46125,
+        -308477.175, -303335.88875, -298194.6025, -293053.31625, -287912.03,
+        -282770.74375, -277629.4575, -272488.17125, -267346.885, -262205.59875,
+        -257064.3125, -251923.02625, -246781.74, -241640.45375, -236499.1675,
+        -231357.88125, -226216.595, -221075.30875, -215934.0225, -210792.73625,
+        -205651.45, -200510.16375, -195368.8775, -190227.59125, -185086.305,
+        -179945.01875, -174803.7325, -169662.44625, -164521.16, -159379.87375,
+        -154238.5875, -149097.30125, -143956.015, -138814.72875, -133673.4425,
+        -128532.15625, -123390.87, -118249.58375, -113108.2975, -107967.01125,
+        -102825.725, -97684.43875, -92543.1525, -87401.86625, -82260.58,
+        -77119.29375, -71978.0075, -66836.72125, -61695.435, -56554.14875,
+        -51412.8625, -46271.57625, -41130.29, -35989.00375, -30847.7175,
+        -25706.43125, -20565.145, -15423.85875, -10282.5725, -5141.28625
+    ]
+
+    bar_width = (max_energy - min_energy) / num_bins
+
+    fig, ax = plt.subplots()
+
+    ax.bar(
+        bin_edges,
+        membrane_hist,
+        width=bar_width,
+        color=(204.0 / 255, 0, 0),
+        label='Membrane Structures',
+        zorder=1)
+    ax.bar(
+        bin_edges,
+        soluble_hist,
+        width=bar_width,
+        color=(0.0, 147.0 / 255, 217.0 / 255),
+        label='Soluble Structures',
+        zorder=1)
+
+    if energy < -250000:
+        if energy < -510000:
+            text = "Pseudo energy of %.f has been\n capped at %.f" % (
+                energy, -510000.00)
+            # for the usage later on
+            energy = -510000
+            ax.text(
+                -480000,
+                80,
+                text,
+                color='black',
+                bbox=dict(
+                    facecolor="#ffb2b2",
+                    alpha=1.0,
+                    edgecolor='black',
+                    boxstyle='round,pad=1',
+                    fill=True),
+                zorder=3)
+
+        ax.plot([energy, energy], [0.0, 150], 'black', linewidth=4.0, zorder=2)
+    else:
+        ax.plot(
+            [energy, energy], [0.0, 177.9], 'black', linewidth=4.0, zorder=2)
+
+    # Annotation for the model specific energy
+    text_coord = None
+    c_style = None
+    if energy < -250000:
+        text_coord = (energy + 10000, 120)
+        c_style = "arc3,rad=-0.3"
+    else:
+        text_coord = (energy - 100000, 120)
+        c_style = "arc3,rad=0.3"
+
+    ax.annotate(
+        'Your Model',
+        xy=(energy, 100),
+        xytext=text_coord,
+        fontsize='large',
+        arrowprops=dict(
+            arrowstyle="simple", fc="0.6", ec="none", connectionstyle=c_style))
+
+    # info box
+    if (energy < -30000):
+        text = "Pseudo energy output of membrane\n"
+        text += "locating algorithm. Your model\n"
+        text += "is within the expected range of\n"
+        text += "a transmembrane structure.\n"
+
+        ax.text(
+            -480000,
+            20,
+            text,
+            color='black',
+            bbox=dict(
+                facecolor="#b2d8b2",
+                alpha=1.0,
+                edgecolor='black',
+                boxstyle='round,pad=1'),
+            zorder=3)
+
+    else:
+        text = "Pseudo energy output of membrane\n"
+        text += "locating algorithm. Are you sure\n"
+        text += "that your model represents a\n"
+        text += "transmembrane structure?\n"
+        text += "It might be of very low quality or\n"
+        text += "of wrong quarternary state making\n"
+        text += "it difficult to locate the membrane!"
+
+        ax.text(
+            -480000,
+            20,
+            text,
+            color='black',
+            bbox=dict(
+                facecolor="#ffb2b2",
+                alpha=1.0,
+                edgecolor='black',
+                boxstyle='round,pad=1',
+                fill=True),
+            zorder=3)
+
+    # set limits, produce legends, axis description...
+    plt.xlim((min_energy, max_energy))
+    plt.legend(loc=2, frameon=False, fontsize='large')
+    plt.ylabel('Structures', fontsize='large')
+    plt.xlabel('Membrane Insertion Energy', fontsize='large')
+
+    xtick_positions = [-500000, -400000, -300000, -200000, -100000, 0]
+    xtick_labels = ['-500k', '-400k', '-300k', '-200k', '-100k', '0']
+
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.set_xticks(xtick_positions, xtick_labels)
+
+    fig.savefig(path)
+
+
+
 
 
 LSCORES_TABLE_HEADER='''\
@@ -65,7 +234,6 @@ Description of columns:
   QMEAN         Predicted local quality. A value describing the expected local
                 similarity to the target structure with a range of [0,1]. 
 '''
-
 
 class LocalMembraneResult:
   def __init__(self,model,data):
