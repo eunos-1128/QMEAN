@@ -20,8 +20,8 @@ Run the QMEAN Scoring Functions
 .. currentmodule:: qmean
 
 
-We distinguish between classical QMEAN to assess quality of soluble protein 
-models and the membrane specific version QMEANBrane. 
+We distinguish between assessment of soluble protein models and a membrane 
+specific version of QMEAN: QMEANBrane. 
 
 Assessing the quality for soluble protein models
 --------------------------------------------------------------------------------
@@ -62,23 +62,19 @@ Assessing the quality for soluble protein models
                         Must have following members:
  
                           * local_potentials: path to :class:`PotentialContainer` 
-                                              applied for local scoring.
+                            applied for local scoring.
                           * global_potentials: path to :class:`PotentialContainer`
-                                               applied for global scoring 
-                                               (qmean4 / qmean6)
+                            applied for global scoring (qmean4 / qmean6)
                           * local_scorer: path to :class:`NNScorer` to estimate
-                                          local scores. this is used if *use_nn*
-                                          is set to True (default)
+                            local scores. this is used if *use_nn* is set to 
+                            True (default)
                           * linear_local_scorer: path to :class:`LocalScorer` to 
-                                                 linearly combine per-residue scores.
-                                                 this is only used if *use_nn* is set
-                                                 to False. 
+                            linearly combine per-residue scores. This is only 
+                            used if *use_nn* is set to False. 
                           * global_scorer: path to :class:`GlobalScorer` to 
-                                           linearly combine global scores 
-                                           (qmean4 / qmean6)
+                            linearly combine global scores (qmean4 / qmean6)
                           * reference_tab: path to :class:`ost.Table` containing
-                                           reference data. To calculate the global
-                                           Z-scores 
+                            reference data. To calculate the global Z-scores. 
   :param use_nn:        Whether to use neural network to calculate local scores. 
                         This is the prefered way of doing things. Set this to False
                         if you want to fallback to the good old times when linear
@@ -155,7 +151,7 @@ Assessing the quality for soluble protein models
     place, so *model* is directly modified.
 
 
-  .. method:: model
+  .. attribute:: model
 
     The internally scored model (the result of 
     *model*.Select("peptide=true"))
@@ -261,9 +257,6 @@ Assessing the quality for membrane protein models
                         prediction won't be used for assessing the quality in
                         the transmembrane part, only in the soluble part.
 
-  :param dc:            Information from homologous templates with known 
-                        structure, QMEAN will run through without it being set but for optimal performance this variable must be set. 
-
   :param assign_bfactors: If set to True, the local scores get assigned to the
                           **model** as bfactors
 
@@ -273,21 +266,17 @@ Assessing the quality for membrane protein models
                         Must have following members:
  
                           * local_potentials_soluble: path to :class:`PotentialContainer` 
-                                              applied for soluble local scoring.
-                          * global_potentials_soluble: path to :class:`PotentialContainer`
-                                               applied for soluble global scoring
+                            applied for soluble local scoring.
                           * local_potentials_membrane: path to :class:`PotentialContainer` 
-                                              applied for local scoring in membrane and interface.
-                          * global_potentials_membrane: path to :class:`PotentialContainer`
-                                               applied for global scoring in membrane and interface.
+                            applied for local scoring in membrane and interface.
                           * local_scorer_soluble: path to :class:`LocalScorer` to 
-                                          linearly combine soluble per-residue scores
+                            linearly combine soluble per-residue scores
                           * local_scorer_membrane: path to :class:`LocalScorer` to 
-                                          linearly combine membrane and interface per-residue scores
+                            linearly combine membrane and interface per-residue scores
                           * global_scorer: path to :class:`GlobalScorer` to 
-                                           linearly combine soluble global scores
+                            linearly combine soluble global scores
                           * reference_tab: path to :class:`ost.Table` containing
-                                           soluble reference data.
+                            soluble reference data.
 
 
   :type model:          :class:`ost.mol.EntityHandle` / :class:`ost.mol.EntityView`
@@ -302,7 +291,7 @@ Assessing the quality for membrane protein models
 
 The following code is not necessarily related to the usage of 
 QMEAN/QMEANBrane but rather reproduces a plot based on data produced
-in the last script (Fig4 in QMEANBrane publication).
+in the last script (Fig. 4 in QMEANBrane publication).
 
 .. literalinclude:: example_scripts/reproduce_fig4_from_publication.py
 

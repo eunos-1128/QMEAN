@@ -18,10 +18,10 @@ Spherical Smoother
 
 .. currentmodule:: qmean
 
-Internally a structure specific graph like visitor pattern gets 
-generated at the smoother objects initialization. Every position gets 
-represented by a node. These nodes get connected to their neighbouring
-nodes with edges, that are directly associated with their distance 
+Internally, a structure specific graph like visitor pattern gets 
+generated at the smoother objects initialization. Every position is 
+represented by a node. These nodes are connected to their neighbouring
+nodes with edges that are directly associated with their distance 
 dependent weights. It is now possible to insert residue specific values in
 the nodes and evaluate the whole graph. This representation gives a
 speed advantage, if several scores have to be smoothed for the same

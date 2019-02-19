@@ -208,24 +208,19 @@ The following script gives some idea how the underlying object, the
                         * counts: The number of other residues within 15 A in 
                           the *view* with a valid constraint.
                         * avg_num_clusters: Average number of clusters observed
-                                            in all the constraints this residue
-                                            is involved in.
+                          in all the constraints this residue is involved in.
                         * avg_max_seqsim: Average of highest per cluster 
-                                          sequence similarity observed in all 
-                                          the constraints this residue is 
-                                          involved in.
+                          sequence similarity observed in all the constraints 
+                          this residue is involved in.
                         * avg_max_seqid: Average of highest per cluster 
-                                         sequence identity observed in all 
-                                         the constraints this residue is 
-                                         involved in.
-                        * avg_variance:  Average variance of the observed 
-                                         distances in all the constraints this
-                                         residue is involved in.
+                          sequence identity observed in all the constraints this 
+                          residue is involved in.
+                        * avg_variance: Average variance of the observed 
+                          distances in all the constraints this residue is 
+                          involved in.
                         * num_constraints: Total number of constraints that are 
-                                           present for this residue.
-                                           Independent from the
-                                           inclusion radius that affects 
-                                           *counts*.
+                          present for this residue. Independent from the
+                          inclusion radius that affects *counts*.
 
 
     :rtype:             :class:`dict` with :class:`str` as keys and 

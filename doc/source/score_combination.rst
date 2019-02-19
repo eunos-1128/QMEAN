@@ -40,9 +40,9 @@ usage of the ost table class.
 
   QMEAN can combine local scores in a linear manner. Due to amino acid specific
   biases, such linear combinations are generated for all 20 standard amino 
-  acids. Another problem are single values, that can be NaN. An example for that
+  acids. Another problem are single values that can be NaN. An example for that
   are the first and last two residues in a torsion potential due to invalid
-  dihedral angles. To solve this second problem, linear combinations get
+  dihedral angles. To solve this second problem, linear combinations are
   calculated for all possible combinations of the features. If a score
   of a particular residue with certain NaN scores has to be estimated,
   only the subset of single scores not being NaN are considered.
@@ -52,7 +52,7 @@ usage of the ost table class.
     Save down the scorer using the pickle functionality of Python
 
     :param filename:    The filename you want to dump the 
-                        :class:`LocalScorer` into
+                        :class:`LocalScorer` to
     :type filename:     :class:`str`
 
   .. method:: Load(filename)
@@ -126,7 +126,7 @@ usage of the ost table class.
   QMEAN can combine global scores in a linear manner, exactly the same way as
   local scores. A problem are single
   values, that can be NaN. To solve this problem, linear combinations
-  get calculated for all possible combinations of the features. If a score
+  are calculated for all possible combinations of the features. If a score
   of a particular structure with certain NaN scores has to be estimated,
   only the subset of single scores not being NaN are considered.
 

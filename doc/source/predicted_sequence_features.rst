@@ -189,7 +189,7 @@ Solvent Accessibility Agreement
   relate this prediction with a structure given consistent sequence.
 
   :param data:          Input data for the ACCPRO prediction. The 
-                        required information is SEQRES, and accessibility.
+                        required information is SEQRES and accessibility.
                         Must be a dictionary with the mentioned elements
                         as single strings with keys "seq", "acc".
                         The accessibility must be descrobed in the
