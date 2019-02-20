@@ -1,6 +1,7 @@
 from qmean import DisCoContainer
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 aln_files = ["example_data/1pvv.1.A.fasta", 
              "example_data/1v1v.1.A.fasta", 
@@ -83,7 +84,7 @@ rnum_j = 261
 c = dc.GetConstraint(rnum_i, rnum_j)
 x = np.linspace(0.0, len(c) * dc.GetBinSize(), len(c))
 plt.plot(x,c)
-plt.xlabel("dist")
+plt.xlabel("dist 58-261")
 plt.ylabel("score")
-plt.show()
+plt.savefig(os.path.join("example_out", "distance_constraint.png"))
 
