@@ -24,9 +24,8 @@ hbond_potential.hh
 ss_agreement.hh
 spherical_smoother.hh
 vec_list_magic.hh
-membrane.hh
-levenberg_marquardt.h
 disco.hh
+clash_score.hh
 impl/reduced_impl.hh
 impl/torsion_impl.hh
 impl/packing_impl.hh
@@ -56,8 +55,8 @@ hbond_statistics.cc
 hbond_potential.cc
 ss_agreement.cc
 spherical_smoother.cc
-membrane.cc
 disco.cc
+clash_score.cc
 impl/reduced_impl.cc
 impl/torsion_impl.cc
 impl/packing_impl.cc
@@ -68,7 +67,7 @@ impl/hbond_impl.cc
 )
 
 
-module(NAME qmean SOURCES ${QMEAN_SOURCES}
-       HEADERS reduced_impl.hh IN_DIR impl ${QMEAN_HEADERS} 
-       HEADER_OUTPUT_DIR qmean PREFIX ""
+module(NAME qmean SOURCES ${QMEAN_SOURCES} HEADERS ${QMEAN_HEADERS} 
+       PREFIX "" HEADER_OUTPUT_DIR qmean 
        LINK ${OST_LIBRARIES} ${BOOST_LIBRARIES})
+

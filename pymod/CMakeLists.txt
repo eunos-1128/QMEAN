@@ -10,6 +10,7 @@ set(QMEAN_MODULES
   crap_checker.py
   score_calculator.py
   reference_set.py
+  mlp_regressor.py
 )
 
 set(QMEAN_PYMOD
@@ -23,10 +24,11 @@ export_hbond.cc
 export_ss_agreement.cc
 export_base.cc
 export_spherical_smoother.cc
-export_membrane.cc
 export_disco.cc
+export_clash.cc
 wrap_qmean.cc
 )
 
 pymod(NAME qmean OUTPUT_DIR qmean CPP ${QMEAN_PYMOD} PY ${QMEAN_MODULES}
       PREFIX "")
+

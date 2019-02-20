@@ -1,7 +1,5 @@
-#Let's import the required module
 from qmean import PSIPREDHandler
-#we also need dssp, make sure an executable lies in your PATH!!
-from ost.bindings import dssp
+from ost import mol
 import os
 
 #let's define the psipred data for crambin
@@ -14,10 +12,10 @@ data["conf"] = "9657578887665410368988878977449676559978188898"
 handler = PSIPREDHandler(data)
 
 #let's load the crystal structure and assign the secondary structure
-#as estimated by dssp
+#as estimated by the dssp algorithm
 prot_path = os.path.join("example_data","1CRN.pdb")
 prot = io.LoadPDB(prot_path)
-dssp.AssignDSSP(prot)
+mol.alg.AssignSecStruct(prot)
 
 #Let's use the handler for the full first chain, but also for a subset of it!
 subset = prot.Select("rnum>5 and rnum<20")
@@ -34,6 +32,6 @@ print handler.GetPSIPREDSS(subset.chains[0])
 print handler.GetPSIPREDConf(subset.chains[0])
 
 print "And here are the according SSAgreement scores"
-print handler.GetSSAgreementFromChain(prot.chains[0], dssp_assigned=True)
-print handler.GetSSAgreementFromChain(subset.chains[0], dssp_assigned=True)
+print handler.GetSSAgreementFromChain(prot.chains[0])
+print handler.GetSSAgreementFromChain(subset.chains[0])
 

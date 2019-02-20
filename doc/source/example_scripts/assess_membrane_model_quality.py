@@ -1,7 +1,5 @@
 #import the required module
 from qmean import AssessMembraneModelQuality
-from qmean import PSIPREDHandler
-from qmean import ACCPROHandler
 from ost.io import LoadPDB
 import os
 

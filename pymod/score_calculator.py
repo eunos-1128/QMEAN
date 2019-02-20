@@ -1,3 +1,18 @@
+# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Biozentrum - University of Basel
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #requires mlabwrap and matlab! download mlabwrap from sourceforge and
 #try to run "python setup.py install" If you get errors like strange 
 #int conversion stuff, modify setup.py according to http://obasic.net/how-to-install-mlabwrap-on-windows
@@ -5,12 +20,13 @@
 #
 #In case of the local scorer, the ost table MUST contain the column AA (AminoAcid one letter code)
 
-
-
 from ost.table import *
 import numpy as np
 import sys
 import traceback
+import os
+import json
+from mlp_regressor import Regressor
 
 class Scorer():
 
@@ -136,7 +152,6 @@ class Scorer():
     else:
       stream=stream_or_filename
     return cPickle.load(stream)
-
 
 class LocalScorer():
 
@@ -373,4 +388,87 @@ class GlobalScorer():
     else:
       stream=stream_or_filename
     return cPickle.load(stream)
+
+
+class NNScorer:
+
+  def __init__(self, scorer_dir):
+
+    # The scorer assumes to get a data directory containing following files:
+    #
+    # feature_groups.json: Json file containing a list.
+    #                      Every list represents a list of features and the 
+    #                      whole thing is assigned to the internal feature
+    #                      groups variable.
+    #                      Whenever you call GetScore(score_dict), the feature 
+    #                      groups are iterated and the index of the FIRST 
+    #                      feature group for which all datapoints are valid in 
+    #                      score_dict is used to select the corresponding neural 
+    #                      network.
+    #                      IF NO FEATURE GROUP MATCHES THE INPUT FEATURES WE
+    #                      RETURN 0.0!!!
+    #
+    # nn_<idx>.dat: Neural networks, one for each entry in self.feature_groups.
+    #               idx relates to the corresponding entry. The ordering of the 
+    #               nodes in the input layer of every neural network is defined 
+    #               in the corresponding entry in self.feature_groups.
+
+    self.feature_groups = list()
+    self.nn = list()
+    self.aa_string = "ACDEFGHIKLMNPQRSTVWY"
+
+    feature_groups_path = os.path.join(scorer_dir, "feature_groups.json")
+    if not os.path.exists(feature_groups_path):
+      raise RuntimeError("Specified NNScorer directory does not contain the "\
+                         "required feature_groups.json file!")
+
+    fh = open(feature_groups_path, 'r')
+    self.feature_groups = json.load(fh)
+    fh.close()
+
+    for fg_idx, fg in enumerate(self.feature_groups):
+      nn_path = os.path.join(scorer_dir, "nn_%i.dat"%(fg_idx))
+      if not os.path.exists(nn_path):
+        raise RuntimeError("Specified NNScorer directory does not contain "\
+                           "a neural network for every entry in "\
+                           "feature_groups.json")
+      self.nn.append(Regressor(nn_path))
+      if self.nn[-1].layer_sizes[0] != len(fg) + len(self.aa_string):
+        raise RuntimeError("Input layer of loaded NN is inconsistent with "\
+                           "number of features as defined in "\
+                           "feature_groups.json!")
+
+  def GetScore(self, score_dict, olc):
+
+    try:
+      aa_idx = self.aa_string.index(olc)
+    except:
+      return 0.0
+
+    valid_scores = dict()
+
+    for k, v in score_dict.iteritems():
+      if v == v:
+        valid_scores[k] = v
+
+    final_fg_idx = -1
+    for fg_idx, fg in enumerate(self.feature_groups):
+      all_there = True
+      for f in fg:
+        if f not in valid_scores:
+          all_there = False
+          break
+      if all_there:
+        final_fg_idx = fg_idx
+        break
+
+    if final_fg_idx == -1:
+      return 0.0
+
+    input_features = list([0.0] * len(self.aa_string))
+    input_features[aa_idx] = 1.0
+    for f in self.feature_groups[final_fg_idx]:
+      input_features.append(valid_scores[f])
+
+    return self.nn[final_fg_idx].Predict(input_features)
 
