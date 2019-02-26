@@ -53,9 +53,6 @@ find_package(Python 2.7.0 REQUIRED)
 find_package(OPENSTRUCTURE 1.7 REQUIRED 
              COMPONENTS mol seq seq_alg mol_alg conop)
 
-find_package(Eigen 3.0.0 REQUIRED)
-
-
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 set(_BOOST_MIN_VERSION 1.53)
 find_package(Boost ${_BOOST_MIN_VERSION} 
@@ -72,7 +69,6 @@ set(Boost_LIBRARIES)
 
 find_package(Python 2.7.0 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS} 
-                    ${EIGEN3_INCLUDE_DIR}
                     ${OST_INCLUDE_DIR})
                     
 add_subdirectory(data)
