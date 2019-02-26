@@ -1,3 +1,18 @@
+// Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+// Biozentrum - University of Basel
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <qmean/disco.hh>
 
 #include <ost/seq/alg/merge_pairwise_alignments.hh>
@@ -863,7 +878,6 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
   PairwiseSequenceSimilarities(full_aln, sub, pairwise_seqsim, seqsim_to_target);
 
   // calculate the sequence identities to the target
-  // (required for random forest features)
   // Please note, that we have no O(n2) here, only O(n)
   // a special function is therefore not implemented
   std::vector<Real> seqid_to_target(aln_.size(), 0.0);

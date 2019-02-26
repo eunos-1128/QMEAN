@@ -1,3 +1,18 @@
+# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Biozentrum - University of Basel
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import bisect
 import math
 from ost import stutil
@@ -22,7 +37,8 @@ class ReferenceSet:
             'acc_agreement': 'Normalized ACC Agreement Score',
             'reduced':'Normalized Reduced Score',
             'QMEAN4': 'Normalized QMEAN4 Score',
-            'QMEAN6': 'Normalized QMEAN6 Score'}
+            'QMEAN6': 'Normalized QMEAN6 Score',
+            'FAENNZ': 'Normalized FAENNZ Score'}
 
   def ZScoreFromNormScore(self, score_name, num_residues, norm_score):
     """
@@ -37,7 +53,7 @@ class ReferenceSet:
     """
 
     inverted_scores = set(['QMEAN4', 'QMEAN6', 'ss_agreement', 
-                           'acc_agreement'])
+                           'acc_agreement', 'FAENNZ'])
     if score_name not in self.nice_titles:
       raise ValueError('unknown score term "%s"' % score_name)
     num_residues=max(40, min(num_residues, 600))
@@ -62,10 +78,11 @@ class ReferenceSet:
     # have to invert the sign...
     return sign*(mean-norm_score)/stdev
 
-  def ReferenceSetPlot(self, num_residues, qmean_norm_score, score_name):
+  def DumpReferenceSetPlot(self, out_path, num_residues, qmean_norm_score, 
+                           score_name):
     """
-    Plots the qmean_norm_score in relation to QMEAN scores for a non-redundant
-    set of X-ray structures.
+    Plots and dumps the qmean_norm_score in relation to QMEAN scores for a 
+    non-redundant set of X-ray structures.
     """
     if score_name not in self.nice_titles:
       raise ValueError('invalid score: '+score_name)
@@ -104,17 +121,20 @@ class ReferenceSet:
     if(num_residues>600):
       text = 'Number of residues (%i) has been\n'%(num_residues)
       text += 'capped at 600 for visualisation\nand Z-score calculation!'
-      p.text(35,-0.365,text,color='black',bbox=dict(facecolor='red',alpha=0.3,edgecolor='black',
-                                                  boxstyle='round,pad=1'))
+      p.text(35,-0.365,text,color='black',bbox=dict(facecolor='red', alpha=0.3,
+                                                    edgecolor='black',
+                                                    boxstyle='round,pad=1'))
 
-    return p
+    p.savefig(out_path)
 
-  def ZScoreSliders(self, qmean_norm_scores, score_names, num_residues, score_labels=None, **kwargs):
+  def DumpZScoreSliders(self, out_path, qmean_norm_scores, score_names, 
+                        num_residues, score_labels=None, **kwargs):
     """
-    Plots QMEAN scores as sliders.
+    Plots and dumps QMEAN scores as sliders.
     """
     import matplotlib as mpl
     from matplotlib import pyplot
+    pyplot.clf()
 
     if len(qmean_norm_scores)!=len(score_names):
       raise ValueError('Number of scores and score names is not consistent!')
@@ -198,4 +218,4 @@ class ReferenceSet:
         ax.set_xticklabels([])
       slider+=1
 
-    return pyplot
+    pyplot.savefig(out_path)

@@ -1,3 +1,18 @@
+.. Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+.. Biozentrum - University of Basel
+.. 
+.. Licensed under the Apache License, Version 2.0 (the "License");
+.. you may not use this file except in compliance with the License.
+.. You may obtain a copy of the License at
+.. 
+.. http://www.apache.org/licenses/LICENSE-2.0
+.. 
+.. Unless required by applicable law or agreed to in writing, software
+.. distributed under the License is distributed on an "AS IS" BASIS,
+.. WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.. See the License for the specific language governing permissions and
+.. limitations under the License.
+
 Predicted Sequence Features
 ================================================================================
 
@@ -142,28 +157,20 @@ Secondary Structure Agreement
     :raises:            :class:`RuntimeError` If **chain** is not None and
                         its sequence cannot be aligned to the internal SEQRES
 
-  .. method:: GetSSAgreementFromChain(chain,[dssp_assigned=False])
+  .. method:: GetSSAgreementFromChain(chain)
 
     :param chain:       A chain view with sequence consistent to the internal
                         SEQRES.
 
-    :param dssp_assigned: Flag, whether secondary structure has already been
-                          assigned using dssp. dssp if set to False, dssp
-                          runs over the chain, this requires the dssp
-                          executable to be in the path.
-
     :type chain:        :class:`ost.mol.ChainView` / :class:`ost.mol.ChainHandle`
-    :type dssp_assigned: :class:`bool`
 
     :returns:           SSAgreement values mapped onto the structure by
                         aligning the structure to the internal SEQRES.
 
     :rtype:             :class:`list` of :class:`float`
 
-    :raises:            :class:`RuntimeError` if dssp has to be 
-                        assigned but the executable cannot be found in the
-                        path or when the chain cannot be aligned
-                        to the SEQRES.           
+    :raises:            :class:`RuntimeError` if the chain cannot be aligned
+                        to the internal SEQRES.           
 
 
 
@@ -182,7 +189,7 @@ Solvent Accessibility Agreement
   relate this prediction with a structure given consistent sequence.
 
   :param data:          Input data for the ACCPRO prediction. The 
-                        required information is SEQRES, and accessibility.
+                        required information is SEQRES and accessibility.
                         Must be a dictionary with the mentioned elements
                         as single strings with keys "seq", "acc".
                         The accessibility must be descrobed in the
@@ -209,28 +216,20 @@ Solvent Accessibility Agreement
                         its sequence cannot be aligned to the internal SEQRES
 
 
-  .. method:: GetACCAgreementFromChain(chain,[dssp_assigned=False])
+  .. method:: GetACCAgreementFromChain(chain)
 
     :param chain:       A chain view with sequence consistent to the internal
                         SEQRES.
 
-    :param dssp_assigned: Flag, whether solvent accessibility has already
-                          been assigned using dssp. dssp if set to False,
-                          dssp runs over the chain, this requires the dssp
-                          executable to be in the path.
-
     :type chain:        :class:`ost.mol.ChainView` / :class:`ost.mol.ChainHandle`
-    :type dssp_assigned: :class:`bool`
 
     :returns:           ACCAgreement values mapped onto the structure by
                         aligning the structure to the internal SEQRES.
 
     :rtype:             :class:`list` of :class:`float`
 
-    :raises:            :class:`RuntimeError` if dssp has to be 
-                        assigned but the executable cannot be found in the
-                        path or when the chain cannot be aligned
-                        to the SEQRES.           
+    :raises:            :class:`RuntimeError` if the chain cannot be aligned
+                        to the internal SEQRES.           
 
 
 

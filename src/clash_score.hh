@@ -1,3 +1,18 @@
+// Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+// Biozentrum - University of Basel
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #ifndef QMEAN_CLASH_SCORE_HH
 #define QMEAN_CLASH_SCORE_HH
 
@@ -11,40 +26,11 @@
 
 namespace qmean {
 
-/// \defgroup Clash Steric Clash Score Calculation
-/// 
-/// The used scoring function is a simple steric energy function with linear 
-/// fallof that is capped for small distances to avoid explosion of energies.
-/// This is identical to the clash function used in SCWRL 3
+std::vector<Real> GetClashScores(const ost::mol::EntityView& target, 
+                                 const ost::mol::EntityView& env);
 
-//@{ 
-/// \brief calculate clash score between two entity views
-/// 
-/// For each atom of ent_a the interaction with atoms of ent_b calculated.
-/// \return 0.0 if there are no clashes and a positive clash score otherwise.
-/// \sa \ref the_hammer.py "The Hammer Example"
-Real DLLEXPORT_QMEAN ClashScore(const mol::EntityView& ent_a, const mol::EntityView& ent_b);
 
-/// \brief calculate clash score between full entity and view
-Real DLLEXPORT_QMEAN ClashScore(const mol::EntityHandle& ent_a, 
-                                 const mol::EntityView& ent_b);
-//// \brief calculate clash score of one single atom
-/// 
-/// \return floating point between 0 and 10
-/// \sa \ref the_hammer.py "The Hammer Example"
-Real DLLEXPORT_QMEAN ClashScore(const mol::AtomHandle& atom, 
-                                 const mol::EntityView& ent_b);
-
-/// \brief calculate steric energy of two atoms
-Real DLLEXPORT_QMEAN StericEnergy(const geom::Vec3& pos1, Real r1,
-                                   const geom::Vec3& pos2, Real r2);
-//@}
-
-/// \example the_hammer.py
-/// 
-/// Dynamic recalculation of clash score for a moving object. The real-valued
-/// clash score is then color-mapped onto the objects. 
-}
+} // ns
 
 #endif
 

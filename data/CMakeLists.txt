@@ -1,26 +1,66 @@
+set(QMEAN_DATA_DIR "${CMAKE_SOURCE_DIR}/data/qmean")
+
+set(POTENTIAL_DIR "${QMEAN_DATA_DIR}/potentials")
 set(POTENTIAL_FILES
-qmean/potentials/soluble_global_potentials.dat 
-qmean/potentials/soluble_local_potentials.dat 
-qmean/potentials/membrane_local_potentials.dat
-qmean/potentials/membrane_global_potentials.dat
+${POTENTIAL_DIR}/soluble_global_potentials.dat 
+${POTENTIAL_DIR}/soluble_local_potentials.dat 
+${POTENTIAL_DIR}/membrane_local_potentials.dat
+${POTENTIAL_DIR}/membrane_global_potentials.dat
 )
-set(REFERENCES
-qmean/reference_values/reference_tab_promod_scorer.txt
+
+set(REFERENCE_TABLE_DIR "${QMEAN_DATA_DIR}/reference_values")
+set(REFERENCE_TABLE_FILES
+${REFERENCE_TABLE_DIR}/reference_tab_promod_scorer.txt
 )
-set(SCORER
-qmean/scorer/promod_local_scorer.dat
-qmean/scorer/promod_global_scorer.dat
-qmean/scorer/membrane_local_scorer.dat
-qmean/scorer/disco_tree.pkl
+
+set(LINEAR_SCORER_DIR "${QMEAN_DATA_DIR}/scorer")
+set(LINEAR_SCORER_FILES
+${LINEAR_SCORER_DIR}/promod_local_scorer.dat
+${LINEAR_SCORER_DIR}/promod_global_scorer.dat
+${LINEAR_SCORER_DIR}/membrane_local_scorer.dat
+)
+
+set(LOCAL_NN_SCORER_DIR "${QMEAN_DATA_DIR}/scorer/local_nn_scorer")
+set(LOCAL_NN_SCORER_FILES
+${LOCAL_NN_SCORER_DIR}/feature_groups.json
+${LOCAL_NN_SCORER_DIR}/nn_0.dat
+${LOCAL_NN_SCORER_DIR}/nn_1.dat
+${LOCAL_NN_SCORER_DIR}/nn_2.dat
+${LOCAL_NN_SCORER_DIR}/nn_3.dat
+${LOCAL_NN_SCORER_DIR}/nn_4.dat
+${LOCAL_NN_SCORER_DIR}/nn_5.dat
+${LOCAL_NN_SCORER_DIR}/nn_6.dat
+${LOCAL_NN_SCORER_DIR}/nn_7.dat
+${LOCAL_NN_SCORER_DIR}/nn_8.dat
+${LOCAL_NN_SCORER_DIR}/nn_9.dat
+${LOCAL_NN_SCORER_DIR}/nn_10.dat
+${LOCAL_NN_SCORER_DIR}/nn_11.dat
+${LOCAL_NN_SCORER_DIR}/nn_12.dat
+${LOCAL_NN_SCORER_DIR}/nn_13.dat
+${LOCAL_NN_SCORER_DIR}/nn_14.dat
+${LOCAL_NN_SCORER_DIR}/nn_15.dat
 )
 
 add_custom_target(qmean_data_files ALL)
+
 copy_if_different("./" "${SHARED_DATA_PATH}/potentials" 
-                  "${POTENTIAL_FILES}" "qmean_DATA_FILES" qmean_data_files)
-copy_if_different("./" "${SHARED_DATA_PATH}/references" 
-                  "${REFERENCES}" "REFERENCES" qmean_data_files)         
+                  "${POTENTIAL_FILES}" "QMEAN_POTENTIAL_FILES" qmean_data_files)
+
+copy_if_different("./" "${SHARED_DATA_PATH}/reference_values" 
+                  "${REFERENCE_TABLE_FILES}" "QMEAN_REFERENCE_TABLE_FILES" 
+                  qmean_data_files)         
+
 copy_if_different("./" "${SHARED_DATA_PATH}/scorer" 
-                  "${SCORER}" "SCORER" qmean_data_files)  
+                  "${LINEAR_SCORER_FILES}" "QMEAN_LINEAR_SCORER_FILES" 
+                  qmean_data_files)  
+
+copy_if_different("./" "${SHARED_DATA_PATH}/scorer/local_nn_scorer" 
+                  "${LOCAL_NN_SCORER_FILES}" "QMEAN_LOCAL_NN_SCORER_FILES" 
+                  qmean_data_files)  
+
+
 install(FILES ${POTENTIAL_FILES} DESTINATION "share/qmean/potentials")
-install(FILES ${REFERENCES} DESTINATION "share/qmean/references")
-install(FILES ${SCORER} DESTINATION "share/qmean/scorer")
+install(FILES ${REFERENCE_TABLE_FILES} DESTINATION "share/qmean/references")
+install(FILES ${LINEAR_SCORER_FILES} DESTINATION "share/qmean/scorer")
+install(FILES ${LOCAL_NN_SCORER_FILES} DESTINATION "share/qmean/scorer/linear_nn_scorer")
+

@@ -1,3 +1,18 @@
+.. Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+.. Biozentrum - University of Basel
+.. 
+.. Licensed under the Apache License, Version 2.0 (the "License");
+.. you may not use this file except in compliance with the License.
+.. You may obtain a copy of the License at
+.. 
+.. http://www.apache.org/licenses/LICENSE-2.0
+.. 
+.. Unless required by applicable law or agreed to in writing, software
+.. distributed under the License is distributed on an "AS IS" BASIS,
+.. WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.. See the License for the specific language governing permissions and
+.. limitations under the License.
+
 Statistical Potentials of Mean Force
 ================================================================================
 
@@ -11,9 +26,6 @@ features from training protein structures and internally stores them
 using histogram techniques. A potential object then converts these
 histograms into potential functions and assigns pseudo 
 energies/scores to protein structures of interest. 
-The number of available potentials has grown over the years. Only a subset 
-of them is actually used in the official QMEAN scoring function.
-
 
 * :ref:`interaction-potential`: 
                                 Evaluates a pseudo energy
@@ -83,16 +95,6 @@ of them is actually used in the official QMEAN scoring function.
                           which the energy is extracted. In all other cases, 
                           the energy is extracted from the 0 state.
 
-All required statistics and potentials are derived from the according base classes.
-They are not accessible from Python.
-
-.. class:: StatisticBase
-
-.. class:: PotentialBase
-
-
-
-
 
 .. _interaction-potential:
 
@@ -127,7 +129,7 @@ InteractionPotential
 
   .. attribute:: sigma
 
-    Parameter to control the sparse data handling
+    Parameter to control the sparse data handling as described in [sippl1990]_
 
 
 .. class:: InteractionStatistic(l_cutoff, u_cutoff, nob, ssep)
@@ -151,7 +153,7 @@ InteractionPotential
 
   .. method:: Load(filename)
 
-    Loads a :class:`InteractionStatistic` from disk
+    Loads an :class:`InteractionStatistic` from disk
 
     :param filename:    Path to file containing the statistic
     :type filename:     :class:`str`
@@ -174,10 +176,8 @@ InteractionPotential
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param env:         The structure a particular atom position in the target
-                        actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param env:         The structure an atom in the target actually sees
+    :param weight:      The value that gets added to the histogram 
 
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
@@ -199,8 +199,8 @@ InteractionPotential
     :type atom_two:     :ref:`ChemType <ChemType>`
     :type dist_bin:     :class:`int`
 
-    :returns:           The histogram count for the particular pair of
-                        atoms in the particular distance bin
+    :returns:           The histogram count for the specified pair of
+                        atoms in *dist_bin*
     :rtype:             :class:`float`
 
   .. method:: GetCount(atom_one, atom_two)
@@ -211,7 +211,7 @@ InteractionPotential
     :type atom_one:     :ref:`ChemType <ChemType>`
     :type atom_two:     :ref:`ChemType <ChemType>`
 
-    :returns:           The histogram count for the particular pair of
+    :returns:           The histogram count for the specified pair of
                         atoms
     :rtype:             :class:`float`
 
@@ -220,8 +220,8 @@ InteractionPotential
     :param dist_bin:    Distance bin to considered
     :type dist_bin:     :class:`int`
 
-    :returns:           The histogram count for this particular
-                        distance bins in all pairwise histograms
+    :returns:           The histogram count for this
+                        distance bin in all pairwise histograms
 
   .. method:: GetOptions()
 
@@ -236,7 +236,7 @@ InteractionPotential
 
   .. method:: Load(filename)
 
-    Loads a :class:`InteractionPotential` from disk
+    Loads an :class:`InteractionPotential` from disk
 
     :param filename:    Path to file containing the potential
     :type filename:     :class:`str`
@@ -247,7 +247,7 @@ InteractionPotential
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -258,7 +258,7 @@ InteractionPotential
     are turned into a potential using the formalism described by Sippl.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
     :param reference_state: The reference state to be used. Currently there
                             is only "classic" available, which implements
                             the reference state described by Sippl
@@ -284,7 +284,8 @@ InteractionPotential
     :param stat_two:    The not necessarily saturated statistic from which you
                         want to create the potential
     
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as 
+                        described in the QMEANBrane publication
     :param reference_state: The reference state to be used. Currently there
                             is only "classic" available, which implements
                             the reference state described by Sippl
@@ -307,8 +308,8 @@ InteractionPotential
 
   .. method:: GetEnergy(atom_one, atom_two, dist)
 
-    Get an energy value for a particular pair of atoms with their 
-    positions at a certain distance
+    Get an energy value for a pair of atoms with their positions at a certain 
+    distance
 
     :param atom_one:       First interaction partner
     :param atom_two:       Second interaction partner
@@ -324,8 +325,7 @@ InteractionPotential
 
   .. method:: GetEnergy(res, env [normalize = True] )
 
-    Gets the energy of **res** given the provided environment by evaluating
-    all pairwise distances to the given environment.
+    Gets the energy of **res** given **env**.
 
     :param res:         Residue to be evaluated
     :param env:         The environment, the residue actually sees
@@ -341,9 +341,7 @@ InteractionPotential
 
   .. method:: GetTotalEnergy(target, env, [normalize = True])
 
-    Gets the energy of **target** given the provided environment by evaluating
-    all pairwise distances from all residues of the **target** to the given 
-    environment.
+    Gets the energy of **target** given **env**.
 
     :param target:      Structure to be evaluated
     :param env:         The environment, the residues from **target** actually sees
@@ -359,9 +357,9 @@ InteractionPotential
 
   .. method:: GetEnergies(target, env, [normalize = True])
 
-    Gets energies for every single residue in the **target** given the provided
-    environment. For every residue, all pairwise interactions towards the
-    environment are evaluated and summed up.
+    Gets energies for every single residue in **target** given **env**. For 
+    every residue, all pairwise interactions towards the environment are 
+    evaluated and summed up.
 
     :param target:      Structure to be evaluated
     :param env:         The environment, the residues from **target** actually sees
@@ -373,7 +371,6 @@ InteractionPotential
 
     :returns:           The requested energies, single elements can be NaN if no 
                         valid pairwise distance is evaluated towards the environment
-                        for one particular residue
     :rtype:             :class:`list` of :class:`float`
 
   .. method:: GetOptions()
@@ -414,7 +411,7 @@ CBetaPotential
 
   .. attribute:: sigma
 
-    Parameter to control the sparse data handling
+    Parameter to control the sparse data handling as described in [sippl1990]_
 
 
 .. class:: CBetaStatistic(l_cutoff, u_cutoff, nob, ssep)
@@ -428,8 +425,8 @@ CBetaPotential
                         considered
   :param nob:           Number of equidistant bins building the internal 
                         histograms
-  :param ssep:          Only CB Positions from residues separated by this amount of residues
-                        are considered
+  :param ssep:          Only CB Positions from residues separated by this amount 
+                        of residues are considered
 
   :type l_cutoff:      :class:`float`
   :type u_cutoff:      :class:`float`
@@ -449,22 +446,19 @@ CBetaPotential
 
   .. method:: Save(filename)
 
-    Saves a the statistic down to disk
+    Saves the statistic down to disk
 
     :param filename:    Path of the file, the statistic should be saved in
     :type filename:     :class:`str`
 
   .. method:: Extract(target, env, [weight = 1.0])
 
-    Adds the value of the **weight** parameter to the according bins in the
-    internal histograms
+    Adds the value of **weight** to the according bins in the internal histograms
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param env:         The structure a particular CB Position in the target
-                        actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param env:         The structure a CB atom in the target actually sees
+    :param weight:      The value that gets added to the histogram positions
 
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
@@ -487,8 +481,8 @@ CBetaPotential
     :type aa_two:       :class:`ost.conop.AminoAcid`
     :type dist_bin:     :class:`int`
 
-    :returns:           The histogram count for the particular pair of
-                        amino acids in the particular distance bin
+    :returns:           The histogram count for the specified pair of
+                        amino acids in *dist_bin*
     :rtype:             :class:`int`
 
   .. method:: GetCount(aa_one, aa_two)
@@ -499,7 +493,7 @@ CBetaPotential
     :type aa_one:       :class:`ost.conop.AminoAcid`
     :type aa_two:       :class:`ost.conop.AminoAcid`
 
-    :returns:           The histogram count for the particular pair of
+    :returns:           The histogram count for the specified pair of
                         amino acids
     :rtype:             :class:`int`
 
@@ -509,7 +503,7 @@ CBetaPotential
     :param dist_bin:    Distance bin to considered
     :type dist_bin:     :class:`int`
 
-    :returns:          The histogram count for this particular distance bin
+    :returns:          The histogram count for *dist_bin*
                        summed over all pairwise histograms
 
   .. method:: GetOptions()
@@ -536,7 +530,7 @@ CBetaPotential
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -547,7 +541,7 @@ CBetaPotential
     are turned into a potential using the formalism described by Sippl.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
     :param reference_state: The reference state to be used. Currently there
                             is only "classic" available, which implements
                             the reference state described by Sippl
@@ -568,12 +562,13 @@ CBetaPotential
     **stat_one** is considered to be saturated, whereas **stat_two** is 
     considered to be sparse.
 
-    :param stat_one:    The saturates statistic from which you want to create
+    :param stat_one:    The saturated statistic from which you want to create
                         the potential
     :param stat_two:    The not necessarily saturated statistic from which you
                         want to create the potential
     
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in the 
+                        QMEANBrane publication
     :param reference_state: The reference state to be used. Currently there
                             is only "classic" available, which implements
                             the reference state described by Sippl
@@ -596,12 +591,12 @@ CBetaPotential
 
   .. method:: GetEnergy(amino_acid_one, amino_acid_two, dist)
 
-    Get an energy value for a particular pair of amino acids with their 
+    Get an energy value for a pair of amino acids with their 
     CB positions at a certain distance
 
     :param amino_acid_one: First interaction partner
     :param amino_acid_two: Second interaction partner
-    :param dist:           Distance of the two interaction partners CB positions
+    :param dist:           Distance of the two CB positions
 
     :type amino_acid_one:  :class:`ost.conop.AminoAcid`
     :type amino_acid_two:  :class:`ost.conop.AminoAcid`
@@ -635,7 +630,7 @@ CBetaPotential
     environment.
 
     :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
+    :param env:         The environment, the residues from **target** actually see
     :normalize:         Whether the final summed energy should be normalized by
                         total number of observed interactions
     :type target:       :class:`ost.mol.EntityView`
@@ -653,16 +648,17 @@ CBetaPotential
     environment are evaluated and summed up.
 
     :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
-    :normalize:         Whether the final summed energy for every should be normalized by
-                        total number of observed interactions for this residue
+    :param env:         The environment, the residues from **target** actually see
+    :normalize:         Whether the final summed energy for every residue should 
+                        be normalized by total number of observed interactions for 
+                        this residue
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
     :type normalize:    :class:`bool`
 
     :returns:           The requested energies, single elements can be NaN if no 
-                        valid pairwise distance is evaluated towards the environment
-                        for one particular residue
+                        valid pairwise distance is evaluated towards **env**
+
     :rtype:             :class:`list` of :class:`float`
 
   .. method:: GetOptions()
@@ -711,7 +707,7 @@ ReducedPotential
 
   .. attribute:: sigma
 
-    Parameter to control the sparse data handling
+    Parameter to control the sparse data handling as described in [sippl1990]_
 
 
 .. class:: ReducedStatistic(l_cutoff, u_cutoff, nab, ndab, ndb, ssep)
@@ -764,10 +760,9 @@ ReducedPotential
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param env:         The structure a particular residue in the target
+    :param env:         The structure a residue in the target
                         actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param weight:      The value that gets added to the histogram bins
 
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
@@ -796,9 +791,8 @@ ReducedPotential
     :type beta_bin:     :class:`int`
     :type gamma_bin:    :class:`int`
 
-    :returns:           The histogram count for the particular pair of
-                        amino acids in the particular distance, angle and 
-                        dihedral bin
+    :returns:           The histogram count for a pair of amino acids in the 
+                        a certain distance, angle and dihedral bin
     :rtype:             :class:`float`
 
   .. method:: GetCount(aa_one, aa_two)
@@ -809,18 +803,23 @@ ReducedPotential
     :type aa_one:       :class:`ost.conop.AminoAcid`
     :type aa_two:       :class:`ost.conop.AminoAcid`
 
-    :returns:           The histogram count for the particular pair of
-                        amino acids
+    :returns:           The histogram count for a pair of amino acids
     :rtype:             :class:`float`
 
 
   .. method:: GetCount(dist_bin, alpha_bin, beta_bin, gamma_bin)
 
-    Sums up all values for one particular distance, angle and dihedral bin 
-    for all possible pairs of amino acids
-
-    :param dist_bin:    Distance bin to considered
+    :param dist_bin:    Distance bin to be considered
+    :param alpha_bin:   Alpha angle bin to be considered
+    :param beta_bin:    Beta angle bin to be considered
+    :param gamma_bin:   Gamma Dihedral angle bin to be considered
     :type dist_bin:     :class:`int`
+    :type alpha_bin:    :class:`int`
+    :type beta_bin:     :class:`int`
+    :type gamma_bin:    :class:`int`
+
+    :returns:           The histogram count for a certain distance, angle and 
+                        dihedral bin
 
   .. method:: GetOptions()
 
@@ -846,7 +845,7 @@ ReducedPotential
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -857,7 +856,7 @@ ReducedPotential
     are turned into a potential using the formalism described by Sippl.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
     :param reference_state: The reference state to be used. Currently there
                             is only "classic" available, which implements
                             the reference state described by Sippl
@@ -873,14 +872,14 @@ ReducedPotential
 
   .. method:: GetEnergy(amino_acid_one, amino_acid_two, dist, alpha, beta, gamma)
 
-    Get an energy value for a particular pair of amino acids with their 
-    their relative orientation described by dist, alpha beta and gamma
+    Get an energy value for a pair of amino acids with their relative 
+    orientation described by dist, alpha, beta and gamma
 
     :param amino_acid_one: First interaction partner
     :param amino_acid_two: Second interaction partner
-    :param dist:           Distance of the two interaction partners CA positions
+    :param dist:           Distance of the two CA positions
     :param alpha:          First angle describing the relative orientation
-    :param beta:           First angle describing the relative orientation
+    :param beta:           Seconod angle describing the relative orientation
     :param gamma:          Dihedral angle describing the relative orientation
 
     :type amino_acid_one:  :class:`ost.conop.AminoAcid`
@@ -896,8 +895,7 @@ ReducedPotential
 
   .. method:: GetEnergy(res, env [normalize = True] )
 
-    Gets the energy of **res** given the provided environment by evaluating
-    all pairwise distances to the given environment.
+    Gets the energy of **res** given **env**.
 
     :param res:         Residue to be evaluated
     :param env:         The environment, the residue actually sees
@@ -913,12 +911,10 @@ ReducedPotential
 
   .. method:: GetTotalEnergy(target, env, [normalize = True])
 
-    Gets the energy of **target** given the provided environment by evaluating
-    all pairwise distances from all residues of the **target** to the given 
-    environment.
+    Gets the total energy of **target** given **env**
 
     :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
+    :param env:         The environment, the residues from **target** actually see
     :normalize:         Whether the final summed energy should be normalized by
                         total number of observed interactions
     :type target:       :class:`ost.mol.EntityView`
@@ -931,14 +927,15 @@ ReducedPotential
 
   .. method:: GetEnergies(target, env, [normalize = True])
 
-    Gets energies for every single residue in the **target** given the provided
-    environment. For every residue, all pairwise interactions towards the
-    environment are evaluated and summed up.
+    Gets energies for every single residue in the **target** given **env**. 
+    For every residue, all pairwise interactions towards the environment are 
+    evaluated and summed up.
 
     :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
-    :normalize:         Whether the final summed energy for every should be normalized by
-                        total number of observed interactions for this residue
+    :param env:         The environment, the residues from **target** actually see
+    :normalize:         Whether the final summed energy for every residue should be 
+                        normalized by total number of observed interactions for 
+                        this residue
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
     :type normalize:    :class:`bool`
@@ -959,8 +956,8 @@ ReducedPotential
 TorsionPotential
 --------------------------------------------------------------------------------
 
-Since the torsion sampler considers triplets of amino acids, we need to define 
-them. This is done with the so called torsion group definitions. Three strings 
+Since the torsion potential considers triplets of amino acids, we need to define 
+them. This is done with torsion group definitions. Three strings 
 represent the according positions of the consecutive amino acids. They are 
 combined by “-”. It is either possible to use the keyword “all”, or write out 
 all allowed amino acids by their three letter code and separate them by ”,”. 
@@ -991,7 +988,7 @@ acids and the first hit is decisive.
 
   .. attribute:: sigma
 
-    Parameter to control the sparse data handling
+    Parameter to control the sparse data handling as described in [sippl1990]_
 
 
 .. class:: TorsionStatistic(group_identifier, number_of_bins)
@@ -1021,7 +1018,7 @@ acids and the first hit is decisive.
 
   .. method:: Save(filename)
 
-    Saves a the statistic down to disk
+    Saves the statistic down to disk
 
     :param filename:    Path of the file, the statistic should be saved in
     :type filename:     :class:`str`
@@ -1033,8 +1030,7 @@ acids and the first hit is decisive.
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param weight:      The value that gets added to the histogram positions
 
     :type target:       :class:`ost.mol.EntityView`
     :type weight:       :class:`float`
@@ -1067,9 +1063,8 @@ acids and the first hit is decisive.
     :type group_identifier: :class:`list` of :class:`str`
     :type bins:         :class:`list` of 6 :class:`int` values
 
-    :returns:           The histogram count for the particular group of
-                        amino acid  triplets in the according dihedral
-                        angle bins
+    :returns:           The histogram count for the group of
+                        amino acid triplets in the specified dihedranl angle bins
     :rtype:             :class:`float`
 
   .. method:: GetCount(bins)
@@ -1078,7 +1073,7 @@ acids and the first hit is decisive.
 
     :type bins:         :class:`list` of 6 :class:`int` values         
 
-    :returns:           The histogram count for the particular bin combination
+    :returns:           The histogram count for the specified bin combination
                         summed over all possible groups of amino acid triplets
     :rtype:             :class:`float`
 
@@ -1101,7 +1096,7 @@ acids and the first hit is decisive.
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -1113,7 +1108,7 @@ acids and the first hit is decisive.
     will be created a separate potential for all groups.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
     :param reference_state: The reference state to be used. Currently there
                             is "classic" available, which implements
                             the reference state described by Sippl, an
@@ -1211,7 +1206,7 @@ PackingPotential
 
   .. attribute:: sigma
 
-    Parameter to control the sparse data handling
+    Parameter to control the sparse data handling as described in [sippl1990]_
 
 
 .. class:: PackingStatistic(cutoff, max_counts)
@@ -1251,10 +1246,9 @@ PackingPotential
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param env:         The structure a particular atom position in the target
+    :param env:         The structure an atom position in the target
                         actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param weight:      The value that gets added to the histogram positions
 
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
@@ -1273,19 +1267,18 @@ PackingPotential
 
     :type aa:           :ref:`ChemType <ChemType>`
 
-    :returns:           The sum of all counts in the histogram for one 
-                        particular atom
+    :returns:           The sum of all counts in the histogram for one atom type
 
     :rtype:             :class:`float`
 
   .. method:: GetCount(count)
 
-    :param count:       The particular count you're interested in
+    :param count:       The count you're interested in
 
     :type count:       :class:`int`
 
     :returns:           The sum of all counts in the histogram for
-                        this particular count
+                        this count
 
     :rtype:             :class:`float`
 
@@ -1293,16 +1286,15 @@ PackingPotential
   .. method:: GetCount(atom, count)
 
     :param atom:        Identity of the atom
-    :param count:       The particular count you're interested in
+    :param count:       The count you're interested in
 
     :type atom:         :ref:`ChemType <ChemType>`
     :type count:        :class:`int`
 
-    :returns:           The histogram value for the particular 
+    :returns:           The histogram value for the specified 
                         atom / count combination
 
     :rtype:             :class:`float`
-
 
   .. method:: GetOptions()
 
@@ -1329,7 +1321,7 @@ PackingPotential
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -1340,7 +1332,7 @@ PackingPotential
     are turned into a potential using the formalism described by Sippl.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
     :param reference_state: The reference state to be used. Currently there
                             is "classic" available, which implements
                             the reference state described by Sippl, an
@@ -1357,7 +1349,7 @@ PackingPotential
 
   .. method:: GetEnergy(atom, count)
 
-    Get an energy value for a particular amino acids with a specific count
+    Get an energy value for an atom type with a specific count
 
     :param atom:           The atom of interest
     :param count:          The count
@@ -1370,7 +1362,7 @@ PackingPotential
 
   .. method:: GetEnergy(res, env, normalize)
 
-    Gets the energy of **res** given the provided environment.
+    Gets the energy of **res** given **env**.
 
     :param res:         Residue to be evaluated
     :param env:         The environment, the residue actually sees
@@ -1389,7 +1381,7 @@ PackingPotential
     Gets the energy of **target** given the provided environment
 
     :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
+    :param env:         The environment, the residues from **target** actually see
     :normalize:         Whether the summed energy should be normalized by the
                         total number of atoms contributing to the final
                         energy
@@ -1403,11 +1395,10 @@ PackingPotential
 
   .. method:: GetEnergies(target, env, normalize)
 
-    Gets energies for every single residue in the **target** given the provided
-    environment. 
+    Gets energies for every single residue in the **target** given **env**. 
 
     :param target:      Structure to be evaluated
-    :param env:         The environment, the residues from **target** actually sees
+    :param env:         The environment, the residues from **target** actually see
     :param normalize:   Whether the per residue energy values should be 
                         normalized by the number of atoms in a residue contributing
                         to its final energy
@@ -1449,7 +1440,7 @@ CBPackingPotential
 
   .. attribute:: sigma
 
-    Parameter to control the sparse data handling
+    Parameter to control the sparse data handling as described in [sippl1990]_
 
 
 .. class:: CBPackingStatistic(cutoff, max_counts)
@@ -1489,10 +1480,8 @@ CBPackingPotential
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param env:         The structure a particular CB position in the target
-                        actually sees
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param env:         The structure a CB position in the target actually sees
+    :param weight:      The value that gets added to the histogram positions
 
     :type target:       :class:`ost.mol.EntityView`
     :type env:          :class:`ost.mol.EntityView`
@@ -1512,18 +1501,17 @@ CBPackingPotential
     :type aa:           :class:`ost.conop.AminoAcid`
 
     :returns:           The sum of all counts in the histogram for one 
-                        particular amino acid
+                        amino acid
 
     :rtype:             :class:`float`
 
   .. method:: GetCount(count)
 
-    :param count:       The particular count you're interested in
+    :param count:       The count you're interested in
 
     :type count:       :class:`int`
 
-    :returns:           The sum of all counts in the histogram for
-                        this particular count
+    :returns:           The sum of all counts in the histogram for this count
 
     :rtype:             :class:`float`
 
@@ -1531,12 +1519,12 @@ CBPackingPotential
   .. method:: GetCount(aa, count)
 
     :param aa:          Identity of the amino acid
-    :param count:       The particular count you're interested in
+    :param count:       The count you're interested in
 
     :type aa:           :class:`ost.conop.AminoAcid`
     :type count:        :class:`int`
 
-    :returns:           The histogram value for the particular 
+    :returns:           The histogram value for the specified 
                         amino acid / count combination
 
     :rtype:             :class:`float`
@@ -1546,8 +1534,6 @@ CBPackingPotential
 
     :returns:           A readonly option object
     :rtype:             :class:`CBetaOpts`
-
-
 
 
 
@@ -1569,7 +1555,7 @@ CBPackingPotential
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -1580,7 +1566,7 @@ CBPackingPotential
     are turned into a potential using the formalism described by Sippl.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
     :param reference_state: The reference state to be used. Currently there
                             is "classic" available, which implements
                             the reference state described by Sippl, an
@@ -1597,7 +1583,7 @@ CBPackingPotential
 
   .. method:: GetEnergy(aa, count)
 
-    Get an energy value for a particular amino acids with a specific count
+    Get an energy value for an amino acid with a specific count
 
     :param aa:             The amino acid of interest
     :param count:          The count
@@ -1613,7 +1599,7 @@ CBPackingPotential
     Gets the energy of **res** given the provided environment.
 
     :param res:         Residue to be evaluated
-    :param env:         The environment, the residue actually sees
+    :param env:         The environment, the residue sees
     :type res:          :class:`ost.mol.ResidueView`
     :type env:          :class:`ost.mol.EntityView`
     :type normalize:    :class:`bool`
@@ -1623,7 +1609,7 @@ CBPackingPotential
 
   .. method:: GetTotalEnergy(target, env, normalize)
 
-    Gets the energy of **target** given the provided environment
+    Gets the energy of **target** given **env**
 
     :param target:      Structure to be evaluated
     :param env:         The environment, the residues from **target** actually sees
@@ -1638,8 +1624,7 @@ CBPackingPotential
 
   .. method:: GetEnergies(target, env)
 
-    Gets energies for every single residue in the **target** given the provided
-    environment. 
+    Gets energies for every single residue in **target** given **env**
 
     :param target:      Structure to be evaluated
     :param env:         The environment, the residues from **target** actually sees
@@ -1769,8 +1754,7 @@ HBondPotential
 
     :param target:      The target structure from which the statistics are 
                         extracted
-    :param weight:      The value that gets added to the particular histogram 
-                        positions
+    :param weight:      The value that gets added to the histogram positions
 
     :type target:       :class:`ost.mol.EntityView`
     :type weight:       :class:`float`
@@ -1788,8 +1772,8 @@ HBondPotential
 
     :type state:        :class:`int`
 
-    :returns:           The sum of all counts in the histogram for 
-                        one particular state
+    :returns:           The sum of all counts in the histogram for a certain 
+                        state
     :rtype:             :class:`float`
 
   .. method:: GetCount(state, d_bin, alpha_bin, beta_bin, gamma_bin)
@@ -1807,7 +1791,7 @@ HBondPotential
     :type gamma_bin:    :class:`int`
 
     :returns:           The sum of all counts in the histogram for
-                        this particular bin combination
+                        this bin combination
 
     :rtype:             :class:`float`
 
@@ -1835,7 +1819,7 @@ HBondPotential
 
   .. method:: Save(filename)
 
-    Saves a the potential down to disk
+    Saves the potential down to disk
 
     :param filename:    Path of the file, the potential should be saved in
     :type filename:     :class:`str`  
@@ -1847,7 +1831,7 @@ HBondPotential
     there is no sigma parameter given, the statistics are expected to be saturated.
 
     :param stat:        The statistic from which you want to create the potential
-    :param sigma:       The sigma parameter to handle sparse data
+    :param sigma:       Parameter to control the sparse data handling as described in [sippl1990]_
 
     :type stat:         :class:`HBondStatistic`
 
@@ -1856,7 +1840,7 @@ HBondPotential
 
   .. method:: GetEnergy(state, d, alpha, beta, gamma)
 
-    Get an energy value for a particular set of parameters
+    Get an energy value for the specified set of parameters
 
     :param state:       The state... 0: not defined 1: helix 2: sheet
     :param d:           The distance
@@ -1876,7 +1860,7 @@ HBondPotential
 
   .. method:: GetEnergy(res, env)
 
-    Gets the energy of **res** given the provided environment.
+    Gets the energy of **res** given **env**.
 
     :param res:         Residue to be evaluated
     :param env:         The environment, the residue actually sees
@@ -1911,7 +1895,7 @@ HBondPotential
     :type target:       :class:`ost.mol.EntityView`
 
     :returns:           The requested energies, elements can be NaN, if
-                        no interactions are observed for a particular residue
+                        no interactions are observed for certain residues
     :rtype:             :class:`list` of :class:`float`
 
   .. method:: GetOptions()

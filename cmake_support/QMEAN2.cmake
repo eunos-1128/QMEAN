@@ -5,6 +5,45 @@
 # configuration for the modules.
 #-------------------------------------------------------------------------------
 
+
+#-------------------------------------------------------------------------------
+# map macro
+#
+# this function emulates a map/dict data type
+#-------------------------------------------------------------------------------
+
+function(map COMMAND MAPNAME)
+  set (_KEYS ${MAPNAME}_MAP_KEYS )
+  set (_VALUES ${MAPNAME}_MAP_VALUES)
+  if(${COMMAND} STREQUAL SET)
+    list(REMOVE_AT ARGN 0)
+    list(FIND ${_KEYS} ${ARGV2} _MAP_INDEX)
+    if(_MAP_INDEX EQUAL -1)
+      list(APPEND ${_KEYS} ${ARGV2})
+      set(${_KEYS} ${${_KEYS}} PARENT_SCOPE)
+      set(${_VALUES}_${ARGV2}  ${ARGN} PARENT_SCOPE)
+    else()
+      set(${_VALUES}_${ARGV2}  ${ARGN} PARENT_SCOPE)
+    endif()
+  elseif(${COMMAND} STREQUAL GET)
+    list(FIND ${_KEYS} ${ARGV2} _MAP_INDEX)
+    if(_MAP_INDEX EQUAL -1)
+      MESSAGE(FATAL_ERROR "Unknown key: " ${ARGV2})
+    endif()
+    set(${ARGV3} ${${_VALUES}_${ARGV2}} PARENT_SCOPE)
+  elseif(${COMMAND} STREQUAL KEYS)
+    set(${ARGV2} ${${_KEYS}} PARENT_SCOPE)
+  elseif(${COMMAND} STREQUAL CREATE)
+    set(${_KEYS}  "" PARENT_SCOPE)
+  elseif(${COMMAND} STREQUAL LENGTH)
+    list(LENGTH ${_KEYS} _L)
+    set(${ARGV2} ${_L} PARENT_SCOPE)
+  else()
+    MESSAGE(FATAL_ERROR "Unknown map command:" ${COMMAND})
+  endif()
+endfunction()
+
+
 #-------------------------------------------------------------------------------
 # check_architecture
 #
@@ -24,6 +63,30 @@ macro(check_architecture)
     set(OS_64_BITS 0)
     set(CMAKE_NATIVE_ARCH 32)
   endif()
+endmacro()
+
+#-------------------------------------------------------------------------------
+# Synopsis:
+#   compile_py_files(module out_dir compiled_files [input_file1 ...])
+# Description:
+#   Calls pyuic on every input file. The resulting python files are stored in
+#   the variable with name compiled_files.
+#-------------------------------------------------------------------------------
+macro(compile_py_files module out_dir compiled_files_name)
+  set(_input_files ${ARGN})
+  set(${compiled_files_name})
+  foreach(input_file ${_input_files})
+    get_filename_component(_out_file ${input_file} NAME_WE)
+    get_filename_component(_in_file ${input_file} ABSOLUTE)
+    set(_out_file ${out_dir}/${_out_file}.pyc)
+    list(APPEND ${compiled_files_name} ${_out_file})
+    get_filename_component(_in_name ${input_file} NAME)
+    file(MAKE_DIRECTORY  ${out_dir})
+    add_custom_command(TARGET ${module}
+                       COMMAND ${PYTHON_BINARY} -c "import py_compile;py_compile.compile(\"${_in_file}\",\"${_out_file}\",\"${_in_name}\",doraise=True)"
+                       VERBATIM DEPENDS ${input_file}
+                       )
+  endforeach()
 endmacro()
 
 #-------------------------------------------------------------------------------
@@ -84,6 +147,7 @@ macro(copy_if_different FROM_DIR TO_DIR FILES TARGETS TARGET)
           set(TO ${TO_DIR}/${TOFILE})
       endif()
       file(MAKE_DIRECTORY  ${TO_DIR})
+      #message("copy following stuff: ${FROM} ${TO}")
       add_custom_command(TARGET "${TARGET}" PRE_BUILD
           DEPENDS ${FROM}
           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${FROM} ${TO}
@@ -97,6 +161,34 @@ macro(copy_if_different FROM_DIR TO_DIR FILES TARGETS TARGET)
 endmacro()
 
 #-------------------------------------------------------------------------------
+# parse_file_list
+#
+# this macro splits a list of files with IN_DIR statements and fills them into a map
+# where the key is the directory name
+#-------------------------------------------------------------------------------
+macro(parse_file_list FILELIST FILEMAP)
+  set(_EXPECT_IN_DIR FALSE)
+  map(CREATE ${FILEMAP})
+  set(_CURRENT_LIST)
+  foreach(_ITEM ${FILELIST})
+    if (_ITEM STREQUAL "IN_DIR")
+      set(_EXPECT_IN_DIR TRUE)
+    else()
+      if (_EXPECT_IN_DIR)
+        set(_EXPECT_IN_DIR FALSE)
+        map(SET ${FILEMAP} ${_ITEM} ${_CURRENT_LIST})
+        set(_CURRENT_LIST)
+      else()
+        list(APPEND _CURRENT_LIST "${_ITEM}")
+      endif()
+    endif()
+  endforeach()
+  if(_CURRENT_LIST)
+    map(SET ${FILEMAP} "." ${_CURRENT_LIST})
+  endif()
+endmacro()
+
+#-------------------------------------------------------------------------------
 # stage_headers
 #-------------------------------------------------------------------------------
 macro(stage_headers HEADERS HEADER_INSTALL_DIR TARGET SUB)
@@ -105,7 +197,6 @@ macro(stage_headers HEADERS HEADER_INSTALL_DIR TARGET SUB)
   # building the library
   string(REPLACE "/" "_" _SUB_NO_SLASH "${SUB}")
   string(REPLACE "${PREFIX}_" "" _TARGET "${TARGET}")
-  #message("target before: ${TARGET} after: ${_TARGET}")
   set(_TARGET_NAME ${_TARGET}_${_SUB_NO_SLASH}_headers)
   set(_SUB ${SUB})
   if (NOT _SUB)
@@ -141,7 +232,6 @@ macro(module)
     message(FATAL_ERROR 
             "invalid use of module(): a module name must be provided")
   endif()
-
 
   if (_ARG_HEADER_OUTPUT_DIR)
     set(_HEADER_OUTPUT_DIR ${_ARG_HEADER_OUTPUT_DIR})
@@ -356,27 +446,33 @@ macro(pymod)
   #-----------------------------------------------------------------------------
   set(_ARG_PREFIX qmean)
   parse_argument_list(_ARG 
-                      "NAME;CPP;PY;LINK;OUTPUT_DIR;PREFIX" "" ${ARGN})
+                      "NAME;CPP;PY;LINK;OUTPUT_DIR;UI;PREFIX" "" ${ARGN})
   if (NOT _ARG_NAME)
     message(FATAL_ERROR "invalid use of pymod(): a name must be provided")
   endif()
-  if (_ARG_OUTPUT_DIR)
-    set(PYMOD_DIR "qmean/${_ARG_OUTPUT_DIR}")
-  else()
-    if (_ARG_PREFIX)
-        set(PYMOD_DIR "qmean/${_ARG_PREFIX}/${_ARG_NAME}")
-    else()
-      set(PYMOD_DIR "qmean/${_ARG_NAME}")
-    endif()
+  if (ENABLE_STATIC)
+    return()
   endif()
+  if (_ARG_OUTPUT_DIR)
+    set(PYMOD_DIR "python${PYTHON_VERSION}/site-packages/${_ARG_OUTPUT_DIR}")
+  else()
+    set(PYMOD_DIR "python${PYTHON_VERSION}/site-packages/${_ARG_PREFIX}/${_ARG_NAME}")
+  endif()
+  if (_ARG_PREFIX)
+    set(_LIB_NAME ${_ARG_PREFIX}_${_ARG_NAME})
+  else()
+    set(_LIB_NAME ${_ARG_NAME})
+  endif()
+  
   set(PYMOD_STAGE_DIR "${LIB_STAGE_PATH}/${PYMOD_DIR}")
   file(MAKE_DIRECTORY ${PYMOD_STAGE_DIR})
+  include_directories(${PYTHON_INCLUDE_PATH})
   #-----------------------------------------------------------------------------
   # compile and link C++ wrappers
   #-----------------------------------------------------------------------------
   if (_ARG_CPP)
-    add_library("_${_ARG_NAME}" MODULE ${_ARG_CPP})
-    set_target_properties("_${_ARG_NAME}"
+    add_library("_${_LIB_NAME}" MODULE ${_ARG_CPP})
+    set_target_properties("_${_LIB_NAME}"
                           PROPERTIES ECHO_STRING
                           "Building Python Module ${_ARG_NAME}")
     if (_ARG_PREFIX)
@@ -388,76 +484,77 @@ macro(pymod)
     if (NOT _CUSTOM_CHECK)
       set(_PARENT_LIB_NAME "${_PARENT_NAME}")
     endif()
-    target_link_libraries("_${_ARG_NAME}" ${_PARENT_LIB_NAME} 
+
+    target_link_libraries("_${_LIB_NAME}" ${_PARENT_LIB_NAME} 
                           ${PYTHON_LIBRARIES} ${BOOST_PYTHON_LIBRARIES})
-    set_target_properties("_${_ARG_NAME}"
-                          PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PYMOD_STAGE_DIR}
-                          INSTALL_NAME_DIR "@rpath")
+
+    set_target_properties("_${_LIB_NAME}"
+                          PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PYMOD_STAGE_DIR})
+    set_target_properties("_${_LIB_NAME}"
+                          PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PYMOD_STAGE_DIR})
+    set_target_properties("_${_LIB_NAME}"
+                          PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PYMOD_STAGE_DIR})
+
+    if (NOT ENABLE_STATIC)
+      if (_USE_RPATH)
+        string(REGEX REPLACE "/[^/]*" "/.." inv_pymod_path "/${PYMOD_DIR}")
+        set_target_properties("_${_LIB_NAME}"
+                              PROPERTIES INSTALL_RPATH "$ORIGIN${inv_pymod_path}/")
+      else()
+        set_target_properties("_${_LIB_NAME}"
+                              PROPERTIES INSTALL_RPATH "")
+      endif()
+    endif()
     if (APPLE)
       file(RELATIVE_PATH _REL_PATH "${PYMOD_STAGE_DIR}" "${LIB_STAGE_PATH}")
-      set_target_properties(_${_ARG_NAME} PROPERTIES
-                            LINK_FLAGS "-Wl,-rpath,@${_REL_PATH}")
+      set_target_properties("_${_LIB_NAME}" PROPERTIES
+                            LINK_FLAGS "-Wl,-rpath,@loader_path/${_REL_PATH}"
+                            INSTALL_NAME_DIR "@rpath")
     endif()                          
     if (NOT WIN32)
-      set_target_properties("_${_ARG_NAME}"
+      set_target_properties("_${_LIB_NAME}"
                           PROPERTIES PREFIX "")
     else ()
-      set_target_properties("_${_ARG_NAME}"
-                          PROPERTIES PREFIX "../")
-
-      set_target_properties("_${_ARG_NAME}"
+      set_target_properties("_${_LIB_NAME}"
                           PROPERTIES SUFFIX ".pyd")
-
     endif()
-    install(TARGETS "_${_ARG_NAME}" LIBRARY DESTINATION
+    install(TARGETS "_${_LIB_NAME}" LIBRARY DESTINATION
             "${LIB_DIR}/${PYMOD_DIR}")
   else()
-    add_custom_target("_${_ARG_NAME}" ALL)
+    add_custom_target("_${_LIB_NAME}" ALL)
   endif()
+
+  #-----------------------------------------------------------------------------
+  # compile python files
+  #-----------------------------------------------------------------------------
   if (_ARG_PY)
-    set(_PY_FILES)
-    set(_EXPECT_IN_DIR FALSE)
-    foreach(_PY_FILE ${_ARG_PY})
-      if (_PY_FILE STREQUAL "IN_DIR")
-        set(_EXPECT_IN_DIR TRUE)
-      else()
-        if (_EXPECT_IN_DIR)
-          set(_EXPECT_IN_DIR FALSE)
-          set(_DIR ${_PY_FILE})
-          set(_ABS_PY_FILES)
-          set(_PY_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${_DIR}")
-          foreach(_PY ${_PY_FILES})
-            list(APPEND _ABS_PY_FILES "${_PY_SOURCE_DIR}/${_PY}")
-          endforeach()
-          install(FILES ${_ABS_PY_FILES} DESTINATION
-                  "${LIB_DIR}/${PYMOD_DIR}/${_DIR}")
-          string(REPLACE "/" "_" _DIR_NO_SLASH "${_DIR}")
-          add_custom_target("${_ARG_NAME}_${_DIR_NO_SLASH}_pymod" ALL)
-          copy_if_different("./" "${PYMOD_STAGE_DIR}/${_DIR}" 
-                            "${_ABS_PY_FILES}" "TARGETS"
-                            "${_ARG_NAME}_${_DIR_NO_SLASH}_pymod")
-          set(_PY_FILES)
-        else()
-          list(APPEND _PY_FILES "${_PY_FILE}")
-        endif()
-      endif()
+    parse_file_list("${_ARG_PY}" _PYFILE_MAP)
+    map(KEYS _PYFILE_MAP _PYFILE_MAP_KEYS)
+    foreach(_DIR ${_PYFILE_MAP_KEYS})
+      map(GET _PYFILE_MAP ${_DIR} _PY_FILES)
+      set(_ABS_PY_FILES)
+      set(_PY_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${_DIR}")
+      foreach(_PY ${_PY_FILES})
+        list(APPEND _ABS_PY_FILES "${_PY_SOURCE_DIR}/${_PY}")
+      endforeach()
+      install(FILES ${_ABS_PY_FILES} DESTINATION "${LIB_DIR}/${PYMOD_DIR}/${_DIR}")
+      string(REPLACE "/" "_" _DIR_NO_SLASH "${_DIR}")
+      set(_PYMOD_TARGET "${_LIB_NAME}_${_DIR_NO_SLASH}_pymod")
+      string(REPLACE "_." "" _PYMOD_TARGET "${_PYMOD_TARGET}")
+      add_custom_target(${_PYMOD_TARGET} ALL)
+      copy_if_different("./" "${PYMOD_STAGE_DIR}/${_DIR}"
+                        "${_ABS_PY_FILES}" "TARGETS"
+                        "${_PYMOD_TARGET}")
+      compile_py_files(_${_LIB_NAME} ${PYMOD_STAGE_DIR}/${_DIR} compiled_files ${_ABS_PY_FILES})
+      install(FILES ${compiled_files} DESTINATION "${LIB_DIR}/${PYMOD_DIR}/${_DIR}")
     endforeach()
-    if (_PY_FILES)
-      add_custom_target("${_ARG_NAME}_pymod" ALL)
-      copy_if_different("./" "${PYMOD_STAGE_DIR}" "${_PY_FILES}" "TARGETS"
-                        "${_ARG_NAME}_pymod")
-      add_dependencies("_${_ARG_NAME}" "${_ARG_NAME}_pymod")
-      include_directories(${PYTHON_INCLUDE_PATH})
-      install(FILES ${_PY_FILES} DESTINATION "${LIB_DIR}/${PYMOD_DIR}")
-      endif()
   endif()  
   get_target_property(_MOD_DEPS "${_PARENT_NAME}" MODULE_DEPS)
   if(_MOD_DEPS)
     foreach(dep ${_MOD_DEPS})
-       add_dependencies("_${_ARG_NAME}" "_${dep}")
+       add_dependencies("_${_LIB_NAME}" "_${dep}")
     endforeach()
   endif()
-
 endmacro()
 
 add_custom_target(check)

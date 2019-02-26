@@ -19,7 +19,7 @@ tab_shift_into_middle = Table.Load(os.path.join('example_out',
                                                 'shift_into_middle',
                                                  'local_scores.txt'))
 
-score_idx = tab_no_shift.GetColIndex('lDDT')
+score_idx = tab_no_shift.GetColIndex('QMEAN')
 rnum_idx = tab_no_shift.GetColIndex('rnum')
 
 rnums_no_shift = list()
