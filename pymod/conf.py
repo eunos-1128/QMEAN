@@ -22,7 +22,7 @@ import sys
 # can be adapted when calling make install. This soultion assumes conf.py
 # to be in stage/lib64/python2.7/site-packages/qmean
 QMEAN_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname( __file__ ), 
-                                              '..', '..', '..', '..', 'share'))
+                                              '..', '..', '..', '..', 'share', 'qmean'))
 if not os.path.exists(QMEAN_DATA_DIR):
   print 'internal configuration error:'
   print '  The QMean data directory "%s" does not exist.' % QMEAN_DATA_DIR
