@@ -30,7 +30,7 @@ endif()
 
 set(STAGE_DIR "${CMAKE_BINARY_DIR}/stage")
 set(HEADER_STAGE_PATH ${STAGE_DIR}/include)
-set(SHARED_DATA_PATH ${STAGE_DIR}/share/)
+set(SHARED_DATA_PATH ${STAGE_DIR}/share/qmean/)
 include_directories("${HEADER_STAGE_PATH}")
 link_directories(${LIB_STAGE_PATH})
 
