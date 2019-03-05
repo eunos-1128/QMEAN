@@ -60,7 +60,7 @@ copy_if_different("./" "${SHARED_DATA_PATH}/scorer/local_nn_scorer"
 
 
 install(FILES ${POTENTIAL_FILES} DESTINATION "share/qmean/potentials")
-install(FILES ${REFERENCE_TABLE_FILES} DESTINATION "share/qmean/references")
+install(FILES ${REFERENCE_TABLE_FILES} DESTINATION "share/qmean/reference_values")
 install(FILES ${LINEAR_SCORER_FILES} DESTINATION "share/qmean/scorer")
-install(FILES ${LOCAL_NN_SCORER_FILES} DESTINATION "share/qmean/scorer/linear_nn_scorer")
+install(FILES ${LOCAL_NN_SCORER_FILES} DESTINATION "share/qmean/scorer/local_nn_scorer")
 
