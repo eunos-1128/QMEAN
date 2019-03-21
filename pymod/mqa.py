@@ -439,24 +439,38 @@ class Scores:
       dist_const_data["fraction_observed"] = list()
 
       for c,d in zip(self.target.chains, self.dc):
-        entity_view = self.target.CreateEmptyView()
-        entity_view.AddChain(c, mol.INCLUDE_ALL)
-        chain_data = d.GetScoresWithData(entity_view)
-        dist_const_data["disco"] += chain_data["scores"]
-        dist_const_data["counts"] += chain_data["counts"]
-        dist_const_data["avg_num_clusters"] += chain_data["avg_num_clusters"]
-        dist_const_data["avg_max_seqsim"] += chain_data["avg_max_seqsim"]
-        dist_const_data["avg_max_seqid"] += chain_data["avg_max_seqid"]
-        dist_const_data["avg_variance"] += chain_data["avg_variance"]
-        dist_const_data["num_constraints"] += chain_data["num_constraints"]
+
+        if d!= None:
+
+          entity_view = self.target.CreateEmptyView()
+          entity_view.AddChain(c, mol.INCLUDE_ALL)
+          chain_data = d.GetScoresWithData(entity_view)
+          dist_const_data["disco"] += chain_data["scores"]
+          dist_const_data["counts"] += chain_data["counts"]
+          dist_const_data["avg_num_clusters"] += chain_data["avg_num_clusters"]
+          dist_const_data["avg_max_seqsim"] += chain_data["avg_max_seqsim"]
+          dist_const_data["avg_max_seqid"] += chain_data["avg_max_seqid"]
+          dist_const_data["avg_variance"] += chain_data["avg_variance"]
+          dist_const_data["num_constraints"] += chain_data["num_constraints"]
  
-        fraction_observed = list()
-        for a,b in zip(chain_data["counts"], chain_data["num_constraints"]):
-          if b == 0:
-            fraction_observed.append(0.0)
-          else:
-            fraction_observed.append(float(a)/b)
-        dist_const_data["fraction_observed"] += fraction_observed
+          fraction_observed = list()
+          for a,b in zip(chain_data["counts"], chain_data["num_constraints"]):
+            if b == 0:
+              fraction_observed.append(0.0)
+            else:
+              fraction_observed.append(float(a)/b)
+          dist_const_data["fraction_observed"] += fraction_observed
+
+        else:
+
+          dist_const_data["disco"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["counts"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_num_clusters"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_max_seqsim"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_max_seqid"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["avg_variance"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["num_constraints"] += list([float("NaN")] * len(c.residues))
+          dist_const_data["fraction_observed"] += list([float("NaN")] * len(c.residues))
 
       self.data["dist_const"] = dist_const_data
       self.data["avg_dist_const"] = self.GetAverage(dist_const_data["disco"])   
