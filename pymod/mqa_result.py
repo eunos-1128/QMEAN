@@ -21,6 +21,7 @@ from qmean import PotentialContainer
 from ost.table import Table
 from ost import mol
 import matplotlib.pyplot as plt
+import numpy as np
 
 class QMEANScorer(object):
 
@@ -51,7 +52,7 @@ class QMEANScorer(object):
     self._accpro = accpro
     self._dc = dc
     self._settings = settings
-    self.use_nn = use_nn
+    self._use_nn = use_nn
     self._local_mqa = None
     self._global_mqa = None
     self._linear_global_scorer = None
@@ -64,6 +65,7 @@ class QMEANScorer(object):
     self._qmean6_z_score = None
     self._local_scores = None
     self._avg_local_score = None
+    self._avg_local_score_error = None
 
 
   @property
@@ -234,7 +236,7 @@ class QMEANScorer(object):
     if self._local_scores == None:
       self._local_scores = dict()
 
-      if self.use_nn:
+      if self._use_nn:
         local_features = ["counts", "packing", "cb_packing", "exposed", 
                           "torsion", "reduced", "interaction", "cbeta", 
                           "ss_agreement", "acc_agreement", "dist_const", 
@@ -322,6 +324,40 @@ class QMEANScorer(object):
           self._avg_local_score += s
       self._avg_local_score /= self._model.residue_count
     return self._avg_local_score
+
+
+  @property
+  def avg_local_score_error(self):
+    if self._avg_local_score_error == None:
+      if self._dc != None and self._use_nn:
+        
+        length_array = np.array([40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 
+                                 95, 100, 105, 110, 115, 120, 125, 130, 135, 
+                                 140, 145, 150, 155, 160, 165, 170, 175, 180, 
+                                 185, 190, 195, 200, 205, 210, 215, 220, 225, 
+                                 230, 235, 240, 245, 250, 255, 260, 265, 270, 
+                                 275, 280, 285, 290, 295, 300, 305, 310, 315, 
+                                 320, 325, 330, 335, 340, 345, 350, 355, 360, 
+                                 365, 370, 375, 380, 385, 390, 395, 400])
+
+        error_array = np.array([0.115, 0.115, 0.112, 0.111, 0.109, 0.108, 0.107,
+                                0.105, 0.096, 0.093, 0.092, 0.088, 0.08, 0.078,
+                                0.078, 0.078, 0.076, 0.073, 0.072, 0.071, 0.071,
+                                0.067, 0.067, 0.066, 0.066, 0.067, 0.066, 0.066,
+                                0.063, 0.063, 0.061, 0.06, 0.059, 0.059, 0.059,
+                                0.058, 0.057, 0.056, 0.055, 0.054, 0.051, 0.052,
+                                0.053, 0.052, 0.052, 0.051, 0.051, 0.05, 0.051,
+                                0.051, 0.052, 0.052, 0.052, 0.052, 0.052, 0.053,
+                                0.053, 0.052, 0.051, 0.052, 0.051, 0.051, 0.051,
+                                0.05, 0.049, 0.05, 0.049, 0.05, 0.05, 0.05, 
+                                0.052, 0.053, 0.053])
+
+        idx = np.argmin(np.abs(length_array - self._model.residue_count))
+        self._avg_local_score_error = error_array[idx]
+      else:
+        self._avg_local_score_error = float("NaN")
+    return self._avg_local_score_error
+  
 
 
   @property

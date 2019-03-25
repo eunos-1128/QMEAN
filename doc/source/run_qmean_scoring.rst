@@ -206,12 +206,13 @@ Assessing the quality for soluble protein models
 
     The average of the the local scores
 
+  .. attribute:: avg_local_score_error
 
-
-
-
-
-
+    The expected error for *avg_local_score*. This attribute is only available 
+    if you provided distance constraints and enabled neural networks 
+    (*dc* and *use_nn* parameters at QMEANScorer construction). The error is the
+    root mean squared difference (i.e. standard deviation) between predicted 
+    lDDT and true lDDT on a large set of models with similar size.
 
 
 
