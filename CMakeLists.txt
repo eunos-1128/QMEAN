@@ -2,6 +2,12 @@
 # Author: Marco Biasini
 #-------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+
+set (QMEAN_VERSION_MAJOR 3)
+set (QMEAN_VERSION_MINOR 0)
+set (QMEAN_VERSION_PATCH 3)
+set (QMEAN_VERSION_STRING ${QMEAN_VERSION_MAJOR}.${QMEAN_VERSION_MINOR}.${QMEAN_VERSION_PATCH} )
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake_support)
 
 include(QMEAN2)

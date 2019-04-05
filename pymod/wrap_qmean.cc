@@ -15,6 +15,7 @@
 
 #include <boost/python.hpp>
 #include <ost/mol/entity_handle.hh>
+#include <qmean/version.hh>
 
 void export_Torsion();
 void export_Interaction();
@@ -33,6 +34,13 @@ using namespace boost::python;
 
 BOOST_PYTHON_MODULE(_qmean)
 {
+  // attach version information to current modules scope
+  scope().attr("qmean_version") = QMEAN_VERSION_STRING;
+  scope().attr("qmean_version_major") = QMEAN_VERSION_MAJOR;
+  scope().attr("qmean_version_minor") = QMEAN_VERSION_MINOR;
+  scope().attr("qmean_version_patch") = QMEAN_VERSION_PATCH;
+
+  // export qmean functionality
   export_Base();	
   export_Torsion();
   export_Interaction();
