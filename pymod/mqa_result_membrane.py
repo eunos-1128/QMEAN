@@ -18,6 +18,7 @@ from qmean import mqa_membrane
 from qmean import score_calculator
 from qmean import reference_set
 from qmean import conf
+from ost import conop
 from ost.table import *
 import os
 import matplotlib

@@ -4,6 +4,7 @@
 #load required modules
 from qmean import InteractionStatistic, InteractionPotential
 from qmean import ChemType
+from ost import io
 import os
 import matplotlib.pyplot as plt
 

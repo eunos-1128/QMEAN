@@ -1,7 +1,9 @@
 from qmean import DisCoContainer
+from ost import io
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
 
 aln_files = ["example_data/1pvv.1.A.fasta", 
              "example_data/1v1v.1.A.fasta", 

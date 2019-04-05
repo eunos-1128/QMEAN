@@ -7,7 +7,7 @@ from qmean import CBetaStatistic, CBetaPotential
 from qmean import InteractionStatistic, InteractionPotential
 from qmean import ChemType
 import os
-from ost import conop
+from ost import conop, io
 import matplotlib.pyplot as plt
 
 
