@@ -104,7 +104,8 @@ Assessing the quality for soluble protein models
   .. method:: QMEAN6SliderPlot(out_path)
 
     Dumps the slider plot representing the QMEAN6 Z-Score and the Z-Scores of
-    its components.
+    its components. If *psipred* or *accpro* are missing, the plot makes no 
+    sense as the Z-scores from the agreement terms and QMEAN6 are set to NaN.
 
     :param out_path:    Path to dump the plot, must have image format file
                         ending, e.g. awesome_plot.png
@@ -124,7 +125,9 @@ Assessing the quality for soluble protein models
   .. method:: QMEAN6ReferencePlot(out_path)
 
     Dumps the reference plot with the QMEAN6 score of the *model* compared to
-    the QMEAN6 scores of a large set of non-redundant X-ray structures.
+    the QMEAN6 scores of a large set of non-redundant X-ray structures. If 
+    *psipred* or *accpro* are missing, the plot makes no sense as the QMEAN6
+    score is set to NaN.
 
     :param out_path:    Path to dump the plot, must have image format file
                         ending, e.g. awesome_plot.png
@@ -179,12 +182,14 @@ Assessing the quality for soluble protein models
   .. attribute:: qmean6_score
 
     The QMEAN6 score of *model*, i.e. four statistical potentials and two agreement
-    terms linearly combined to get a global score.
+    terms linearly combined to get a global score. Value is set to NaN if *psipred* 
+    or *accpro* are invalid.
 
   .. attribute:: qmean6_z_score
 
     The QMEAN6 Z-score of *model*, i.e. its QMEAN6 score compared to what one would 
-    expect from high resolution X-ray structures
+    expect from high resolution X-ray structures. Value is set to NaN if *psipred* 
+    or *accpro* are invalid.
 
   .. attribute:: qmean6_components
 
@@ -192,7 +197,9 @@ Assessing the quality for soluble protein models
     and Z-score version. Keys of the dictionary: ["interaction", "cbeta", 
     "packing", "torsion", "ss_agreement", "acc_agreement", 
     "interaction_z_score", "cbeta_z_score", "packing_z_score", "torsion_z_score", 
-    "ss_agreement_z_score", "acc_agreement_z_score"]
+    "ss_agreement_z_score", "acc_agreement_z_score"]. The values for the 
+    agreement terms is set to NaN if the required input is missing 
+    (*psired*, *accpro*)
 
   .. attribute:: local_scores
 
@@ -210,9 +217,10 @@ Assessing the quality for soluble protein models
 
     The expected error for *avg_local_score*. This attribute is only available 
     if you provided distance constraints and enabled neural networks 
-    (*dc* and *use_nn* parameters at QMEANScorer construction). The error is the
-    root mean squared difference (i.e. standard deviation) between predicted 
-    lDDT and true lDDT on a large set of models with similar size.
+    (*dc* and *use_nn* parameters at QMEANScorer construction). NaN is returned
+    otherwise. The error is the root mean squared difference 
+    (i.e. standard deviation) between predicted lDDT and true lDDT on a large 
+    set of models with similar size.
 
 
 
