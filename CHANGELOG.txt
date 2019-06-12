@@ -1,8 +1,9 @@
 Changes in Release 3.0.X
+--------------------------------------------------------------------------------
 
-* Version string available as qmean.qmean_version or qmean.qmean_version_x 
-  (x can be major, minor or patch)
-* Several minor bug fixes, improvements
+ * Version string available as qmean.qmean_version or qmean.qmean_version_x 
+   (x can be major, minor or patch)
+ * Several minor bug fixes, improvements
 
 
 Changes in Release 3.0.3
