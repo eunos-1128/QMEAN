@@ -54,7 +54,12 @@ endif()
 
 file(MAKE_DIRECTORY ${STAGE_DIR} ${HEADER_STAGE_PATH} ${LIB_STAGE_PATH})
 
+# Python needed before Boost
 find_package(Python 2.7.0 REQUIRED)
+# Split version string
+string(REPLACE "." ";" _python_version_list ${PYTHON_VERSION})
+list(GET _python_version_list 0 PYTHON_VERSION_MAJOR)
+list(GET _python_version_list 1 PYTHON_VERSION_MINOR)
 
 find_package(OPENSTRUCTURE 1.7 REQUIRED 
              COMPONENTS mol seq seq_alg mol_alg conop)
@@ -69,11 +74,30 @@ find_package(Boost ${_BOOST_MIN_VERSION}
              COMPONENTS unit_test_framework REQUIRED)
 set(BOOST_UNIT_TEST_LIBRARIES ${Boost_LIBRARIES})
 set(Boost_LIBRARIES)
-find_package(Boost ${_BOOST_MIN_VERSION} COMPONENTS python REQUIRED)
-set(BOOST_PYTHON_LIBRARIES ${Boost_LIBRARIES})
+# starting with CMake 3.11 we could use the following instead of the foreach
+# find_package(Boost ${_BOOST_MIN_VERSION} COMPONENTS
+#              python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} REQUIRED)
+# set(BOOST_PYTHON_LIBRARIES ${Boost_LIBRARIES})
+# see https://cmake.org/cmake/help/v3.11/module/FindBoost.html
+foreach(_python_lib_name python
+                         python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
+                         python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
+                         python${PYTHON_VERSION_MAJOR})
+  find_package(Boost ${_BOOST_MIN_VERSION} COMPONENTS ${_python_lib_name} QUIET)
+  if(Boost_FOUND)
+    message(STATUS "Found Boost package: " ${_python_lib_name})
+    set(BOOST_PYTHON_LIBRARIES ${Boost_LIBRARIES})
+    break()
+  else()
+    message(STATUS "Boost package not found: " ${_python_lib_name}
+                   ". Trying alternative names!")
+  endif()
+endforeach(_python_lib_name)
+if(NOT BOOST_PYTHON_LIBRARIES)
+  message(FATAL_ERROR "Failed to find any Boost Python library!")
+endif()
 set(Boost_LIBRARIES)
 
-find_package(Python 2.7.0 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS} 
                     ${OST_INCLUDE_DIR})
                     
