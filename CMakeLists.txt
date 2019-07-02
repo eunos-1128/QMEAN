@@ -12,7 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake_support)
 
 include(QMEAN2)
 
-project(QMEAN2)
+project(QMEAN2 CXX C)
 
 if (PREFIX)
   set(CMAKE_INSTALL_PREFIX ${PREFIX})
