@@ -61,7 +61,7 @@ string(REPLACE "." ";" _python_version_list ${PYTHON_VERSION})
 list(GET _python_version_list 0 PYTHON_VERSION_MAJOR)
 list(GET _python_version_list 1 PYTHON_VERSION_MINOR)
 
-find_package(OPENSTRUCTURE 1.7 REQUIRED 
+find_package(OPENSTRUCTURE 1.10.0 REQUIRED 
              COMPONENTS mol seq seq_alg mol_alg conop)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
