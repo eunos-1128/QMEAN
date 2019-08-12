@@ -29,8 +29,8 @@ Real GetCountaabin(ReducedStatisticPtr s, ost::conop::AminoAcid aa_one,ost::cono
 Real GetCountbin(ReducedStatisticPtr s, int a, int b, int c, int d){ return s->GetCount(a,b,c,d); }
 
 Real GetEnergy(ReducedPotentialPtr p, ost::conop::AminoAcid aa_one, ost::conop::AminoAcid aa_two, Real dist, Real alpha, Real beta, Real gamma) { return p->GetEnergy(aa_one, aa_two, dist, alpha, beta, gamma); }
-Real GetEnergyRes(ReducedPotentialPtr p, ost::mol::ResidueView& res, bool normalize) { p->GetEnergy(res, normalize); }
-Real GetEnergyResEnv(ReducedPotentialPtr p, ost::mol::ResidueView& res, ost::mol::EntityView& env, bool normalize) { p->GetEnergy(res, env, normalize); }
+Real GetEnergyRes(ReducedPotentialPtr p, ost::mol::ResidueView& res, bool normalize) { return p->GetEnergy(res, normalize); }
+Real GetEnergyResEnv(ReducedPotentialPtr p, ost::mol::ResidueView& res, ost::mol::EntityView& env, bool normalize) { return p->GetEnergy(res, env, normalize); }
 
 list WrapGetEnergies(ReducedPotentialPtr p, ost::mol::EntityView& target, ost::mol::EntityView& env, bool normalize){
   std::vector<Real> energies = p->GetEnergies(target,env, normalize);

@@ -168,12 +168,13 @@ class QMEANScorer(object):
   def qmean6_score(self):
     if self._qmean6_score == None:
       if self._psipred == None or self._accpro == None:
-        raise RuntimeError("Require PSIPRED and ACCPRO information for QMEAN6")
-      data = self.global_mqa.GetAVGData(['interaction','cbeta',
-                                         'packing','torsion',
-                                         'ss_agreement', 'acc_agreement'])
-      s = self.linear_global_scorer.GetGlobalScore('soluble', data)
-      self._qmean6_score = min(max(s, 0.0), 1.0)
+        self._qmean6_score = float("NaN")
+      else:
+        data = self.global_mqa.GetAVGData(['interaction','cbeta',
+                                           'packing','torsion',
+                                           'ss_agreement', 'acc_agreement'])
+        s = self.linear_global_scorer.GetGlobalScore('soluble', data)
+        self._qmean6_score = min(max(s, 0.0), 1.0)
     return self._qmean6_score
 
 

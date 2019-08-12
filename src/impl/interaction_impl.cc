@@ -79,6 +79,8 @@ bool InteractionPotentialImpl::VisitAtom(const ost::mol::AtomHandle& at){
     this->OnInteraction(type_a, type_b, dist);
 
   }
+
+  return true;
 }
 
 }} //namespaces

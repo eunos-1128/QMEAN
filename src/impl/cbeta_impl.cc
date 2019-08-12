@@ -112,6 +112,9 @@ bool CBetaPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
     }
     this->OnInteraction(aa, it->aa, dist);
   }
+
+  // no need to continue to atoms
+  return false;
 }
 
 }}

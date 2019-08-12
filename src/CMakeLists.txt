@@ -24,6 +24,7 @@ hbond_potential.hh
 ss_agreement.hh
 spherical_smoother.hh
 vec_list_magic.hh
+version.hh
 disco.hh
 clash_score.hh
 impl/reduced_impl.hh
@@ -66,6 +67,9 @@ impl/cb_packing_impl.cc
 impl/hbond_impl.cc
 )
 
+set(config_hh_generator "CMake")
+set(VERSION_HH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/version.hh")
+configure_file(version.hh.in ${VERSION_HH_FILE})
 
 module(NAME qmean SOURCES ${QMEAN_SOURCES} HEADERS ${QMEAN_HEADERS} 
        PREFIX "" HEADER_OUTPUT_DIR qmean 

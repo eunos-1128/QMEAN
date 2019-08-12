@@ -705,13 +705,7 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   std::ifstream in_stream(filename.c_str(), std::ios::binary);
   if(!in_stream){
     throw std::runtime_error("Could not open file " + filename);
-  } 
-
-  // number of bytes of the whole file
-  // this will be relevant to determine how many constraints there are to load
-  in_stream.seekg (0, in_stream.end);
-  long int total_num_bytes = in_stream.tellg();
-  in_stream.seekg (0, in_stream.beg); 
+  }
 
   // the variables to load
   char cvalue;
@@ -762,11 +756,14 @@ DisCoContainerPtr DisCoContainer::Load(const String& filename) {
   uint16_t j;
   std::vector<uint8_t> loaded_vec(loaded_container->num_bins_, 0);
 
-  // always check whether there are enough bytes to read for one more constraint
-  while(in_stream.good() && 
-        in_stream.tellg() + constraint_num_bytes <= total_num_bytes) {
+  // abort check with first read
+  while (true) {
 
     in_stream.read(reinterpret_cast<char*>(&i), sizeof(uint16_t));
+    
+    // abort if no more data
+    if (!in_stream) break;
+
     in_stream.read(reinterpret_cast<char*>(&j), sizeof(uint16_t));
     
     ConstraintInfo* constraint_info = new ConstraintInfo;

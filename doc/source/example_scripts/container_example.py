@@ -4,6 +4,7 @@
 from qmean import InteractionStatistic, InteractionPotential, \
                   PackingStatistic, PackingPotential, \
                   StatisticContainer, PotentialContainer
+from ost import io
 import os
 
 #define some training targets used later on

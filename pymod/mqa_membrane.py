@@ -15,7 +15,7 @@
 
 from qmean import *
 from qmean import conf
-from ost import mol
+from ost import mol, geom
 import pickle
 from predicted_sequence_features import AlignChainToSEQRES
 
