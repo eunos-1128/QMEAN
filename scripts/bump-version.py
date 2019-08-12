@@ -32,3 +32,12 @@ for i, line in enumerate(lines):
   if line.startswith("Changes in Release") and "X" in line.upper():
     lines[i] = "Changes in Release %s\n" % version_string
 open("CHANGELOG.txt", "w").writelines(lines)
+
+# fix doc config
+lines = open("doc/source/conf.py").readlines()
+for i, line in enumerate(lines):
+  if line.startswith("version = "):
+    lines[i] = "version = '%d.%d'\n" % (major, minor)
+  elif line.startswith("release = "):
+    lines[i] = "release = '%s'\n" % version_string
+open("doc/source/conf.py", "w").writelines(lines)

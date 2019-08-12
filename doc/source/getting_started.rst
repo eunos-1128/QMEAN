@@ -42,17 +42,17 @@ installed on your system.
 Build QMEAN
 --------------------------------------------------------------------------------
 
-QMEAN requires the OpenStructure framework with all its depencies to be 
-installed. Please follow the instructions on 
-`openstructure.org <http://www.openstructure.org/>`_ to compile from source. 
+QMEAN requires the OpenStructure framework with all its depencies to be
+installed. Please follow the instructions on
+`openstructure.org <http://www.openstructure.org/>`_ to compile from source.
 Once you successfully compiled OpenStructure, you need following python modules:
 
 * numpy
 * scipy
 * matplotlib
 
-To compile QMEAN, change to the QMEAN directory, make a build directory and run 
-CMake in there by giving it the path to your openstructure installation 
+To compile QMEAN, change to the QMEAN directory, make a build directory and run
+CMake in there by giving it the path to your OpenStructure installation
 (you might want to activate optimizations with -DOPTIMIZE):
 
   .. code-block:: bash
@@ -85,7 +85,7 @@ Python. Following command enables QMEAN in your current shell:
     export PYTHONPATH=path_to_qmean_build_dir/stage/lib64/python2.7/site-packages:$PYTHONPATH
     
 
-You can add this command to .bashrc, so it is set permanently.
+You can add this command to ``.bashrc``, so it is set permanently.
 If everything is setup correctly, you can test the setup in an
-interactive ost session by typing: from "qmean import *"
+interactive ost session by typing: from ``qmean import *``
 or, even better, run the example scripts from the documentation.
