@@ -1,11 +1,11 @@
 #Example code to demonstrate the usage of setting up a packing potential
 #and get some basic info out of it. You need matplotlib to run this script!
 
-#load required modules
 import os
+import matplotlib.pyplot as plt
+from ost import io
 from qmean import PackingStatistic, PackingPotential, \
                   ChemType
-import matplotlib.pyplot as plt
 
 
 #define some training targets used later on
@@ -35,10 +35,8 @@ for t in training_targets:
 pot = PackingPotential.Create(stat,reference_state="uniform")
 
 #Save the statistic and potential objects
-stat_out_path = os.path.join("example_out","packing_statistic.dat")
-pot_out_path = os.path.join("example_out","packing_potential.dat")
-stat.Save(stat_out_path)
-pot.Save(pot_out_path)
+stat.Save("packing_statistic.dat")
+pot.Save("packing_potential.dat")
 
 
 #We're not done yet! Let's play around a bit
@@ -50,8 +48,7 @@ pot.Save(pot_out_path)
 ca_pseudo_energies = list()
 nz_pseudo_energies = list()
 
-for i in range(33):
-    count = i
+for count in range(33):
     e = pot.GetEnergy(ChemType.C_LYS_A, count)
     ca_pseudo_energies.append(e)
     e = pot.GetEnergy(ChemType.N_LYS_Z, count)
@@ -76,5 +73,4 @@ plt.plot([0,33],[0,0],'k')
 plt.xlabel("other atoms within cutoff")
 plt.ylabel("pseudo energy")
 plt.legend(frameon=False)
-out_path = os.path.join("example_out","packing_energy_plot.png")
-plt.savefig(out_path)
+plt.savefig("packing_energy_plot.png")

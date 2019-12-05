@@ -1,12 +1,11 @@
 #Example code to demonstrate the usage of setting up an interaction potential
 #and get some basic info out of it. You need matplotlib to run this script!
 
-#load required modules
-from qmean import InteractionStatistic, InteractionPotential
-from qmean import ChemType
-from ost import io
 import os
 import matplotlib.pyplot as plt
+from ost import io
+from qmean import InteractionStatistic, InteractionPotential
+from qmean import ChemType
 
 
 #define some training targets used later on
@@ -37,10 +36,8 @@ for t in training_targets:
 pot = InteractionPotential.Create(stat)
 
 #Save the statistic and potential objects
-stat_path = os.path.join("example_out","interaction_statistic.dat")
-pot_path = os.path.join("example_out","interaction_potential.dat")
-stat.Save(stat_path)
-pot.Save(pot_path)
+stat.Save("interaction_statistic.dat")
+pot.Save("interaction_potential.dat")
 
 
 #We're not done yet! Let's play around a bit
@@ -69,8 +66,7 @@ plt.plot([0,10],[0,0],'k')
 plt.xlabel("distance")
 plt.ylabel("pseudo energy")
 plt.legend(frameon=False)
-fig_path = os.path.join("example_out","interaction_energy_plot.png")
-plt.savefig(fig_path)
+plt.savefig("interaction_energy_plot.png")
 
 
 #To get structure dependent pseudo energies we use crambin

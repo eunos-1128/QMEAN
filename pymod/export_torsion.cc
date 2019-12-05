@@ -66,7 +66,10 @@ void export_Torsion()
 {
 
 class_<impl::TorsionOpts>("TorsionOpts", no_init)
-  .def_readonly("sigma", &impl::TorsionOpts::sigma)
+  // don't export sigma. It gets lost in IO. That's actually a bug
+  // but fixing it would require the potentials to be replaced. So let's
+  // just not give access from the Python side...
+  //.def_readonly("sigma", &impl::TorsionOpts::sigma)
   .def_readonly("number_of_bins", &impl::TorsionOpts::num_of_bins)
   .def_readonly("group_identifier", &impl::TorsionOpts::group_identifier)
 ;

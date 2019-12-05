@@ -104,6 +104,7 @@ include_directories(${Boost_INCLUDE_DIRS}
 add_subdirectory(data)
 add_subdirectory(src)
 add_subdirectory(pymod)
+add_subdirectory(doc)
 
 set (FILES_TO_BE_REMOVED stage CMakeFiles)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES

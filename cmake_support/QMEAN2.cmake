@@ -212,6 +212,7 @@ macro(stage_headers HEADERS HEADER_INSTALL_DIR TARGET SUB)
                         EchoString "Staging headers ${TARGET}")
 endmacro()
 
+
 #-------------------------------------------------------------------------------
 # Synopsis:
 #   module(NAME name SOURCES source1 source2 HEADERS header1 header2 
@@ -454,9 +455,9 @@ macro(pymod)
     return()
   endif()
   if (_ARG_OUTPUT_DIR)
-    set(PYMOD_DIR "python${PYTHON_VERSION}/site-packages/${_ARG_OUTPUT_DIR}")
+    set(PYMOD_DIR "${PYTHON_MODULE_PATH}${_ARG_OUTPUT_DIR}")
   else()
-    set(PYMOD_DIR "python${PYTHON_VERSION}/site-packages/${_ARG_PREFIX}/${_ARG_NAME}")
+    set(PYMOD_DIR "${PYTHON_MODULE_PATH}${_ARG_PREFIX}/${_ARG_NAME}")
   endif()
   if (_ARG_PREFIX)
     set(_LIB_NAME ${_ARG_PREFIX}_${_ARG_NAME})
@@ -557,80 +558,205 @@ macro(pymod)
   endif()
 endmacro()
 
+#-------------------------------------------------------------------------------
+# Synopsis:
+#   add_unit_test_data_target(DAT target)
+#
+# Description:
+#   Add a data target for a unit test to QM_UNIT_TEST_DATA.
+#   DAT - target
+#-------------------------------------------------------------------------------
+macro(add_unit_test_data_target)
+  parse_argument_list(_ARG "DAT" "" ${ARGN})
+  if(NOT _ARG_DAT)
+    message(FATAL_ERROR
+            "invalid use of add_unit_test_data_target(): target missing")
+  endif()
+  if(DEFINED QM_UNIT_TEST_DATA)
+    set(_DATATARGETS "${QM_UNIT_TEST_DATA}")
+    set(_NME_FOUND)
+    foreach(nme ${QM_UNIT_TEST_DATA})
+      if(${nme} STREQUAL ${_ARG_DAT})
+        set(_NME_FOUND TRUE)
+      endif()
+    endforeach()
+    if(NOT _NME_FOUND)
+      list(APPEND _DATATARGETS "${_ARG_DAT}")
+    endif()
+  else()
+    set(_DATATARGETS "${_ARG_DAT}")
+  endif()
+  set(QM_UNIT_TEST_DATA "${_DATATARGETS}" CACHE INTERNAL "" FORCE)
+endmacro(add_unit_test_data_target)
+
 add_custom_target(check)
 if (WIN32)
   set_target_properties(check PROPERTIES EXCLUDE_FROM_ALL "1")
 endif()
+add_custom_target(check_xml)
+add_custom_target(codetest)
+add_dependencies(check codetest)
+
+
+#-------------------------------------------------------------------------------
+# get_python_path(VAR):
+# 
+# Set variable VAR (in parent scope) to an updated PYTHONPATH env. variable 
+# which includes OST path. This can then be used to call python scripts
+# with commands such as: sh -c "PYTHONPATH=${VAR} ${PYTHON_BINARY} ..."
+#-------------------------------------------------------------------------------
+macro(get_python_path VAR)
+  set(${VAR} $ENV{PYTHONPATH})
+  if(${VAR})
+    set(${VAR} ":${${VAR}}")
+  endif(${VAR})
+  set(${VAR} "${LIB_STAGE_PATH}/${PYTHON_MODULE_PATH}${${VAR}}")
+  set(${VAR} "${OST_PYMOD_PATH}:${${VAR}}")
+endmacro(get_python_path)
+
 
 #-------------------------------------------------------------------------------
 # qmean_unittest
 #
 # define a unit test
 #-------------------------------------------------------------------------------
-macro(qmean_unittest MODULE SOURCE_FILES)
-    set(_SOURCES ${SOURCE_FILES})
-    set(CPP_TESTS)
-    set(PY_TESTS)
-    foreach(src ${_SOURCES})
-      if (${src} MATCHES "\\.py$")
-       list(APPEND PY_TESTS "${src}")      
-      else()
-        list(APPEND CPP_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}")
-     endif()
+macro(qmean_unittest)
+  set(_ARG_PREFIX qmean)
+  parse_argument_list(_ARG "MODULE;SOURCES;LINK;DATA;TARGET;BASE_TARGET" "" ${ARGN})
+  set(_SOURCES ${_ARG_SOURCES})
+  set(CPP_TESTS)
+  set(PY_TESTS)
+  if(NOT _ARG_MODULE)
+    message(FATAL_ERROR
+            "invalid use of qmean_unittest(): module name missing")
+  endif()
+  set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_BINARY_DIR}/tests/${_ARG_MODULE}")
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  add_custom_target("test_data_${_ARG_MODULE}")
+  if(_ARG_TARGET)
+    add_dependencies("test_data_${_ARG_MODULE}" "${_ARG_TARGET}")
+  endif(_ARG_TARGET)
+  add_custom_command(TARGET "test_data_${_ARG_MODULE}" PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR})
+  if(_ARG_DATA)
+    foreach(dfile ${_ARG_DATA})
+      get_filename_component(tdata_path "${dfile}" PATH)
+      set(tdata_full_path "${CMAKE_CURRENT_BINARY_DIR}/${tdata_path}")
+      if(tdata_path)
+        file(MAKE_DIRECTORY "${tdata_full_path}")
+        add_custom_command(TARGET "test_data_${_ARG_MODULE}" PRE_BUILD
+          COMMAND ${CMAKE_COMMAND} -E make_directory
+          "${tdata_full_path}")
+      endif()
+      get_filename_component(tdata_file "${dfile}" NAME)
+      copy_if_different("${CMAKE_CURRENT_SOURCE_DIR}/${tdata_path}"
+        "${tdata_full_path}" "${tdata_file}"
+        TARGETS "test_data_${_ARG_MODULE}")
+      add_unit_test_data_target(DAT "test_data_${_ARG_MODULE}")
     endforeach()
-    set(_SOURCES ${CPP_TESTS})
-    set(_test_name "${MODULE}_tests")
-    if(DEFINED CPP_TESTS)
+  endif(_ARG_DATA)
+  foreach(src ${_SOURCES})
+    if(${src} MATCHES "\\.py$")
+      list(APPEND PY_TESTS "${src}")
+    else()
+      list(APPEND CPP_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}")
+   endif()
+  endforeach()
+  set(_SOURCES ${CPP_TESTS})
+  set(_test_name "test_suite_${_ARG_MODULE}")
+  if(DEFINED CPP_TESTS)
+    if(COMPILE_TESTS)
+      add_executable(${_test_name} ${_SOURCES})
+    else()
       add_executable(${_test_name} EXCLUDE_FROM_ALL ${_SOURCES})
-      if (WIN32)
-        target_link_libraries(${_test_name} "qmean_${MODULE}")  
-        add_custom_target("${_test_name}_run"
-                        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${_test_name}.exe || echo
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
-                        COMMENT "running checks for module ${MODULE}"
-                        DEPENDS ${_test_name})
-      else()
-        target_link_libraries(${_test_name} ${BOOST_UNIT_TEST_LIBRARIES}
-                            "qmean_${MODULE}")
-        add_custom_target("${_test_name}_run"
-                        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${_test_name} || echo
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                        COMMENT "running checks for module ${MODULE}"
-                        DEPENDS ${_test_name})
-      endif()
-
-      add_dependencies(check "${_test_name}_run")
-      set_target_properties(${_test_name}
-                            PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                            "${CMAKE_CURRENT_BINARY_DIR}")
-      if (WIN32)
-        set_target_properties("${_test_name}_run" PROPERTIES EXCLUDE_FROM_ALL "1")
-      endif()
     endif()
-    foreach(py_test ${PY_TESTS})
-      if(WIN32)
-        set (PY_TESTS_CMD "${EXECUTABLE_OUTPUT_PATH}/ost.bat")
-      else()
-        set (PY_TESTS_CMD "${EXECUTABLE_OUTPUT_PATH}/ost")
-      endif()
-      add_custom_target("${py_test}_run"
-                  COMMAND ${PY_TESTS_CMD} ${CMAKE_CURRENT_SOURCE_DIR}/${py_test} || echo
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                  COMMENT "running checks  ${py_test}" VERBATIM)
-      add_dependencies("${py_test}_run" qmean_scripts "_${MODULE}")
-      add_dependencies(check "${py_test}_run")
-      if (WIN32)
-        set_target_properties("${py_test}_run" PROPERTIES EXCLUDE_FROM_ALL "1")
-      endif()
-      
-    endforeach()
-    
-    # get_target_property(OUTT ${_test_name} GENERATOR_FILE_NAME)
-    # message("${OUTT}")
-    
-    # get_target_property(OUTT check GENERATOR_FILE_NAME)
-    # message("${OUTT}")
-endmacro()
+    set_target_properties(${_test_name} PROPERTIES
+                         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_target_properties(${_test_name} PROPERTIES
+                   RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR})
+    set_target_properties(${_test_name} PROPERTIES
+                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR})
+    add_dependencies(${_test_name} "test_data_${_ARG_MODULE}")
+    target_link_libraries(${_test_name} ${BOOST_UNIT_TEST_LIBRARIES}
+                        "${_ARG_PREFIX}_${_ARG_MODULE}")
+    add_custom_target("${_test_name}_run"
+                    COMMAND
+           QMEAN_ROOT=${STAGE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${_test_name}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "running checks for module ${_ARG_MODULE}"
+                    DEPENDS ${_test_name})
+    if(TARGET "_${_ARG_MODULE}")
+      add_dependencies("${_test_name}_run" "_${_ARG_MODULE}")
+    endif()
+    set(_xml_test_cmd "QMEAN_ROOT=${STAGE_DIR}")
+    set(_xml_test_cmd ${_xml_test_cmd} ${CMAKE_CURRENT_BINARY_DIR})
+    set(_xml_test_cmd "${_xml_test_cmd}/${_test_name}")
+    set(_xml_test_cmd ${_xml_test_cmd} "--log_format=xml" "--log_level=all")
+    # XML test outputgets an logical OR to 'echo' so if sth fails, make
+    # continues and we get output for all unit tests. Just calling 'echo'
+    # giveth $?=0.
+    add_custom_target("${_test_name}_run_xml"
+                    COMMAND ${_xml_test_cmd} > ${_test_name}_log.xml || echo
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "running checks for module ${_ARG_MODULE}"
+                    DEPENDS ${_test_name})
+    if(TARGET "_${_ARG_MODULE}")
+      add_dependencies("${_test_name}_run_xml" "_${_ARG_MODULE}")
+    endif()
+    add_test("${_test_name}" ${CMAKE_CURRENT_BINARY_DIR}/${_test_name} )
+    add_dependencies(check_xml "${_test_name}_run_xml")
+    if(_ARG_BASE_TARGET)
+      add_dependencies("${_ARG_BASE_TARGET}" "${_test_name}_run")
+    else()
+      add_dependencies(codetest "${_test_name}_run")
+    endif()
+
+    if(_ARG_LINK)
+      target_link_libraries("${_test_name}" ${_ARG_LINK})
+    endif()
+
+    set_target_properties(${_test_name}
+                          PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                          "${CMAKE_CURRENT_BINARY_DIR}")
+  endif()
+
+  foreach(py_test ${PY_TESTS})
+    set(py_twp "${CMAKE_CURRENT_SOURCE_DIR}/${py_test}")
+    if(NOT EXISTS "${py_twp}")
+      message(FATAL_ERROR "Python test script does not exist: ${py_twp}")
+    endif()
+
+    get_python_path(python_path)
+
+    set (PY_TESTS_CMD "PYTHONPATH=${python_path} QMEAN_PYTHON_BINARY=${PYTHON_BINARY}  ${PYTHON_BINARY}")
+
+    add_custom_target("${py_test}_run"
+                sh -c "${PY_TESTS_CMD} ${py_twp}"
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+              COMMENT "running checks ${py_test}" VERBATIM)
+    add_dependencies("${py_test}_run" "test_data_${_ARG_MODULE}")
+    if(TARGET "_${_ARG_MODULE}")
+      add_dependencies("${py_test}_run" "_${_ARG_MODULE}")
+    endif()
+    # XML test output gets an logical OR to 'echo' so if sth fails, make
+    # continues and we get output for all unit tests. Just calling 'echo'
+    # gives $?=0.
+    add_custom_target("${py_test}_run_xml"
+                sh -c "${PY_TESTS_CMD} ${py_twp} xml || echo"
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+              COMMENT "running checks ${py_test}" VERBATIM)
+    add_dependencies("${py_test}_run_xml" "test_data_${_ARG_MODULE}")
+    if(TARGET "_${_ARG_MODULE}")
+      add_dependencies("${py_test}_run_xml" "_${_ARG_MODULE}")
+    endif()
+    add_dependencies(check_xml "${py_test}_run_xml")
+    if(_ARG_BASE_TARGET)
+      add_dependencies("${_ARG_BASE_TARGET}" "${py_test}_run")
+    else()
+      add_dependencies(codetest "${py_test}_run")
+    endif()
+  endforeach()
+endmacro(qmean_unittest)
 
 #-------------------------------------------------------------------------------
 # make sure the previously detected Python interpreter has the given module
@@ -711,21 +837,65 @@ macro(qmean_action ACTION TARGET)
   install(FILES "${ACTION}" DESTINATION "libexec")
 endmacro()
 
-macro(get_qmean_rev)
-  if (NOT HELMM_REV)
-    if (NOT WIN32)
-      exec_program("svn" 
-                   ARGS "info |grep Revision|awk '{print $2}'"
-                   OUTPUT_VARIABLE HELMM_REV
-      )
-    else()
-      exec_program("svnversion.exe"
-                   ARGS ""
-                   OUTPUT_VARIABLE HELMM_REV
-      )    
-      string(REGEX REPLACE "[0-9][0-9][0-9][0-9]:" "" HELMM_REV ${HELMM_REV})
-      string(REGEX REPLACE "[A-Za-z]" "" HELMM_REV ${HELMM_REV})
-    endif()
-  endif()
-  message("Revision: ${HELMM_REV}")
-endmacro()
+#-------------------------------------------------------------------------------
+# Synopsis:
+#   find_path_recursive(VARIABLE
+#                       NAME file
+#                       PATH path
+#                       [PATH_SUFFIXES dir1 dir2 ...])
+# Description:
+#   Find a path to a file in a directory tree. The result is stored in the
+#   given variable. Its 'VARIABLE-NOTFOUND' if the file could not be found.
+#   PATH defines were to search, PATH_SUFFIXES sub-directories in PATH to limit
+#   the search.
+#-------------------------------------------------------------------------------
+macro(find_path_recursive VARIABLE)
+  set(_ARGS "NAME;PATH;PATH_SUFFIXES")
+  parse_argument_list(_ARG "${_ARGS}" "" ${ARGN})
+  if(NOT _ARG_NAME)
+    message(FATAL_ERROR "Wrong use of find_path_recursive, we need a file NAME "
+                        "to look for.")
+  endif(NOT _ARG_NAME)
+  if(NOT _ARG_PATH)
+    message(FATAL_ERROR "Wrong use of find_path_recursive, we need a PATH to "
+                        "look in.")
+  endif(NOT _ARG_PATH)
+  # get first level of dirs (needed to deal with PATH_SUFFIXES if present)
+  if(_ARG_PATH_SUFFIXES)
+    set(_fst_subs)
+    foreach(_psuf ${_ARG_PATH_SUFFIXES})
+      file(TO_NATIVE_PATH "${_ARG_PATH}/${_psuf}" _psuf_path)
+      if(EXISTS ${_psuf_path})
+        list(APPEND _fst_subs ${_psuf_path})
+      endif(EXISTS ${_psuf_path})
+    endforeach()
+  else(_ARG_PATH_SUFFIXES)
+    file(GLOB _fst_subs ${_ARG_PATH}/*)
+  endif(_ARG_PATH_SUFFIXES)
+  set(${VARIABLE} "${VARIABLE}-NOTFOUND")
+  # iterate, top-down, until first hit
+  while(_fst_subs)
+    foreach(_fst ${_fst_subs})
+      # check if exists and exit
+      file(TO_NATIVE_PATH "${_fst}/${_ARG_NAME}" _modpath)
+      if(EXISTS ${_modpath})
+        # set var and exit
+        set(${VARIABLE} ${_fst})
+        set(_fst_subs)
+        break()
+      endif(EXISTS ${_modpath})
+    endforeach(_fst ${_fst_subs})
+    set(_tmp_dlist)
+    foreach(_fst ${_fst_subs})
+      # list subdirs
+      file(GLOB _snd_subs ${_fst}/*)
+      foreach(_snd ${_snd_subs})
+        if(IS_DIRECTORY ${_snd})
+          list(APPEND _tmp_dlist ${_snd})
+        endif()
+      endforeach()
+    endforeach(_fst ${_fst_subs})
+    # swap lists
+    set(_fst_subs ${_tmp_dlist})
+  endwhile(_fst_subs)
+endmacro(find_path_recursive)

@@ -1,6 +1,6 @@
-from qmean import PSIPREDHandler
-from ost import mol
 import os
+from ost import io, mol
+from qmean import PSIPREDHandler
 
 #let's define the psipred data for crambin
 data = dict()

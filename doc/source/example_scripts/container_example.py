@@ -1,11 +1,10 @@
 #Example code to demonstrate the usage of the container classes
 
-#load required modules
+import os
+from ost import io
 from qmean import InteractionStatistic, InteractionPotential, \
                   PackingStatistic, PackingPotential, \
                   StatisticContainer, PotentialContainer
-from ost import io
-import os
 
 #define some training targets used later on
 training_targets = ["7ODC","2QUD","3T47","4C1A","3ZSJ","4I4T","3H6R","3BSO",
@@ -15,7 +14,6 @@ training_targets = ["7ODC","2QUD","3T47","4C1A","3ZSJ","4I4T","3H6R","3BSO",
                     "3FTJ","1KD8","1HBN","4TRK","2GB4","3HNY","4R7Q","1EAQ",
                     "2O1Q","4DX5","1XAK","5CSM","2XWP","2UWA","3SQZ","4MT8",
                     "3HTU"]
-
 
 #We define two different statistics in a container and fill them with 
 #structural information
@@ -44,10 +42,9 @@ print "packing e: ", p_container["pack"].GetTotalEnergy(crambin,crambin)
 
 
 #The awesome thing is, that we can dump the full container at once
-container_path = os.path.join("example_out","potential_container.dat")
-p_container.Save(container_path)
+p_container.Save("potential_container.dat")
 #and load it again
-new_p_container = PotentialContainer.Load(container_path)
+new_p_container = PotentialContainer.Load("potential_container.dat")
 
 print "Just loaded the same container again, let's see whether the "
 print "energies are consistent"
