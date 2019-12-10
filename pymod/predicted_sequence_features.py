@@ -284,31 +284,3 @@ class ACCPROHandler:
     observed_acc = ''.join(observed_acc)
 
     return self.GetACCAgreement(observed_acc, accpro_acc)
-
-
-def CutStuff(seqres, values, chain):
-
-  if len(seqres)!=len(values):
-    raise ValueError("seqres and values must have the same length")
-
-  al = AlignChainToSEQRES(chain, seqres)
-
-  cut_values=list()
-
-  data_index=0
-
-  for col in al:
-    if col[1]!='-':
-      if col[1]==col[0]:
-        cut_values.append(values[data_index])
-        data_index+=1
-      else:
-        if col[0]!='-':
-          raise ValueError("chain sequence ist not consistent with seqres! ("+col[0]+"vs."+col[1]+")")
-        else:
-          cut_values.append(None)
-    else:
-      if col[0]!='-':
-        data_index+=1
-
-  return cut_values
