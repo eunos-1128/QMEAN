@@ -224,9 +224,11 @@ class DocTests(unittest.TestCase):
         return_code, sout, serr = self.runScript('membrane_example.py')
         self.assertEqual(return_code, 0)
         self.assertTrue(os.path.exists("gpcr.pdb"))
-        self.assertTrue(os.path.exists("gpcr_transmembrane_part.pdb"))        
+        self.assertTrue(os.path.exists("gpcr_transmembrane_part.pdb"))      
+        self.assertTrue(os.path.exists("energy_gap_plot.png"))  
         os.remove("gpcr.pdb")
         os.remove("gpcr_transmembrane_part.pdb")
+        os.remove("energy_gap_plot.png") 
 
     def testLocalScorerExample(self):
         return_code, sout, serr = self.runScript('local_scorer_example.py')
@@ -410,14 +412,37 @@ class DocTests(unittest.TestCase):
         return_code, sout, serr = self.runScript('assess_model_quality_example.py')
         self.assertEqual(return_code, 0)
 
-        self.assertTrue(os.path.exists("qmean_4_ref_plot.png"))
-        os.remove("qmean_4_ref_plot.png")
+        self.assertTrue(os.path.exists("local_profile.png"))
+        self.assertTrue(os.path.exists("qmean4_ref_plot.png"))
+        self.assertTrue(os.path.exists("qmean6_ref_plot.png"))
+        self.assertTrue(os.path.exists("qmean4_sliders.png"))
+        self.assertTrue(os.path.exists("qmean6_sliders.png"))
+        os.remove("local_profile.png")
+        os.remove("qmean4_ref_plot.png")
+        os.remove("qmean6_ref_plot.png")
+        os.remove("qmean4_sliders.png")
+        os.remove("qmean6_sliders.png")
 
         qmean4_score = float(sout.splitlines()[0].split()[-1])
+        qmean6_score = float(sout.splitlines()[1].split()[-1])
+        qmean4_z_score = float(sout.splitlines()[2].split()[-1])
+        qmean6_z_score = float(sout.splitlines()[3].split()[-1])
+        avg_local_score = float(sout.splitlines()[5].split()[-1])
+        avg_local_score_error = float(sout.splitlines()[6].split()[-1])
         exp_qmean4_score = 0.765673453311
+        exp_qmean6_score = 0.755831800470
+        exp_qmean4_z_score = -0.1425450733423469
+        exp_qmean6_z_score = -0.25876529067689186
+        exp_avg_local_score = 0.866393307804
         self.assertAlmostEqual(qmean4_score, exp_qmean4_score, 4)
+        self.assertAlmostEqual(qmean6_score, exp_qmean6_score, 4)
+        self.assertAlmostEqual(qmean4_z_score, exp_qmean4_z_score, 4)
+        self.assertAlmostEqual(qmean6_z_score, exp_qmean6_z_score, 4)
+        self.assertAlmostEqual(avg_local_score, exp_avg_local_score, 4)
+        # check for NaN
+        self.assertFalse(avg_local_score_error == avg_local_score_error) 
 
-        local_score_line = sout.splitlines()[1]
+        local_score_line = sout.splitlines()[4]
         local_scores = eval(local_score_line[local_score_line.index('{'):])
         exp_local_scores = {'A': {1: 0.7617946984290086, 2: 0.8103660238896163, 
         3: 0.9159270528774698, 4: 0.9471315272930895, 5: 0.9219615800683376, 

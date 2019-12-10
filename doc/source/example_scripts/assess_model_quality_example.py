@@ -37,10 +37,34 @@ accpro_handler = ACCPROHandler(data)
 scorer = QMEANScorer(crambin, psipred = psipred_handler, 
                      accpro= accpro_handler)
 
-# we get the qmean4 score out and dump the according reference 
-# set plot
+# we get the qmean4 and qmean6 score, as well as their Z-score
+# counterparts 
 print("QMEAN4:", scorer.qmean4_score)
-scorer.QMEAN4ReferencePlot("qmean_4_ref_plot.png")
+print("QMEAN6:", scorer.qmean6_score)
+print("QMEAN4 Z-score:", scorer.qmean4_z_score)
+print("QMEAN6 Z-score:", scorer.qmean6_z_score)
 
 # local scores are available as a dictionary
 print("Local Scores:", scorer.local_scores)
+
+# with the rise of QMEANDisCo, average local score has been introduced
+# as a global score predictor. This also comes with an error. 
+# However, those errors make only sense when DisCo is provided. 
+# We therefore get NaN here...
+print("Avg. Local Score:", scorer.avg_local_score)
+print("Avg. Local Score Error:", scorer.avg_local_score_error)
+
+# we can also map them as bfactors onto the input structure
+scorer.AssignModelBFactors()
+
+# as we're doing that on a reference to our input model,
+# the scores become accessible there
+for r in crambin.residues:
+  print(r, r.atoms[0].b_factor)
+
+# the results can also be visualized with various plots
+scorer.LocalProfilePlot("local_profile.png")
+scorer.QMEAN4ReferencePlot("qmean4_ref_plot.png")
+scorer.QMEAN6ReferencePlot("qmean6_ref_plot.png")
+scorer.QMEAN4SliderPlot("qmean4_sliders")
+scorer.QMEAN6SliderPlot("qmean6_sliders")
