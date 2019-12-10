@@ -19,7 +19,7 @@ Getting Started
 .. currentmodule:: qmean
 
 
-QMEAN is used as a Python module either in an interactive OpenStructure shell or 
+QMEAN is used as a Python 3 module either in an interactive OpenStructure shell or 
 in scripts being executed with the ost OpenStructure executable. You can run all 
 examples of the documentation by calling the according scripts in 
 path_to_qmean/doc/source/example_scripts by typing:
@@ -32,7 +32,7 @@ Build this Documentation
 --------------------------------------------------------------------------------
 
 All information on how to build/run QMEAN can be found in the documentation.
-The documentation is based on Sphinx, so you need Python, Sphinx and Make
+The documentation is based on Sphinx, so you need Python 3, Sphinx and Make
 installed on your system.
 
   * change to the doc directory
@@ -42,10 +42,10 @@ installed on your system.
 Build QMEAN
 --------------------------------------------------------------------------------
 
-QMEAN requires the OpenStructure framework with all its depencies to be
-installed. Please follow the instructions on
+QMEAN requires the OpenStructure framework with Python 3 and all other depencies 
+to be installed. Please follow the instructions on 
 `openstructure.org <http://www.openstructure.org/>`_ to compile from source.
-Once you successfully compiled OpenStructure, you need following python modules:
+Once you successfully compiled OpenStructure, you need following Python modules:
 
 * numpy
 * scipy
@@ -64,11 +64,11 @@ CMake in there by giving it the path to your OpenStructure installation
 If you're working on a Debian based system, cmake might have trouble
 to find the appropriate Python library. This can manually be specified.
 Following additional cmake flag does the job on Ubuntu 18.04 and
-Debian 9:
+Debian 9, you might have to adapt if your Python version differs:
 
   .. code-block:: bash
 
-    -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython2.7.so
+    -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython3.6m.so
 
 build and run unit tests:
 
@@ -80,11 +80,12 @@ build and run unit tests:
 
 For general use you might want the QMEAN modules to be directly 
 accessible from within Python. Following command enables QMEAN 
-in your current shell:
+in your current shell (properly set MAJOR/MINOR version of your
+Python installation):
 
   .. code-block:: bash
 
-    export PYTHONPATH=path_to_qmean_build_dir/stage/lib64/python2.7/site-packages:$PYTHONPATH
+    export PYTHONPATH=path_to_qmean_build_dir/stage/lib64/python<MAJOR>.<MINOR>/site-packages:$PYTHONPATH
     
 
 You can add this command to ``.bashrc``, so it is set permanently.
