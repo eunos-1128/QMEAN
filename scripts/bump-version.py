@@ -2,9 +2,9 @@
 import sys
 
 if len(sys.argv) < 3:
-  print "USAGE: python scripts/bump-version.py QMEAN_VERSION OST_VERSION"
-  print "-> *_VERSION format is MAJOR.MINOR.PATCH (e.g. 1.9.1)"
-  print "-> assumption is that git tags will exist for those *_VERSION"
+  print("USAGE: python scripts/bump-version.py QMEAN_VERSION OST_VERSION")
+  print("-> *_VERSION format is MAJOR.MINOR.PATCH (e.g. 1.9.1)")
+  print("-> assumption is that git tags will exist for those *_VERSION")
   sys.exit(1)
 
 # split up version number

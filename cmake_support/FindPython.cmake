@@ -18,8 +18,8 @@
 # Author: Marco Biasini/ Stefan Bienert
 #-------------------------------------------------------------------------------
 
-set(PYTHON_VERSIONS 2.7)
-set(PYTHON_MIN_VERSION 2.7)
+set(PYTHON_VERSIONS 3.8 3.7 3.6 )
+set(PYTHON_MIN_VERSION 3.6.0)
 
 #-------------------------------------------------------------------------------
 # check for python framework

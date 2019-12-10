@@ -28,8 +28,8 @@ def AlignChainToSEQRES(chain, seqres):
   try:
     return seq.alg.AlignToSEQRES(chain.Select(''), seqres, 
                                  try_resnum_first=False,validate=False)
-  except Exception, e:
-    print e
+  except Exception as e:
+    print(e)
 
   chain_seq = ''.join([r.one_letter_code for r in chain.residues])
   aln = seq.alg.SemiGlobalAlign(seq.CreateSequence('seqres',seqres),
@@ -191,7 +191,7 @@ class ACCPROHandler:
           stream = accpro_data
         self.seq, self.ss, self.acc = self.ParseACCPRO(stream)
       except:
-        print traceback.print_exc()
+        print(traceback.print_exc())
         raise ValueError("could not load ACCPRO data!")
 
     if len(self.seq)!=len(self.ss):

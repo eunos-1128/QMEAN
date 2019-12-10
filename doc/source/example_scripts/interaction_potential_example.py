@@ -75,10 +75,10 @@ crambin = io.LoadPDB(crambin_path).Select("peptide=True")
 
 #Let's get the pseudo energy for the residue num 42 given the full
 #strucure as environment
-print "local e of res num 42: ", pot.GetEnergy(crambin.residues[41],crambin)
+print("local e of res num 42: ", pot.GetEnergy(crambin.residues[41],crambin))
 
 #Let's print out all single residue scores
-print "total e of crambin: ", pot.GetTotalEnergy(crambin,crambin)
+print("total e of crambin: ", pot.GetTotalEnergy(crambin,crambin))
 
 #We might want all single residue scores...
-print "single res energies crambin: ", pot.GetEnergies(crambin,crambin)
+print("single res energies crambin: ", pot.GetEnergies(crambin,crambin))

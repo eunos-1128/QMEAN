@@ -39,8 +39,8 @@ scorer = QMEANScorer(crambin, psipred = psipred_handler,
 
 # we get the qmean4 score out and dump the according reference 
 # set plot
-print "QMEAN4:", scorer.qmean4_score
+print("QMEAN4:", scorer.qmean4_score)
 scorer.QMEAN4ReferencePlot("qmean_4_ref_plot.png")
 
 # local scores are available as a dictionary
-print "Local Scores:", scorer.local_scores
+print("Local Scores:", scorer.local_scores)

@@ -15,7 +15,7 @@
 
 from qmean import *
 from ost import mol
-from predicted_sequence_features import AlignChainToSEQRES
+from .predicted_sequence_features import AlignChainToSEQRES
 
 
 class Scores:

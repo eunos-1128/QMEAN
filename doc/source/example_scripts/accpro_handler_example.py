@@ -20,12 +20,12 @@ mol.alg.Accessibility(crambin, algorithm = mol.alg.DSSP)
 subset = crambin.Select("rnum>5 and rnum<20")
 
 #lets print out some stuff
-print "Solvent accessibility for the full first chain:"
-print handler.GetACCPROAccessibility(crambin.chains[0])
+print("Solvent accessibility for the full first chain:")
+print(handler.GetACCPROAccessibility(crambin.chains[0]))
 
-print "Solvent accessibility for a subset:"
-print handler.GetACCPROAccessibility(subset.chains[0])
+print("Solvent accessibility for a subset:")
+print(handler.GetACCPROAccessibility(subset.chains[0]))
 
-print "And here are the according ACCAgreement scores"
-print handler.GetACCAgreementFromChain(crambin.chains[0])
-print handler.GetACCAgreementFromChain(subset.chains[0])
+print("And here are the according ACCAgreement scores")
+print(handler.GetACCAgreementFromChain(crambin.chains[0]))
+print(handler.GetACCAgreementFromChain(subset.chains[0]))

@@ -320,8 +320,8 @@ class QMEANScorer(object):
   def avg_local_score(self):
     if self._avg_local_score == None:
       self._avg_local_score = 0.0
-      for chain_name, residue_scores in self.local_scores.iteritems():
-        for rnum, s in residue_scores.iteritems():
+      for chain_name, residue_scores in self.local_scores.items():
+        for rnum, s in residue_scores.items():
           self._avg_local_score += s
       self._avg_local_score /= self._model.residue_count
     return self._avg_local_score
@@ -425,12 +425,12 @@ class QMEANScorer(object):
     plt.ylabel('Predicted Local Similarity to Target', size='large')
 
     if chain == None:
-      chains = self.local_scores.keys()
+      chains = list(self.local_scores.keys())
       chains.sort()
       plt.title('Local Quality Estimate',size='x-large')
       for ch_idx, ch in enumerate(chains):
         data = list()
-        for rnum, score in self.local_scores[ch].iteritems():
+        for rnum, score in self.local_scores[ch].items():
           data.append((rnum, score))
         data.sort()
         res_num = [x[0] for x in data]
@@ -440,7 +440,7 @@ class QMEANScorer(object):
     else:
       plt.title('Local Quality Estimate: Chain %s'%(chain), size = 'x-large')
       data = list()
-      for rnum, score in self.local_scores[chain].iteritems():
+      for rnum, score in self.local_scores[chain].items():
         data.append((rnum, score))
       data.sort()
       res_num = [x[0] for x in data]
@@ -451,9 +451,9 @@ class QMEANScorer(object):
 
 
   def AssignModelBFactors(self):
-    for chain_name, data in self.local_scores.iteritems():
+    for chain_name, data in self.local_scores.items():
       chain = self._model.FindChain(chain_name)
-      for num, score in data.iteritems():
+      for num, score in data.items():
         res = chain.FindResidue(mol.ResNum(num))
         for a in res.atoms:
           a.b_factor = score

@@ -23,15 +23,15 @@ subset = prot.Select("rnum>5 and rnum<20")
 
 #lets print out some stuff
 
-print "Psipred prediction and confidence for the full first chain:"
-print handler.GetPSIPREDSS(prot.chains[0])
-print handler.GetPSIPREDConf(prot.chains[0])
+print("Psipred prediction and confidence for the full first chain:")
+print(handler.GetPSIPREDSS(prot.chains[0]))
+print(handler.GetPSIPREDConf(prot.chains[0]))
 
-print "Psipred prediction and confidence for a subset:"
-print handler.GetPSIPREDSS(subset.chains[0])
-print handler.GetPSIPREDConf(subset.chains[0])
+print("Psipred prediction and confidence for a subset:")
+print(handler.GetPSIPREDSS(subset.chains[0]))
+print(handler.GetPSIPREDConf(subset.chains[0]))
 
-print "And here are the according SSAgreement scores"
-print handler.GetSSAgreementFromChain(prot.chains[0])
-print handler.GetSSAgreementFromChain(subset.chains[0])
+print("And here are the according SSAgreement scores")
+print(handler.GetSSAgreementFromChain(prot.chains[0]))
+print(handler.GetSSAgreementFromChain(subset.chains[0]))
 

@@ -24,9 +24,9 @@ import sys
 QMEAN_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname( __file__ ), 
                                               '..', '..', '..', '..', 'share', 'qmean'))
 if not os.path.exists(QMEAN_DATA_DIR):
-  print 'internal configuration error:'
-  print '  The QMean data directory "%s" does not exist.' % QMEAN_DATA_DIR
-  print '   Make sure QMEAN_DATA_DIR is set correctly'
+  print('internal configuration error:')
+  print('  The QMean data directory "%s" does not exist.' % QMEAN_DATA_DIR)
+  print('   Make sure QMEAN_DATA_DIR is set correctly')
   sys.exit(-1)
   
 POTENTIAL_DIR=os.path.join(QMEAN_DATA_DIR, 'potentials')

@@ -316,6 +316,6 @@ plt.plot(dots_x,dots_y,'o',color='k',markersize=0.5)
 plt.ylim((-0.3,0.3))
 plt.xlim((rnums[0],rnums[-1]))
 plt.xlabel('Residue Number',fontsize='large')
-plt.ylabel(u'\u0394QMEANBrane Score', fontsize='large')
+plt.ylabel('\u0394QMEANBrane Score', fontsize='large')
 
 plt.savefig("alignment_comparison.png",dpi=300)

@@ -109,7 +109,7 @@ class DocTests(unittest.TestCase):
         self.assertEqual(return_code, 0)
 
         # lets parse the values we get
-        sout = sout.decode().splitlines()
+        sout = sout.splitlines()
         values = list()
         for line in sout:
             if "Score given a DSSP state of" in line:
@@ -135,7 +135,7 @@ class DocTests(unittest.TestCase):
     def testPSIPREDHandlerExample(self):
         return_code, sout, serr = self.runScript('psipred_handler_example.py')
         self.assertEqual(return_code, 0)
-        sout = sout.decode().splitlines()
+        sout = sout.splitlines()
 
         # braindead reading of the standard out and comparing to what it once was
         # on my machine. Values can change if SSAgreement scorer is retrained, feel
@@ -376,7 +376,7 @@ class DocTests(unittest.TestCase):
     def testACCPROHandlerExample(self):
         return_code, sout, serr = self.runScript('accpro_handler_example.py')
         self.assertEqual(return_code, 0)
-        sout = sout.decode().splitlines()
+        sout = sout.splitlines()
 
         # braindead reading of the standard out and comparing to what it once was
         # on my machine. Values can change if SSAgreement scorer is retrained, feel
@@ -436,7 +436,7 @@ class DocTests(unittest.TestCase):
         42: 0.7806667545942363, 43: 0.8086675483501075, 44: 0.8212366973904793, 
         45: 0.7547270179166898, 46: 0.7887433534989572}}
         self.assertTrue('A' in local_scores)
-        for k,v in exp_local_scores['A'].iteritems():
+        for k,v in exp_local_scores['A'].items():
             self.assertTrue(k in local_scores['A'])
             self.assertAlmostEqual(local_scores['A'][k], v, 2)
 

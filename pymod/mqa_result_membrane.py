@@ -322,7 +322,7 @@ class LocalMembraneResult:
       raise ValueError('Error Plotting Local Membrane Values!')
 
 
-    print starts,ends
+    print(starts,ends)
 
     for s,e in zip(starts, ends):
       p.axvspan(s, e, color='#004586',alpha=0.2)
