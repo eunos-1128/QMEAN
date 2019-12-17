@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 import sys
 
+
+raise RuntimeError("Many things have changed in the Python 3 port. " +
+                   "bump-version.py might require updates. " +
+                   "Only remove this error after careful checking!")
+
 if len(sys.argv) < 3:
   print("USAGE: python scripts/bump-version.py QMEAN_VERSION OST_VERSION")
   print("-> *_VERSION format is MAJOR.MINOR.PATCH (e.g. 1.9.1)")
