@@ -1,4 +1,4 @@
-Changes in Release 3.X.0
+Changes in Release 3.2.0
 --------------------------------------------------------------------------------
 
  * Added automated testing of all example scripts in the documentation
