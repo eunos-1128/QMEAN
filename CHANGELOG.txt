@@ -1,7 +1,8 @@
-Changes in Release 3.X.0
+Changes in Release 3.2.0
 --------------------------------------------------------------------------------
 
- * Added automated testing of all example scripts in the documentation
+ * This is expected to be the last release supporting Python 2.
+ * Added automated testing of all example scripts in the documentation.
  * Several minor bug fixes, improvements
 
 
