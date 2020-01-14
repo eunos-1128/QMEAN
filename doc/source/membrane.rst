@@ -21,6 +21,8 @@ a membrane protein. QMEANBrane uses an implementation described by the
 Orientation of Proteins in Membrane (OPM) database [lomize2006]_.
 The actual method is implemented in :meth:`ost.mol.alg.FindMembrane`.
 
+.. literalinclude:: example_scripts/membrane_example.py
+
 
 .. [lomize2006] Lomize AL, Pogozheva ID, Lomize MA, Mosberg HI (2006). Positioning of proteins in membranes: A computational approach. Protein Science 15, 1318-1333
 

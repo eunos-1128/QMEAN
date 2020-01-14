@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
 set (QMEAN_VERSION_MAJOR 3)
-set (QMEAN_VERSION_MINOR 1)
+set (QMEAN_VERSION_MINOR 2)
 set (QMEAN_VERSION_PATCH 0)
 set (QMEAN_VERSION_STRING ${QMEAN_VERSION_MAJOR}.${QMEAN_VERSION_MINOR}.${QMEAN_VERSION_PATCH} )
 
@@ -61,7 +61,7 @@ string(REPLACE "." ";" _python_version_list ${PYTHON_VERSION})
 list(GET _python_version_list 0 PYTHON_VERSION_MAJOR)
 list(GET _python_version_list 1 PYTHON_VERSION_MINOR)
 
-find_package(OPENSTRUCTURE 1.10.0 REQUIRED
+find_package(OPENSTRUCTURE 1.11.0 REQUIRED
              COMPONENTS mol seq seq_alg mol_alg conop)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
@@ -104,6 +104,7 @@ include_directories(${Boost_INCLUDE_DIRS}
 add_subdirectory(data)
 add_subdirectory(src)
 add_subdirectory(pymod)
+add_subdirectory(doc)
 
 set (FILES_TO_BE_REMOVED stage CMakeFiles)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES

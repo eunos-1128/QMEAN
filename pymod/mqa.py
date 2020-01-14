@@ -395,7 +395,10 @@ class Scores:
     if self.psipred!=None:
       ss_agreement = []
       for c, p in zip(self.target.chains, self.psipred):
-        ss_agreement += p.GetSSAgreementFromChain(c)
+        if p != None:
+          ss_agreement += p.GetSSAgreementFromChain(c)
+        else:
+          ss_agreement += list([float("NaN")] * len(c.residues))
       self.data['avg_ss_agreement'] = self.GetAverage(ss_agreement)
       if self.smooth_std!=None:
         self.data['ss_agreement']=self.spherical_smoother.Smooth(ss_agreement)
@@ -409,7 +412,10 @@ class Scores:
     if self.accpro!=None:
       acc_agreement = []
       for c,a in zip(self.target.chains, self.accpro):
-        acc_agreement += a.GetACCAgreementFromChain(c)
+        if a != None:
+          acc_agreement += a.GetACCAgreementFromChain(c)
+        else:
+          acc_agreement += list([float("NaN")] * len(c.residues))
       self.data['avg_acc_agreement'] = self.GetAverage(acc_agreement)
       if self.smooth_std!=None:
         self.data['acc_agreement']=self.spherical_smoother.Smooth(acc_agreement)

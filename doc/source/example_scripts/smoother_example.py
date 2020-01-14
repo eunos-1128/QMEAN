@@ -1,8 +1,7 @@
-#Load QMEAN modules
-from qmean import *
-#import python random module
-import random
 import os
+import random
+from ost import io
+from qmean import SphericalSmoother
 
 #Load crambin and extract CA positions
 crambin_path = os.path.join("example_data","1CRN.pdb")

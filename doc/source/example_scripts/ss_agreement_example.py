@@ -1,5 +1,4 @@
-#load QMEAN modules
-from qmean import *
+from qmean import SSAgreement
 
 #get an SSAgreement object
 ss = SSAgreement()

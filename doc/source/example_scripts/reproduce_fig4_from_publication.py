@@ -1,23 +1,19 @@
+import os
 from scipy.ndimage import gaussian_filter
 from ost.table import Table
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 #Load the data produced by QMEANBrane
-tab_no_shift = Table.Load(os.path.join('example_out',
-                                       'original_hhblits_alignment',
+tab_no_shift = Table.Load(os.path.join('original_hhblits_alignment',
                                        'local_scores.txt'))
-tab_correct_shift = Table.Load(os.path.join('example_out',
-                                            'shift_in_front_helix_four',
+tab_correct_shift = Table.Load(os.path.join('shift_in_front_helix_four',
                                             'local_scores.txt'))
-tab_wrong_shift = Table.Load(os.path.join('example_out',
-                                          'shift_towards_cter',
+tab_wrong_shift = Table.Load(os.path.join('shift_towards_cter',
                                           'local_scores.txt'))
-tab_shift_into_middle = Table.Load(os.path.join('example_out',
-                                                'shift_into_middle',
-                                                 'local_scores.txt'))
+tab_shift_into_middle = Table.Load(os.path.join('shift_into_middle',
+                                                'local_scores.txt'))
 
 score_idx = tab_no_shift.GetColIndex('QMEAN')
 rnum_idx = tab_no_shift.GetColIndex('rnum')
@@ -322,9 +318,4 @@ plt.xlim((rnums[0],rnums[-1]))
 plt.xlabel('Residue Number',fontsize='large')
 plt.ylabel(u'\u0394QMEANBrane Score', fontsize='large')
 
-out_path = os.path.join("example_out","alignment_comparison.png")
-plt.savefig(out_path,dpi=300)
-
-
-
-
+plt.savefig("alignment_comparison.png",dpi=300)

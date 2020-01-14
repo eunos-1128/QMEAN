@@ -2,13 +2,12 @@
 #and get some basic info out of it in comparison to an interaction potential. 
 #You need matplotlib to run this script!
 
-#load required modules
+import os
+import matplotlib.pyplot as plt
+from ost import conop, io
 from qmean import CBetaStatistic, CBetaPotential
 from qmean import InteractionStatistic, InteractionPotential
 from qmean import ChemType
-import os
-from ost import conop, io
-import matplotlib.pyplot as plt
 
 
 #define some training targets used later on
@@ -86,5 +85,4 @@ plt.plot([0,10],[0,0],'k')
 plt.xlabel("distance")
 plt.ylabel("pseudo energy")
 plt.legend(frameon=False)
-fig_path = os.path.join("example_out","cbeta_energy_plot.png")
-plt.savefig(fig_path)
+plt.savefig("cbeta_energy_plot.png")

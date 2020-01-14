@@ -1,9 +1,8 @@
-from qmean import DisCoContainer
-from ost import io
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-
+from ost import io, geom
+from qmean import DisCoContainer
 
 aln_files = ["example_data/1pvv.1.A.fasta", 
              "example_data/1v1v.1.A.fasta", 
@@ -78,7 +77,10 @@ for res, score in zip(model.residues, scores):
   for a in res.atoms:
     a.b_factor = score
 
-io.SavePDB(model, "example_out/assigned_disco.pdb")
+io.SavePDB(model, "assigned_disco.pdb")
+
+# save the DisCoContainer for later use
+dc.Save("dc.dat")
 
 # we just plot one of the constraints:
 rnum_i = 58
@@ -88,5 +90,4 @@ x = np.linspace(0.0, len(c) * dc.GetBinSize(), len(c))
 plt.plot(x,c)
 plt.xlabel("dist 58-261")
 plt.ylabel("score")
-plt.savefig(os.path.join("example_out", "distance_constraint.png"))
-
+plt.savefig(os.path.join("distance_constraint.png"))

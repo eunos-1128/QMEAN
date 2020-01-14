@@ -70,15 +70,17 @@ Debian 9:
 
     -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython2.7.so
 
-build:
+build and run unit tests:
 
   .. code-block:: bash
     
     make
+    make check
 
 
-You need the QMEAN modules to be directly accessible from within
-Python. Following command enables QMEAN in your current shell:
+For general use you might want the QMEAN modules to be directly 
+accessible from within Python. Following command enables QMEAN 
+in your current shell:
 
   .. code-block:: bash
 

@@ -13,12 +13,13 @@
 #    PYTHON_VERSION           is set to the version of python
 #    PYTHON_INCLUDE_PATH      is set to the path that contains Python.h
 #    PYTHON_BINARY            is set to the path to the python executable
+#    PYTHON_MODULE_PATH       is set as path-component where modules should live
 #
-# Author: Marco Biasini
+# Author: Marco Biasini/ Stefan Bienert
 #-------------------------------------------------------------------------------
 
-set(PYTHON_VERSIONS 2.7 2.6 2.5 2.4 2.3 2.2)
-set(PYTHON_MIN_VERSION 2.2.1)
+set(PYTHON_VERSIONS 2.7)
+set(PYTHON_MIN_VERSION 2.7)
 
 #-------------------------------------------------------------------------------
 # check for python framework
@@ -42,12 +43,12 @@ endmacro()
 
 
 macro(_find_python PYTHON_ROOT VERSION)
-  string(REPLACE "." "" _VERSION_NO_DOTS ${VERSION})
+  string(REPLACE "." "" _VERSION_NO_DOTS "${VERSION}")
   if(PYTHON_ROOT)
     find_library(PYTHON_LIBRARIES
       NAMES "python${_VERSION_NO_DOTS}" "python${VERSION}"
       HINTS "${PYTHON_ROOT}"
-      PATH_SUFFIXES lib
+      PATH_SUFFIXES lib libs
       NO_SYSTEM_ENVIRONMENT_PATH NO_DEFAULT_PATH
     )
     find_path(PYTHON_INCLUDE_PATH
@@ -69,17 +70,17 @@ macro(_find_python PYTHON_ROOT VERSION)
 endmacro()
 
 macro(_find_python_bin PYTHON_ROOT VERSION)
-  string(REPLACE "." "" _VERSION_NO_DOTS ${VERSION})
+  string(REPLACE "." "" _VERSION_NO_DOTS "${VERSION}")
   if(PYTHON_ROOT)
     find_program(PYTHON_BINARY
-      NAMES "python" "python${_VERSION_NO_DOTS}" "python${VERSION}"
+      NAMES "python${_VERSION_NO_DOTS}" "python${VERSION}" python.exe
       HINTS "${PYTHON_ROOT}"
       PATH_SUFFIXES bin
       NO_SYSTEM_ENVIRONMENT_PATH NO_DEFAULT_PATH
     )
   else()
     find_program(PYTHON_BINARY
-      NAMES "python" "python${_VERSION_NO_DOTS}" "python${VERSION}"
+      NAMES "python${_VERSION_NO_DOTS}" "python${VERSION}"
       HINTS "${CMAKE_PREFIX_PATH}"
       PATH_SUFFIXES bin
     )  
@@ -96,7 +97,8 @@ macro(check_for_python_lib)
     _find_python("${PYTHON_ROOT}" "${PYTHON_VERSION}")
   else()
     foreach(_VERSION ${PYTHON_VERSIONS})
-     if(${PYTHON_MIN_VERSION} VERSION_LESS ${_VERSION})
+     if((${PYTHON_MIN_VERSION} VERSION_LESS ${_VERSION}) OR
+        (${PYTHON_MIN_VERSION} VERSION_EQUAL ${_VERSION}))
         _find_python("${PYTHON_ROOT}" "${_VERSION}")
         if(PYTHON_LIBRARIES)
           set(PYTHON_VERSION "${_VERSION}")
@@ -105,6 +107,10 @@ macro(check_for_python_lib)
       endif()
     endforeach()
   endif()
+  # fallback to non-versioned naming scheme
+  if (NOT $PYTHON_LIBRARIES)
+    _find_python("${PYTHON_ROOT}" "")
+  endif()
 endmacro()
 
 macro(check_for_python_binary)
@@ -112,14 +118,21 @@ macro(check_for_python_binary)
     _find_python_bin("${PYTHON_ROOT}" "${PYTHON_VERSION}")
   else()
     foreach(_VERSION ${PYTHON_VERSIONS})
-      if(${PYTHON_MIN_VERSION} VERSION_LESS ${_VERSION})
+      if((${PYTHON_MIN_VERSION} VERSION_LESS ${_VERSION}) OR
+         (${PYTHON_MIN_VERSION} VERSION_EQUAL ${_VERSION}))
         _find_python_bin("${PYTHON_ROOT}" "${_VERSION}")
-        if(PYTHON_LIBRARIES)
+        if(PYTHON_BINARY)
           set(PYTHON_VERSION "${_VERSION}")
+          # disallow all versions except for the one we just found. This makes
+          # sure we don't mismatch the python binary and the libraries.
+          set(PYTHON_VERSIONS "${_VERSION}")
           break()
         endif()
       endif()
     endforeach()
+  endif()
+  if (NOT PYTHON_BINARY)
+    _find_python("${PYTHON_ROOT}" "")
   endif()
 endmacro()
 
@@ -134,16 +147,21 @@ if(APPLE AND NOT PYTHON_IGNORE_FRAMEWORKS)
   check_for_python_framework()
 endif()
 
+# first check for python binary.
+check_for_python_binary()
+
 if(NOT PYTHON_FRAMEWORK_FOUND)
   check_for_python_lib()
 endif()
 
-check_for_python_binary()
+set(PYTHON_MODULE_PATH "python${PYTHON_VERSION}/site-packages/")
+
 mark_as_advanced(
   PYTHON_LIBRARIES
   PYTHON_INCLUDE_PATH
   PYTHON_VERSION
   PYTHON_BINARY
+  PYTHON_MODULE_PATH
 )
 
 if(PYTHON_LIBRARIES)
@@ -159,6 +177,8 @@ if(PYTHON_LIBRARIES)
 endif()
 
 if (PYTHON_BINARY)
+  set(PYTHON_VERSION "${PYTHON_VERSION}"
+      CACHE STRING "Python Version" FORCE)
   set(PYTHON_BINARY "${PYTHON_BINARY}"
       CACHE FILEPATH "Python Binary" FORCE)
 endif()

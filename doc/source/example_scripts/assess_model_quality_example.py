@@ -1,9 +1,8 @@
-#import the required modules
+import os
+from ost.io import LoadPDB
 from qmean import QMEANScorer
 from qmean import PSIPREDHandler
 from qmean import ACCPROHandler
-from ost.io import LoadPDB
-import os
 
 # we use our favourite example, crambin to demonstrate the usage 
 # of the AssessModelQuality function
@@ -38,8 +37,10 @@ accpro_handler = ACCPROHandler(data)
 scorer = QMEANScorer(crambin, psipred = psipred_handler, 
                      accpro= accpro_handler)
 
-
 # we get the qmean4 score out and dump the according reference 
 # set plot
 print "QMEAN4:", scorer.qmean4_score
-scorer.QMEAN4ReferencePlot("example_out/qmean_4_ref_plot.png")
+scorer.QMEAN4ReferencePlot("qmean_4_ref_plot.png")
+
+# local scores are available as a dictionary
+print "Local Scores:", scorer.local_scores

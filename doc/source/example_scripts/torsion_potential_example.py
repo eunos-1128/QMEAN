@@ -1,9 +1,9 @@
 #Example code to demonstrate the usage of setting up a torsion
 #potential with customized group identifiers and dihedral angle binning
 
-#load the QMEAN modules
-from qmean import *
 import os
+from ost import io
+from qmean import TorsionStatistic, TorsionPotential
 
 
 #Let's define some groups for three consecutive amino acids
@@ -33,17 +33,14 @@ group_identifier.append("all-all-all")
 bins = [1,1,18,18,1,1]
 stat = TorsionStatistic(group_identifier, bins)
 
-
 #Load some structure from the PDB and train the stats with it
 crambin_path = os.path.join("example_data","1CRN.pdb")
 crambin = io.LoadPDB(crambin_path).Select("cname=A and peptide=true")
 stat.Extract(crambin)
 
-
 #Create a super undersaturated potential
 pot = TorsionPotential.Create(stat)
 
-
 #Save the statistic and potential objects
-stat.Save(os.path.join("example_out", "torsion_statistic.dat"))
-pot.Save(os.path.join("example_out", "torsion_pot.dat"))
+stat.Save("torsion_stat.dat")
+pot.Save("torsion_pot.dat")

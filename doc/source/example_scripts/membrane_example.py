@@ -1,5 +1,5 @@
 import os
-from ost import mol
+from ost import io, mol, geom
 
 #We use a GPCR example... 
 #Directly after loading we strip of all hydrogens 
@@ -32,8 +32,5 @@ for r in gpcr.residues:
 transmembrane_part = gpcr.Select("grin_membrane:0=1")
 
 #We can finally save down the transmembrane part!
-gpcr_path = os.path.join("example_out","gpcr.pdb")
-gpcr_transmem_path = os.path.join("example_out","gpcr_transmembrane_part.pdb")
-io.SavePDB(gpcr,gpcr_path)
-io.SavePDB(transmembrane_part, gpcr_transmem_path)
-
+io.SavePDB(gpcr,"gpcr.pdb")
+io.SavePDB(transmembrane_part, "gpcr_transmembrane_part.pdb")
