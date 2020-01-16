@@ -488,8 +488,18 @@ class DocTests(unittest.TestCase):
             exp_qmean_col = exp_tab["QMEAN"] 
             qmean_col = tab["QMEAN"] 
             self.assertEqual(len(exp_qmean_col), len(qmean_col))
+
+            # we accept a really low number of discrepancies
+            # the reason is that the membrane finding can have slight
+            # differences leading to residues that are suddenly 
+            # classified differently (membrane/interface/soluble). This results
+            # in different statical potentials being applied and therefore 
+            # different numbers...
+            n_fails = 0
             for a,b in zip(exp_qmean_col, qmean_col):
-                self.assertAlmostEqual(a,b,2)
+                if abs(a-b) > 0.01:
+                    n_fails += 1
+            self.assertTrue(n_fails<=3)
 
         _CheckResult('original_hhblits_alignment')
         _CheckResult('shift_in_front_helix_four')
