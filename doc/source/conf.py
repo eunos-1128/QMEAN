@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
 # Biozentrum - University of Basel
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'QMEAN'
-copyright = '2016-2019, Gabriel Studer'
+copyright = '2016-2020, Gabriel Studer'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
