@@ -1,7 +1,14 @@
 #-------------------------------------------------------------------------------
 # Author: Marco Biasini
 #-------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12.1 FATAL_ERROR)
+
+# Set CMake policies
+# Behaviour of target_link_libraries, always link by full path. CMP0060 can
+# disable this to stay compatible with old projects. We want the new behaviour
+# since before we needed to provide the full path ourselves, that is: we
+# manually forced CMake to the new scheme.
+cmake_policy(SET CMP0060 NEW)
 
 set (QMEAN_VERSION_MAJOR 3)
 set (QMEAN_VERSION_MINOR 1)
