@@ -16,7 +16,7 @@ from qmean import mqa_result_membrane
 
 import ost
 from ost import io, conop
-from ost.io import (LoadPDB,  SavePDB)
+from ost.io import LoadMMCIF
 from ost.bindings import hhblits
 from ost.bindings import WrappedTMAlign
 from ost.seq import CreateSequenceList
@@ -88,57 +88,6 @@ def _GetSequenceFeatures(proj):
 
     return (seqres, psipred_handler, accpro_handler, dc_container)
 
-
-def _LoadMolckedModel(model_path):
-
-    model = LoadPDB(model_path) 
-    Molck(model, conop.GetDefaultLib(), MolckSettings(rm_unk_atoms=True,
-                        rm_non_std=True, rm_hyd_atoms=True, rm_oxt_atoms=False,
-                        rm_zero_occ_atoms=True, colored=False, map_nonstd_res=True,
-                        assign_elem=True))
-
-    return model
-
-
-def _NameChainsIfNecessary(model, proj, model_file):
-    valid_chain_names = True
-    jquery_chars = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+"
-    for c in model.chains:
-        cname = c.GetName()
-        if len(cname.strip()) < 1 or re.match(jquery_chars, cname) is None:
-            valid_chain_names = False
-            break
-
-    if valid_chain_names:
-        return model
-    ed = model.handle.EditXCS()
-    name_mapping = dict()
-    stupid_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
-    for c in model.handle.chains:
-        for newname in stupid_names:
-            try:
-                name_mapping[c.GetName()] = newname
-                ed.RenameChain(c, newname)
-                break
-            except:
-                # Continue through the list until
-                # we have an unused chainname
-                continue
-    info = proj.GetProjectJSON()
-    model_id = model_file.split(".")[0]
-    if "info" not in info:
-        info["info"] = dict()
-    if model_id not in info["info"]:
-        info["info"][model_id] = dict()
-    info["info"][model_id]["chain_mapping"] = name_mapping
-    proj.SaveProjectJSON(info)
-    name_mapping = ["%s -> %s" % (o, n) for o, n in name_mapping.items()]
-    proj.UpdateProgress("renaming chains in %s: %s" % (
-        model_file.split(".")[0],
-        ", ".join(name_mapping)))
-    return model
-
-
 def _RenumberModel(model, seqres_list):
     ed = model.handle.EditXCS()
 
@@ -181,7 +130,7 @@ def _LoadRawModels(in_dir, model_files):
 
     for m_f in model_files:
         try:
-            model = _LoadMolckedModel(
+            model = LoadPDB(
                 os.path.join(in_dir, m_f)).Select("peptide=true")
             models.append(model)
         except:
@@ -195,9 +144,7 @@ def _LoadProcessedModels(in_dir, model_files, seqres_lists, proj):
 
     for m_f, s_l in zip(model_files, seqres_lists):
         try:
-            model = _LoadMolckedModel(
-                os.path.join(in_dir, m_f)).Select("peptide=true")
-            model = _NameChainsIfNecessary(model, proj, m_f)
+            model = LoadPDB(os.path.join(in_dir, m_f)).Select("peptide=true")
             model = _RenumberModel(model, s_l)
             models.append(model)
         except Exception as ex:
@@ -206,6 +153,96 @@ def _LoadProcessedModels(in_dir, model_files, seqres_lists, proj):
     return_list = _SuperposeOnFirstChains(models)
 
     return return_list
+
+def _AssembleResultJSON(scorer, seqres):
+  """
+  Given a QMEANScorer object, this function will extract global and local 
+  scores and return them as a dictionary. You can access them by the keys
+  "global_scores" and "local_scores".
+
+  For "global_scores" you get another dictionary with keys:
+
+    * "qmean4_norm_score"
+    * "qmean4_z_score"
+    * "qmean6_norm_score"
+    * "qmean6_z_score"
+    * "interaction_norm_score"
+    * "interaction_z_score"
+    * "cbeta_norm_score"
+    * "cbeta_z_score"
+    * "packing_norm_score"
+    * "packing_z_score"
+    * "torsion_norm_score"
+    * "torsion_z_score"
+    * "ss_agreement_norm_score"
+    * "ss_agreement_z_score"
+    * "acc_agreement_norm_score"
+    * "acc_agreement_z_score"
+    * "avg_local_score"
+
+  For "local_scores" you get another dictionary with chain names as keys
+  and lists with local scores as value. The local score lists have the
+  same length as the according SEQRES. Assuming that the residue numbers
+  in the model correspond to their location in the SEQRES, they will determine
+  the location of a per residue score in this result list. The underlying 
+  assumption there is a SEQRES numbering scheme starting from one.
+
+  :param scorer:        Scorer object from QMEAN from which to extract stuff
+  :param seqres:        SEQRES sequences for every chain, this list must have
+                        the exact same length as there are chains in the scored
+                        model
+  :type scorer:         :class:`QMEANScorer`
+  :type seqres:         :class:`list` of :class:`ost.seq.SequenceHandle`
+
+  """
+
+  # QMEAN gives NaN if something is not defined. JSON prefers None
+  def nan_to_none(val):
+    if val != val:
+      return None
+    return val
+
+  global_scores = dict()
+  global_scores["qmean4_norm_score"] = nan_to_none(scorer.qmean4_score)
+  global_scores["qmean4_z_score"] = nan_to_none(scorer.qmean4_z_score)
+  
+  try:
+    global_scores["qmean6_norm_score"] = nan_to_none(scorer.qmean6_score)
+    global_scores["qmean6_z_score"] = nan_to_none(scorer.qmean6_z_score)
+  except:
+    global_scores["qmean6_norm_score"] = None
+    global_scores["qmean6_z_score"] = None
+
+  scores = scorer.qmean6_components
+  global_scores["interaction_norm_score"] = nan_to_none(scores["interaction"])
+  global_scores["interaction_z_score"] = nan_to_none(scores["interaction_z_score"])
+  global_scores["cbeta_norm_score"] = nan_to_none(scores["cbeta"])
+  global_scores["cbeta_z_score"] = nan_to_none(scores["cbeta_z_score"])
+  global_scores["packing_norm_score"] = nan_to_none(scores["packing"])
+  global_scores["packing_z_score"] = nan_to_none(scores["packing_z_score"])
+  global_scores["torsion_norm_score"] = nan_to_none(scores["torsion"])
+  global_scores["torsion_z_score"] = nan_to_none(scores["torsion_z_score"])
+  global_scores["ss_agreement_norm_score"] = nan_to_none(scores["ss_agreement"])
+  global_scores["ss_agreement_z_score"] = nan_to_none(scores["ss_agreement_z_score"])
+  global_scores["acc_agreement_norm_score"] = nan_to_none(scores["acc_agreement"])
+  global_scores["acc_agreement_z_score"] = nan_to_none(scores["acc_agreement_z_score"])
+  global_scores["avg_local_score"] = nan_to_none(scorer.avg_local_score)
+  global_scores["avg_local_score_error"] = nan_to_none(scorer.avg_local_score_error)
+
+  local_scores = dict()
+  for ch, s in zip(scorer.model.chains, seqres):
+    score_list = list([None] * len(s))
+    per_chain_scores = scorer.local_scores[ch.GetName()]
+    for rnum, score in per_chain_scores.items():
+      if rnum < 1 or rnum > len(s):
+        raise RuntimeError("Observed ResNum not matching provided SEQRES!")
+      score_list[rnum-1] = nan_to_none(score)
+    local_scores[ch.GetName()] = score_list
+
+  result = dict()
+  result["global_scores"] = global_scores
+  result["local_scores"] = local_scores
+  return result
 
 
 #proj = ProjectFactory.FromName(sys.argv[1])
@@ -218,8 +255,6 @@ def _LoadProcessedModels(in_dir, model_files, seqres_lists, proj):
 
 ## lets read the json stuff to get all required information about the project
 #project_data = proj.GetProjectJSON()
-
-#use_qmeandisco = project_data["options"]["qmeandisco"]
 
 ## The actual action starts here, let's put everything in
 ## a try block to perform appropriate error handling
@@ -269,7 +304,6 @@ def _LoadProcessedModels(in_dir, model_files, seqres_lists, proj):
 #        model = processed_models[mdl_idx]
 #        raw_model = raw_models[mdl_idx]
 
-#        proj.UpdateProgress("processing model " + model_files[mdl_idx])
 #        out_path = os.path.join(out_dir, model_files[mdl_idx].split('.')[0])
 #        out_paths.append(out_path)
 #        if not os.path.exists(out_path):
@@ -306,16 +340,15 @@ def _LoadProcessedModels(in_dir, model_files, seqres_lists, proj):
 
 #            qmean_scorer = QMEANScorer(model, psipred=psipred_handler,
 #                                       accpro=accpro_handler, dc=dc_container,
-#                                       use_nn = use_qmeandisco)
+#                                       use_nn=True)
 #            qmean_scorer.AssignModelBFactors()
 #            score_dict = FetchScoresFromScorer(qmean_scorer, 
 #                                               seqres_lists[mdl_idx],
-#                                               assign_avg_local_score_error = use_qmeandisco)
-#            utfile = open(os.path.join(out_path, "score_file.json"), 'w')
+#                                               assign_avg_local_score_error=True)
+#            outfile = open(os.path.join(out_path, "score_file.json"), 'w')
 #            json.dump(score_dict, outfile, indent=2, sort_keys=True)
 #            outfile.close()
 
-#            proj.UpdateProgress(" + saving down model with bfactors")
 #            SavePDB(model, os.path.join(out_path, "model_processed.pdb"))
 
 #            # map over bfactors from processed model to rawmodel
@@ -323,13 +356,6 @@ def _LoadProcessedModels(in_dir, model_files, seqres_lists, proj):
 #                bfac = r_processed.atoms[0].GetBFactor()
 #                for a in r_raw.atoms:
 #                    a.SetBFactor(bfac)
-
-#            SavePDB(raw_model, os.path.join(out_path, "model_raw.pdb"))
-                
-#            _WriteModelStatus(per_model_status_path, "COMPLETED")
-
-#            #Calling LoadModelDetails will cache some alignment details
-#            proj.LoadModelDetails(project_data["models"][mdl_idx]['modelid'])
 
 #        except:
 #            raise
@@ -341,6 +367,18 @@ def _main():
     """Run QMEAN DisCO
     """
     opts = _ParseArgs()
+
+    mdl_ent, mdl_seq = LoadMMCIF(opts.model, seqres=True)
+
+    mdl_ent = _RenumberModel(mdl_ent, mdl_seq)
+    
+    qmean_scorer = QMEANScorer(mdl_ent, psipred=None,
+                               accpro=None, dc=None,
+                               use_nn=True)
+
+    result_json = _AssembleResultJSON(qmean_scorer, mdl_seq)
+
+    print(result_json)
 
 if __name__ == "__main__":
     _main()
