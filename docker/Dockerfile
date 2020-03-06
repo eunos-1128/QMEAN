@@ -364,3 +364,9 @@ LABEL maintainer="Stefan Bienert <stefan.bienert@unibas.ch>"
 LABEL vendor1="Schwede Group (schwedelab.org)"
 LABEL vendor2="SIB - Swiss Institute of Bioinformatics"
 LABEL vendor3="Biozentrum - University of Basel"
+
+RUN /usr/bin/mkdir /qmean
+
+WORKDIR /qmean
+
+COPY run-qmeandisco.py /qmean/
