@@ -49,38 +49,11 @@ RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
     # \
-    yum makecache fast;            \
-    yum -y install epel-release;   \
-    yum update --assumeyes;        \
-    yum install --assumeyes bzip2 bzip2-devel cmake \
-    doxygen                        \
-    fftw-devel                     \
-    freetype-devel                 \
-    gcc                            \
-    gcc-c++                        \
-    gcc-gfortran                   \
-    gd-devel                       \
-    git                            \
-    git-lfs                        \
-    glibc-devel                    \
-    graphviz                       \
-    libicu-devel                   \
-    libpng-devel                   \
-    libpng-static                  \
-    libstdc++-static               \
-    libtiff-devel                  \
-    make                           \
-    mariadb-devel                  \
-    pcre-devel                     \
-    perl                            \
-    python3                         \
-    python3-devel                   \
-    python3-pip                     \
-    readline-devel                  \
-    sqlite-devel                    \
-    subversion                      \
-    tcsh                            \
-    wget which zlib-devel zlib-static; \
+    yum makecache fast; \
+    yum -y install epel-release; \
+    yum update --assumeyes; \
+    yum install --assumeyes bzip2 gcc-c++ make pcre-devel python3 \
+                            python3-devel which wget zlib-static; \
     yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
     # \
@@ -94,7 +67,7 @@ RUN set -eo pipefail; \
     # Install: Eigen \
     # \
     cd ${SRC_FLDR}; \
-    /usr/bin/wget -nc -O eigen.tar.bz2 \
+    /usr/bin/wget -nv -nc -O eigen.tar.bz2 \
                 http://bitbucket.org/eigen/eigen/get/${VERSION_EIGEN}.tar.bz2; \
     /usr/bin/mkdir eigen/; \
     /usr/bin/tar --strip-components=1 -C eigen/ -xf eigen.tar.bz2; \
@@ -102,25 +75,10 @@ RUN set -eo pipefail; \
     /usr/bin/mv eigen/Eigen /usr/local/include; \
     /usr/bin/rm -rf eigen; \
     # \
-    # Install: SWIG \
-    # \
-    cd ${SRC_FLDR}; \
-    /usr/bin/wget -nc -O swig.tar.gz \
-    https://sourceforge.net/projects/swig/files/swig/swig-${VERSION_SWIG}/swig-${VERSION_SWIG}.tar.gz; \
-    /usr/bin/mkdir swig; \
-    /usr/bin/tar --strip-components=1 -C swig/ -xf swig.tar.gz; \
-    /usr/bin/rm -rf swig.tar.gz; \
-    cd swig/; \
-    ./configure --prefix=/usr/local/; \
-    /usr/bin/make -j ${CPUS_FOR_MAKE}; \
-    /usr/bin/make install; \
-    cd ${SRC_FLDR}; \
-    /usr/bin/rm -rf swig; \
-    # \
     # Install: Boost \
     # \
     cd ${SRC_FLDR} && \
-    /usr/bin/wget -nc -O boost.tar.bz2 \
+    /usr/bin/wget -nv -nc -O boost.tar.bz2 \
     https://sourceforge.net/projects/boost/files/boost/1.68.0/boost_${VERSION_BOOST}.tar.bz2/download; \
     /usr/bin/mkdir boost; \
     /usr/bin/tar --strip-components=1 -C boost -xf boost.tar.bz2; \
@@ -136,42 +94,28 @@ RUN set -eo pipefail; \
     cd ${SRC_FLDR}; \
     /usr/bin/rm -rf boost; \
     # \
+    # Install: SWIG \
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/wget -nv -nc -O swig.tar.gz \
+    https://sourceforge.net/projects/swig/files/swig/swig-${VERSION_SWIG}/swig-${VERSION_SWIG}.tar.gz; \
+    /usr/bin/mkdir swig; \
+    /usr/bin/tar --strip-components=1 -C swig/ -xf swig.tar.gz; \
+    /usr/bin/rm -rf swig.tar.gz; \
+    cd swig/; \
+    ./configure --without-python --prefix=/usr/local/; \
+    /usr/bin/make -j ${CPUS_FOR_MAKE}; \
+    /usr/bin/make install; \
+    cd ${SRC_FLDR}; \
+    /usr/bin/rm -rf swig; \
+    # \
     # Cleanup packages only needed to compile/ install things to keep the \
     # image size low. \
     # \
-    yum --assumeyes remove         \
-    bzip2                          \
-    bzip2-devel                    \
-    cmake                          \
-    doxygen                        \
-    fftw-devel                     \
-    freetype-devel                 \
-    gcc                            \
-    gcc-c++                        \
-    gcc-gfortran                   \
-    gd-devel                       \
-    git                            \
-    git-lfs                        \
-    glibc-devel                    \
-    graphviz                       \
-    libicu-devel                   \
-    libpng-devel                   \
-    libpng-static                  \
-    libstdc++-static               \
-    make                           \
-    mariadb-devel                  \
-    pcre-devel                     \
-    perl                           \
-    python3-devel                  \
-    python3-pip                    \
-    readline-devel                 \
-    sqlite-devel                   \
-    subversion                     \
-    tcsh                           \
-    wget                           \
-    which                          \
-    zlib-devel                     \
-    zlib-static; \
+    yum --assumeyes remove bzip2 gcc gcc-c++ glibc-devel make pcre-devel perl \
+                           python3-devel python3-pip wget which zlib-devel \
+                           zlib-static; \
+    yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     /usr/bin/rm -rf /tmp/*; \
@@ -195,46 +139,14 @@ RUN set -eo pipefail; \
     yum makecache fast;            \
     yum -y install epel-release;   \
     yum update --assumeyes;        \
-    yum install --assumeyes        \
-    bzip2                          \
-    bzip2-devel                    \
-    cmake                          \
-    doxygen                        \
-    fftw-devel                     \
-    freetype-devel                 \
-    gcc                            \
-    gcc-c++                        \
-    gcc-gfortran                   \
-    gd-devel                       \
-    git                            \
-    git-lfs                        \
-    glibc-devel                    \
-    graphviz                       \
-    libicu-devel                   \
-    libpng-devel                   \
-    libpng-static                  \
-    libstdc++-static               \
-    libtiff-devel                  \
-    make                           \
-    mariadb-devel                  \
-    pcre-devel                     \
-    perl                            \
-    python3                         \
-    python3-devel                   \
-    python3-pip                     \
-    readline-devel                  \
-    sqlite-devel                    \
-    subversion                      \
-    tcsh                            \
-    wget                            \
-    which                           \
-    zlib-devel                      \
-    zlib-static;                    \
+    yum install --assumeyes cmake fftw fftw-devel gcc-c++ libpng \
+                            libpng-devel libtiff-devel make python3-devel \
+                            sqlite-devel wget \
     yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
     cd ${SRC_FLDR}; \
     /usr/bin/mkdir ost; \
-    /usr/bin/wget -nc -O ost.tar.gz \
+    /usr/bin/wget -nv -nc -O ost.tar.gz \
          ${SCCRE_GTLB}/openstructure/repository/${OST_VERSION}/archive.tar.gz; \
     /usr/bin/tar --strip-components=1 -C ost -xf ost.tar.gz; \
     /usr/bin/rm -f ost.tar.gz; \
@@ -254,7 +166,7 @@ RUN set -eo pipefail; \
     # 1st run: get everything to build a compounds library
     /usr/bin/make chemdict_tool; \
     # get the compounds dictionary from RCSB PDB
-    /usr/bin/wget -nc -O components.cif.gz \
+    /usr/bin/wget -nv -nc -O components.cif.gz \
                   ftp://ftp.wwpdb.org/pub/pdb/data/monomers/components.cif.gz; \
     stage/bin/chemdict_tool create components.cif.gz compounds.chemlib pdb; \
     stage/bin/chemdict_tool update modules/conop/data/charmm.cif compounds.chemlib charmm; \
@@ -272,22 +184,13 @@ RUN set -eo pipefail; \
     # \
     # Cleanup packages only needed to compile/ install things \
     # \
-    yum --assumeyes remove bzip2 bzip2-devel cmake doxygen fftw-devel \
-                           freetype-devel gcc gcc-c++ gcc-gfortran gd-devel \
-                           git git-lfs glibc-devel graphviz libicu-devel \
-                           libpng-devel libpng-static libstdc++-static make \
-                           mariadb-devel pcre-devel perl python3-devel \
-                           python3-pip readline-devel sqlite-devel subversion \
-                           tcsh wget which zlib-devel zlib-static; \
+    yum --assumeyes remove cmake fftw-devel gcc gcc-c++ glibc-devel \
+                           libpng-devel make perl python3-devel python3-pip \
+                           sqlite-devel wget zlib-devel; \
+    yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/rm -rf /tmp/*; \
-    # removing pip alsp removes the entire Python 3 installation...
-    yum makecache fast; \
-    yum -y install epel-release; \
-    yum install --assumeyes python3; \
-    yum --assumeyes clean all; \
-    /usr/bin/rm -rf /var/cache/yum
+    /usr/bin/rm -rf /tmp/*
 
 #
 # Install QMEAN
@@ -302,17 +205,10 @@ RUN set -eo pipefail; \
     yum makecache fast;            \
     yum -y install epel-release;   \
     yum update --assumeyes;        \
-    yum install --assumeyes bzip2 bzip2-devel cmake doxygen fftw-devel \
-                            freetype-devel gcc gcc-c++ gcc-gfortran gd-devel \
-                            git git-lfs glibc-devel graphviz libicu-devel \
-                            libpng-devel libpng-static libstdc++-static \
-                            libtiff-devel make mariadb-devel pcre-devel perl \
-                            python3 python3-devel python3-pip readline-devel \
-                            sqlite-devel subversion tcsh wget which zlib-devel \
-                            zlib-static; \
+    yum install --assumeyes cmake gcc-c++ make python3-devel wget; \
     yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/wget -nc -O qmean.tar.gz \
+    /usr/bin/wget -nv -nc -O qmean.tar.gz \
             ${SCCRE_GTLB}/QMEAN/repository/${QMEAN_VERSION}/archive.tar.gz; \
     /usr/bin/mkdir qmean; \
     /usr/bin/tar --strip-components=1 -C qmean -xf qmean.tar.gz; \
@@ -332,13 +228,9 @@ RUN set -eo pipefail; \
     # \
     # Cleanup packages only needed to compile/ install things \
     # \
-    yum --assumeyes remove bzip2 bzip2-devel cmake doxygen fftw-devel \
-                           freetype-devel gcc gcc-c++ gcc-gfortran gd-devel \
-                           git git-lfs glibc-devel graphviz libicu-devel \
-                           libpng-devel libpng-static libstdc++-static make \
-                           mariadb-devel pcre-devel perl python3-devel \
-                           python3-pip readline-devel sqlite-devel subversion \
-                           tcsh wget which zlib-devel zlib-static; \
+    yum --assumeyes remove cmake gcc gcc-c++ glibc-devel make perl \
+                           python3-devel python3-pip wget; \
+    yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     /usr/bin/rm -rf /tmp/*; \
