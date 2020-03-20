@@ -9,6 +9,7 @@ set(QMEAN_MODULES
   score_calculator.py
   reference_set.py
   mlp_regressor.py
+  gmqe.py
 )
 
 set(QMEAN_PYMOD
@@ -24,6 +25,7 @@ export_base.cc
 export_spherical_smoother.cc
 export_disco.cc
 export_clash.cc
+export_gmqe.cc
 wrap_qmean.cc
 )
 

@@ -27,6 +27,7 @@ vec_list_magic.hh
 version.hh
 disco.hh
 clash_score.hh
+gmqe_scores.hh
 impl/reduced_impl.hh
 impl/torsion_impl.hh
 impl/packing_impl.hh
@@ -58,6 +59,7 @@ ss_agreement.cc
 spherical_smoother.cc
 disco.cc
 clash_score.cc
+gmqe_scores.cc
 impl/reduced_impl.cc
 impl/torsion_impl.cc
 impl/packing_impl.cc
