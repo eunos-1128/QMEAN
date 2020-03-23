@@ -1,5 +1,18 @@
 # OpenStructure image, dedicated for SMNG.
 
+# TODO:
+# - create a dedicated user (restricts writing of output because of permissions)
+#   note in REAMDE how to rebuild with a dedicated user, also
+#   test that this works
+# - set CMD or Entrypoint?
+# - load matplotlib once for this user to fix the fontcache thing ... PENDING
+# - would it be of any help to byte-compile all the Python here already? Or do
+#   we set the container to not byte compile at all?
+# - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
+#   Check the docs!)
+# - turn the run-qmeandisco.py into a proper QMEAN DisCo
+#   - requires HHBlits, ACCPro and maybe more software in this image
+
 FROM centos:7.4.1708
 
 # Arguments, optional
@@ -63,6 +76,11 @@ RUN set -eo pipefail; \
     /usr/bin/python3 -m pip install --no-cache-dir numpy==1.17.4 \
                                                    scipy==1.4.0 \
                                                    matplotlib==3.1.2; \
+    # configure matplotlib \
+    /usr/bin/mkdir -p $HOME/.config/matplotlib/; \
+    echo "backend      : Agg" > $HOME/.config/matplotlib/matplotlibrc; \
+    # Import matplot once to generate the fontcache \
+    echo "import matplotlib.pyplot" | /usr/bin/python3; \
     # \
     # Install: Eigen \
     # \
@@ -196,7 +214,7 @@ RUN set -eo pipefail; \
 # Install QMEAN
 #
 # Version can be switched via --build-arg QMEAN_VERSION="<TAG|BRANCH>"
-ARG QMEAN_VERSION="4.0.0-rc"
+ARG QMEAN_VERSION="4.0.0"
 
 RUN set -eo pipefail; \
     # \
@@ -242,7 +260,6 @@ RUN set -eo pipefail; \
     /usr/bin/rm -rf /var/cache/yum
 
 # Copy script to run QMEANDisCo
-# Set CMD or Entrypoint?
 
 # Labels
 LABEL license=""
@@ -259,6 +276,26 @@ LABEL vendor3="Biozentrum - University of Basel"
 
 RUN /usr/bin/mkdir /qmean
 
+COPY run-qmeandisco.py /qmean/
+
+# create user & group to run QMEAN
+# IDs can be switched via --build-arg QMEAN_USER_ID=<USER ID>,
+# e.g. --build-arg QMEAN_USER_ID=$(id -u) for your own user. That would mean
+# that files and directories outside of the container would belong to you and
+# directories you create to be mounted as volumes inside the container are owned
+# by the QMEAN user. Just make sure to match the user ID with the one running the
+# container in production or make corresponding directories writable. Treat the
+# group ID similar.
+ARG QMEAN_USER_ID=1000
+ARG QMEAN_GROUP_ID=1000
+ENV QMEAN_USER="qmean" \
+    QMEAN_GROUP="qmean"
+RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP && \
+    useradd --no-log-init -u $QMEAN_USER_ID -r -ms /bin/bash -g $QMEAN_GROUP \
+            $QMEAN_USER; \
+    /usr/bin/chgrp -R $QMEAN_GROUP /qmean; \
+    /usr/bin/chown -R $QMEAN_USER /qmean
+
 WORKDIR /qmean
 
-COPY run-qmeandisco.py /qmean/
+# LocalWords:  QMEAN arg
