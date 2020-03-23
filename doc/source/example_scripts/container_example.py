@@ -37,8 +37,8 @@ p_container["pack"] = PackingPotential.Create(s_container["pack"])
 crambin_path = os.path.join("example_data","1CRN.pdb")
 crambin = io.LoadPDB(crambin_path).Select("peptide=true")
 
-print "interaction e: ", p_container["int"].GetTotalEnergy(crambin,crambin)
-print "packing e: ", p_container["pack"].GetTotalEnergy(crambin,crambin)
+print("interaction e: ", p_container["int"].GetTotalEnergy(crambin,crambin))
+print("packing e: ", p_container["pack"].GetTotalEnergy(crambin,crambin))
 
 
 #The awesome thing is, that we can dump the full container at once
@@ -46,8 +46,8 @@ p_container.Save("potential_container.dat")
 #and load it again
 new_p_container = PotentialContainer.Load("potential_container.dat")
 
-print "Just loaded the same container again, let's see whether the "
-print "energies are consistent"
+print("Just loaded the same container again, let's see whether the ")
+print("energies are consistent")
 
-print "interaction e: ", new_p_container["int"].GetTotalEnergy(crambin,crambin)
-print "packing e: ", new_p_container["pack"].GetTotalEnergy(crambin,crambin)
+print("interaction e: ", new_p_container["int"].GetTotalEnergy(crambin,crambin))
+print("packing e: ", new_p_container["pack"].GetTotalEnergy(crambin,crambin))

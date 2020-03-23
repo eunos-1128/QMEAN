@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
 # Biozentrum - University of Basel
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,8 @@ import sys
 import traceback
 import os
 import json
-from mlp_regressor import Regressor
+import pickle
+from .mlp_regressor import Regressor
 
 class Scorer():
 
@@ -44,14 +45,14 @@ class Scorer():
     try:
       target_idx=table.GetColIndex('target')
     except:
-      print "training table requires a column named target to train against!"
+      print("training table requires a column named target to train against!")
       sys.exit(0)
 
     for f in feature_names:
       try:
         feature_indices.append(table.GetColIndex(f))
       except:
-        print "the feature\"",f,"\" could not be found as a column in the provided table"
+        print("the feature\"",f,"\" could not be found as a column in the provided table")
         sys.exit(0)
 
     for r in table.rows:
@@ -84,7 +85,7 @@ class Scorer():
         numpy_data[i][j]=data[i][j]
 
     if len(data)<100:
-      print 'not enough datapoints! set all weights to 0!!!'
+      print('not enough datapoints! set all weights to 0!!!')
       self.weights=[0]*(len(feature_names)+1)
       return
 
@@ -92,24 +93,24 @@ class Scorer():
       try:
        from mlabwrap import mlab
       except ImportError:
-        print "If method of feature combination is set to robust, mlabwrap and matlab are necessary! Could not import mlabwrap!"
+        print("If method of feature combination is set to robust, mlabwrap and matlab are necessary! Could not import mlabwrap!")
         raise
 
       self.weights=mlab.robustfit(numpy_data, numpy_target_data)
-      print "trained weights: ",self.weights
+      print("trained weights: ",self.weights)
       self.trained_features=feature_names
 
     elif method=='leastsqr':
       try:
         from scipy.linalg import lstsq
       except ImportError:
-        print "If method of feature combination is set to leastsqr, scipy.linalg.lstsq is necessary! Could not import it!"
+        print("If method of feature combination is set to leastsqr, scipy.linalg.lstsq is necessary! Could not import it!")
 
       temp=np.ones((numpy_data.shape[0],numpy_data.shape[1]+1))
       temp[:,1:]=numpy_data
       numpy_data=temp
       self.weights=lstsq(numpy_data, numpy_target_data)[0]
-      print "trained weights: ",self.weights
+      print("trained weights: ",self.weights)
       self.trained_features=feature_names
 
     else:
@@ -126,11 +127,11 @@ class Scorer():
         feature_values[i+1]=data[f]
         set_values+=1
       except:
-        print f+' is not trained! Return NaN for local score!'
+        print(f+' is not trained! Return NaN for local score!')
         return float('NaN')
 
     if set_values!=len(self.trained_features):
-      print 'There is one or more features missing! Return NaN for local score!'
+      print('There is one or more features missing! Return NaN for local score!')
       return float('NaN')
 
     return float(np.dot(feature_values,self.weights))
@@ -143,7 +144,7 @@ class Scorer():
       stream=open(stream_or_filename, 'wb')
     else:
       stream=stream_or_filename
-    cPickle.dump(self, stream, cPickle.HIGHEST_PROTOCOL)
+    pickle.dump(self, stream)
 
   @staticmethod
   def Load(stream_or_filename):
@@ -151,7 +152,7 @@ class Scorer():
       stream=open(stream_or_filename, 'rb')
     else:
       stream=stream_or_filename
-    return cPickle.load(stream)
+    return pickle.load(stream)
 
 class LocalScorer():
 
@@ -195,7 +196,7 @@ class LocalScorer():
     for AA in self.AANames:
       self.scorer[residue_type][AA]=list()
       for c in self.feature_combinations[residue_type]:
-        print "train tab with features ", c," for residue_type ",residue_type," and amino acid ",AA
+        print("train tab with features ", c," for residue_type ",residue_type," and amino acid ",AA)
         self.scorer[residue_type][AA].append(Scorer())
         self.scorer[residue_type][AA][-1].TrainWeights(subtabs[AA], list(c), method)
 
@@ -205,15 +206,15 @@ class LocalScorer():
   def GetLocalScore(self, residue_type, AA, data):
 
     if residue_type not in self.trained_types:
-      print "provided residue type is not trained! returned NaN for local score!"
+      print("provided residue type is not trained! returned NaN for local score!")
       return float('NaN')
     if AA not in self.AANames:
-      print "provided amino acid name is not trained! returned NaN for local score!"
+      print("provided amino acid name is not trained! returned NaN for local score!")
       return float('NaN')
 
     #remove NaN and None values
     processed_data=dict()
-    for k,v in data.iteritems():
+    for k,v in data.items():
       if v!=v or v==None:
         continue
       processed_data[k]=v
@@ -225,7 +226,7 @@ class LocalScorer():
 
       match=True
 
-      for k,v in processed_data.iteritems():
+      for k,v in processed_data.items():
         if k not in c:
           match=False
 
@@ -234,7 +235,7 @@ class LocalScorer():
 
       self.last_used_features=list(c)
       return self.scorer[residue_type][AA][i].GetScore(processed_data) 
-    print "could not find appropriate scorer for provided data. return NaN for local score"
+    print("could not find appropriate scorer for provided data. return NaN for local score")
     return float('NaN')
 
   def GetWeights(self, residue_type, AA, features):
@@ -268,7 +269,7 @@ class LocalScorer():
       stream=open(stream_or_filename, 'wb')
     else:
       stream=stream_or_filename
-    cPickle.dump(self, stream, cPickle.HIGHEST_PROTOCOL)
+    pickle.dump(self, stream)
 
 
   @staticmethod
@@ -277,7 +278,7 @@ class LocalScorer():
       stream=open(stream_or_filename, 'rb')
     else:
       stream=stream_or_filename
-    return cPickle.load(stream)
+    return pickle.load(stream)
 
 
 
@@ -314,7 +315,7 @@ class GlobalScorer():
     self.scorer[structure_type]=list()
 
     for c in self.feature_combinations[structure_type]:
-      print "train tab with features ", c," for structure_type ",structure_type
+      print("train tab with features ", c," for structure_type ",structure_type)
       self.scorer[structure_type].append(Scorer())
       self.scorer[structure_type][-1].TrainWeights(tab, list(c), method)
 
@@ -324,12 +325,12 @@ class GlobalScorer():
   def GetGlobalScore(self, structure_type, data):
 
     if structure_type not in self.trained_types:
-      print "provided structure type is not trained! return NaN for global score!"
+      print("provided structure type is not trained! return NaN for global score!")
       return float('NaN')
 
     #remove NaN and None values
     processed_data=dict()
-    for k,v in data.iteritems():
+    for k,v in data.items():
       if v!=v or v==None:
         continue
       processed_data[k]=v
@@ -341,7 +342,7 @@ class GlobalScorer():
 
       match=True
 
-      for k,v in processed_data.iteritems():
+      for k,v in processed_data.items():
         if k not in c:
           match=False
 
@@ -349,7 +350,7 @@ class GlobalScorer():
         continue
 
       return self.scorer[structure_type][i].GetScore(processed_data) 
-    print "could not find appropriate scorer for provided data. return NaN for global score"
+    print("could not find appropriate scorer for provided data. return NaN for global score")
     return float('NaN')
 
   def GetWeights(self, structure_type, features):
@@ -378,7 +379,7 @@ class GlobalScorer():
       stream=open(stream_or_filename, 'wb')
     else:
       stream=stream_or_filename
-    cPickle.dump(self, stream, cPickle.HIGHEST_PROTOCOL)
+    pickle.dump(self, stream)
 
 
   @staticmethod
@@ -387,7 +388,7 @@ class GlobalScorer():
       stream=open(stream_or_filename, 'rb')
     else:
       stream=stream_or_filename
-    return cPickle.load(stream)
+    return pickle.load(stream)
 
 
 class NNScorer:
@@ -447,7 +448,7 @@ class NNScorer:
 
     valid_scores = dict()
 
-    for k, v in score_dict.iteritems():
+    for k, v in score_dict.items():
       if v == v:
         valid_scores[k] = v
 

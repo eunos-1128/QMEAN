@@ -2,12 +2,10 @@ set(QMEAN_MODULES
   __init__.py
   predicted_sequence_features.py
   conf.py
-  pisces.py
   mqa.py
   mqa_result.py
   mqa_membrane.py
   mqa_result_membrane.py
-  crap_checker.py
   score_calculator.py
   reference_set.py
   mlp_regressor.py

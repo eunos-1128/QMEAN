@@ -55,11 +55,11 @@ data_two[features[0]] = 1.0
 data_two[features[1]] = 1.0
 data_two[features[2]] = float("NaN")
 
-print "Local score for alanine when all features are defined:"
-print local_scorer.GetLocalScore("random",'A',data_one)
+print("Local score for alanine when all features are defined:")
+print(local_scorer.GetLocalScore("random",'A',data_one))
 
-print "Local score for alanine when one of the features is NaN:"
-print local_scorer.GetLocalScore("random",'A',data_two)
+print("Local score for alanine when one of the features is NaN:")
+print(local_scorer.GetLocalScore("random",'A',data_two))
 
 #save down the scorer...
 local_scorer.Save("local_scorer.dat")

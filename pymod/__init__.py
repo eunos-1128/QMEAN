@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
 # Biozentrum - University of Basel
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _qmean import *
+from ._qmean import *
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from qmean.score_calculator import LocalScorer
 from qmean.score_calculator import GlobalScorer
 from qmean.mqa_result_membrane import AssessMembraneModelQuality
+from qmean.mqa_result_membrane import GenerateEnergyGapPlot
 from qmean.mqa_result import QMEANScorer
-

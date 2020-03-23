@@ -68,12 +68,12 @@ scores = dc.GetScores(model.CreateFullView())
 
 # the length of the returned list corresponds to the number of
 # residues in the model...
-print "n residues: ", len(model.residues)
-print "n scores:", len(scores)
+print("n residues: ", len(model.residues))
+print("n scores:", len(scores))
 
 # we assign the DisCo scores to the bfactors and dump the model
 for res, score in zip(model.residues, scores):
-  print res, "DisCo score:", score
+  print(res, "DisCo score:", score)
   for a in res.atoms:
     a.b_factor = score
 

@@ -18,6 +18,6 @@ values = [random.random() for i in range(len(crambin.residues))]
 #Smooth the random values
 smoothed_values = smoother.Smooth(values)
 
-print "initial values: ",values
-print
-print "smoothed values: ", smoothed_values
+print("initial values: ",values)
+print()
+print("smoothed values: ", smoothed_values)

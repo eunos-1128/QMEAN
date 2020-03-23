@@ -12,7 +12,7 @@ tpl_files = ["1pvv.1.A.pdb",
 
 
 for af, tf in zip(aln_files, tpl_files):
-  print "processing",af,tf
+  print("processing",af,tf)
 
   aln = io.LoadAlignment(af)
   tpl = io.LoadPDB(tf)

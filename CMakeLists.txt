@@ -1,10 +1,17 @@
 #-------------------------------------------------------------------------------
 # Author: Marco Biasini
 #-------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12.1 FATAL_ERROR)
 
-set (QMEAN_VERSION_MAJOR 3)
-set (QMEAN_VERSION_MINOR 2)
+# Set CMake policies
+# Behaviour of target_link_libraries, always link by full path. CMP0060 can
+# disable this to stay compatible with old projects. We want the new behaviour
+# since before we needed to provide the full path ourselves, that is: we
+# manually forced CMake to the new scheme.
+cmake_policy(SET CMP0060 NEW)
+
+set (QMEAN_VERSION_MAJOR 4)
+set (QMEAN_VERSION_MINOR 0)
 set (QMEAN_VERSION_PATCH 0)
 set (QMEAN_VERSION_STRING ${QMEAN_VERSION_MAJOR}.${QMEAN_VERSION_MINOR}.${QMEAN_VERSION_PATCH} )
 
@@ -55,13 +62,13 @@ endif()
 file(MAKE_DIRECTORY ${STAGE_DIR} ${HEADER_STAGE_PATH} ${LIB_STAGE_PATH})
 
 # Python needed before Boost
-find_package(Python 2.7.0 REQUIRED)
+find_package(Python 3.6.0 REQUIRED)
 # Split version string
 string(REPLACE "." ";" _python_version_list ${PYTHON_VERSION})
 list(GET _python_version_list 0 PYTHON_VERSION_MAJOR)
 list(GET _python_version_list 1 PYTHON_VERSION_MINOR)
 
-find_package(OPENSTRUCTURE 1.11.0 REQUIRED
+find_package(OPENSTRUCTURE 2.0.0 REQUIRED
              COMPONENTS mol seq seq_alg mol_alg conop)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
@@ -79,10 +86,10 @@ set(Boost_LIBRARIES)
 #              python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} REQUIRED)
 # set(BOOST_PYTHON_LIBRARIES ${Boost_LIBRARIES})
 # see https://cmake.org/cmake/help/v3.11/module/FindBoost.html
-foreach(_python_lib_name python
-                         python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
+foreach(_python_lib_name python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
                          python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
-                         python${PYTHON_VERSION_MAJOR})
+                         python${PYTHON_VERSION_MAJOR}
+                         python)
   find_package(Boost ${_BOOST_MIN_VERSION} COMPONENTS ${_python_lib_name} QUIET)
   if(Boost_FOUND)
     message(STATUS "Found Boost package: " ${_python_lib_name})

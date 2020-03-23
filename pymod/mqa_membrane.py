@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
 # Biozentrum - University of Basel
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@ from qmean import *
 from qmean import conf
 from ost import mol, geom
 import pickle
-from predicted_sequence_features import AlignChainToSEQRES
+from .predicted_sequence_features import AlignChainToSEQRES
 
 
 class MembraneScores:

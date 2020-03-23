@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018, SIB - Swiss Institute of Bioinformatics and
+# Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
 # Biozentrum - University of Basel
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +28,8 @@ def AlignChainToSEQRES(chain, seqres):
   try:
     return seq.alg.AlignToSEQRES(chain.Select(''), seqres, 
                                  try_resnum_first=False,validate=False)
-  except Exception, e:
-    print e
+  except Exception as e:
+    print(e)
 
   chain_seq = ''.join([r.one_letter_code for r in chain.residues])
   aln = seq.alg.SemiGlobalAlign(seq.CreateSequence('seqres',seqres),
@@ -191,7 +191,7 @@ class ACCPROHandler:
           stream = accpro_data
         self.seq, self.ss, self.acc = self.ParseACCPRO(stream)
       except:
-        print traceback.print_exc()
+        print(traceback.print_exc())
         raise ValueError("could not load ACCPRO data!")
 
     if len(self.seq)!=len(self.ss):
@@ -284,31 +284,3 @@ class ACCPROHandler:
     observed_acc = ''.join(observed_acc)
 
     return self.GetACCAgreement(observed_acc, accpro_acc)
-
-
-def CutStuff(seqres, values, chain):
-
-  if len(seqres)!=len(values):
-    raise ValueError("seqres and values must have the same length")
-
-  al = AlignChainToSEQRES(chain, seqres)
-
-  cut_values=list()
-
-  data_index=0
-
-  for col in al:
-    if col[1]!='-':
-      if col[1]==col[0]:
-        cut_values.append(values[data_index])
-        data_index+=1
-      else:
-        if col[0]!='-':
-          raise ValueError("chain sequence ist not consistent with seqres! ("+col[0]+"vs."+col[1]+")")
-        else:
-          cut_values.append(None)
-    else:
-      if col[0]!='-':
-        data_index+=1
-
-  return cut_values
