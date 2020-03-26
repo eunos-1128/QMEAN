@@ -29,7 +29,6 @@ ENV SCCRE_GTLB="https://git.scicore.unibas.ch/schwede" \
     VERSION_EIGEN="3.3.1" \
     VERSION_SWIG="3.0.12" \
     VERSION_BOOST="1_68_0" \
-    VERSION_OPENSTRUCTURE=$OST_VERSION \
     # Define temporary dirs for the build process
     TEMP="/tmp" \
     TEMPDIR="/tmp" \
@@ -148,7 +147,9 @@ RUN set -eo pipefail; \
 # Install OpenStructure
 #
 # Version can be switched via --build-arg OST_VERSION="<TAG|BRANCH>"
-ARG OST_VERSION="2.0.0-rc"
+ARG OST_VERSION="2.0.0"
+
+ENV VERSION_OPENSTRUCTURE=$OST_VERSION
 
 RUN set -eo pipefail; \
     # \
