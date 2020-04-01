@@ -10,8 +10,8 @@ cmake_minimum_required(VERSION 3.12.1 FATAL_ERROR)
 # manually forced CMake to the new scheme.
 cmake_policy(SET CMP0060 NEW)
 
-set (QMEAN_VERSION_MAJOR 3)
-set (QMEAN_VERSION_MINOR 2)
+set (QMEAN_VERSION_MAJOR 4)
+set (QMEAN_VERSION_MINOR 0)
 set (QMEAN_VERSION_PATCH 0)
 set (QMEAN_VERSION_STRING ${QMEAN_VERSION_MAJOR}.${QMEAN_VERSION_MINOR}.${QMEAN_VERSION_PATCH} )
 
@@ -68,7 +68,7 @@ string(REPLACE "." ";" _python_version_list ${PYTHON_VERSION})
 list(GET _python_version_list 0 PYTHON_VERSION_MAJOR)
 list(GET _python_version_list 1 PYTHON_VERSION_MINOR)
 
-find_package(OPENSTRUCTURE 1.11.0 REQUIRED
+find_package(OPENSTRUCTURE 2.0.0 REQUIRED
              COMPONENTS mol seq seq_alg mol_alg conop)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY)

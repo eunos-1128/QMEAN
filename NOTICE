@@ -7,16 +7,15 @@ The main authors are: Gabriel Studer, Pascal Benkert and Marco Biasini
                              
 If you find this software useful, please cite:
 
+Reference for the QMEANDisCo scoring function:
+Studer, G., Rempfer, C., Waterhouse, A.M., Gumienny, G., Haas, J., Schwede, T. 
+QMEANDisCo - distance constraints applied on model quality estimation. 
+Bioinformatics 36, 1765-1771 (2020).
+
 Reference for the QMEAN scoring function:
 Benkert, P., Biasini, M., Schwede, T. Toward the estimation of the absolute
 quality of individual protein structure models. Bioinformatics 27, 343-350
 (2011).
-
-Reference for the QMEANDisCo scoring function:
-Waterhouse, A., Bertoni, M., Bienert, S., Studer, G., Tauriello, G.,
-Gumienny, R., Heer, F.T., de Beer, T.A.P., Rempfer, C., Bordoli, L., Lepore, R.,
-Schwede, T. SWISS-MODEL: homology modelling of protein structures and complexes.
-Nucleic Acids Res. 46(W1), W296-W303 (2018).
 
 Reference for the QMEANBrane scoring function:
 Studer, G., Biasini, M., Schwede, T. Assessing the local structural quality
