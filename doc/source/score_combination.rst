@@ -201,15 +201,71 @@ usage of the ost table class.
 Multi-Layer Perceptron scoring
 --------------------------------------------------------------------------------
 
-To be independent from any machine learning library, QMEAN comes with an own
-implementation of a multi-layer perceptron to evaluate a fully connected
-feed-forward neural network, the :class:`Regressor`. The idea is to use
-whatever machine learning library to train such a network and then dump
-it to disk in a way that it can be read by the :class:`Regressor`.
+To be independent from any machine learning library, QMEAN comes with a 
+lightweight multi-layer perceptron implementation: the :class:`Regressor`. 
+The idea is to use whatever machine learning library to train such a network and 
+transform it into a :class:`Regressor`.
 
-Right now, theres no documentation on :class:`Regressor`. The interested
-user can figure out the data format and functionality by studying the file
-mlp_regressor.py.
+.. class:: Regressor(n_input_features, mean=None, std=None)
+
+  Lighweight implementation of a fully connected multi-layer perceptron with 
+  in-built data normalization. Before traversing the layers, data is normalized 
+  as (input-mean)/std.
+
+  :param n_input_features: The number of input features to expect
+  :param mean: Mean value for every input feature (*n_input_features* values) 
+               for data normalization. All values set to 0.0 if not provided.
+  :param std: Standard deviation for every input feature (*n_input_features* 
+              values) for data normalization. All values set to 1.0 if not 
+              provided.
+
+  :type n_input_features: :class:`int`
+  :type mean: :class:`list` of :class:`float` or :class:`numpy.ndarray`
+  :type mean: :class:`list` of :class:`float` or :class:`numpy.ndarray`
+   
+
+  .. method:: AddLayer(weights, activation_function, bias=None)
+
+    Adds another layer *i*. Given the weight matrix M, the new layer
+    is derived from a simple matrix multiplication M*layer[*i*-1], where
+    the input layer is considered to be layer 0. Postprocessing 
+    consists of adding bias values and perform a final activation.
+
+    :param weights:  Weight matrix with shape (m,n). n is the number of
+                     elements of the previous layer and m determines the
+                     number of elements in the added layer.
+    :param activation_function: 0: no activation, 1: ReLU (Rectified Linear 
+                                Unit) activation
+    :param bias:     Bias that is applied to layer before executing the 
+                     activation function. Size must be consistent with
+                     number of rows (m) in *weights*. All values set to 0.0 if 
+                     not provided.
+    :type weights:  :class:`numpy.ndarray`
+    :type activation_function: :class:`int`
+    :type bias:  :class:`list` of :class:`float` or :class:`numpy.ndarray`
+
+  .. method:: Save(filepath)
+
+    Dumps regressor in binary format
+
+    :param filepath: Path to dump regressor
+    :type filepath: :class:`str`
+
+  .. method:: Load(filepath)
+
+    Static method to load previously dumped regressor
+
+    :param filepath: Path to dumped regressor
+    :type filepath: :class:`str`
+    
+  .. method:: Predict(input)
+
+    Normalizes input, traverses all layers an returns first element of last 
+    layer: the prediction
+
+    :param input:  Input of size *n_input_features* to feed into network
+    :type input:  :class:`list` of :class:`float` or :class:`numpy.ndarray`
+
 
 Similar problems as for the linear combination apply. There's no guarantee
 that all input features are valid. The idea is to again train several 
