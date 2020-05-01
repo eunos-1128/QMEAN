@@ -433,8 +433,8 @@ class NNScorer:
         raise RuntimeError("Specified NNScorer directory does not contain "\
                            "a neural network for every entry in "\
                            "feature_groups.json")
-      self.nn.append(Regressor(nn_path))
-      if self.nn[-1].layer_sizes[0] != len(fg) + len(self.aa_string):
+      self.nn.append(Regressor.Load(nn_path))
+      if self.nn[-1]._layer_sizes[0] != len(fg) + len(self.aa_string):
         raise RuntimeError("Input layer of loaded NN is inconsistent with "\
                            "number of features as defined in "\
                            "feature_groups.json!")
