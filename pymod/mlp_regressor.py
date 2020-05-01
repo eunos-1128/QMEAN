@@ -83,10 +83,6 @@ class Regressor:
                 )
             n_layers = np.fromfile(fh, dtype=np.int32, count=1)[0]
             layer_sizes = np.fromfile(fh, dtype=np.int32, count=n_layers)
-            if layer_sizes[-1] != 1:
-                raise RuntimeError(
-                    "Expect a layer size of 1 for last (output) " "layer."
-                )
             activations = np.fromfile(fh, dtype=np.int32, count=n_layers)
             mean = np.fromfile(fh, dtype=np.float32, count=layer_sizes[0])
             std = np.fromfile(fh, dtype=np.float32, count=layer_sizes[0])
@@ -108,6 +104,10 @@ class Regressor:
         return regressor
 
     def Save(self, filepath):
+
+        if self._layer_sizes[-1] != 1:
+            raise RuntimeError("Expect size of 1 for last (output) layer.")
+
         with open(filepath, "wb") as fh:
             np.array([444222], dtype=np.int32).tofile(fh)
             np.array([1], dtype=np.int32).tofile(fh)
@@ -120,6 +120,8 @@ class Regressor:
                 b.astype(np.float32).tofile(fh)
             for w in self._weights[1:]:
                 w.astype(np.float32).tofile(fh)
+
+
 
     def Predict(self, features):
         features = np.array(features).reshape(self._layer_sizes[0], 1)
