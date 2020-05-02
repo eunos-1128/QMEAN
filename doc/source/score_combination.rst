@@ -204,7 +204,8 @@ Multi-Layer Perceptron scoring
 To be independent from any machine learning library, QMEAN comes with a 
 lightweight multi-layer perceptron implementation: the :class:`Regressor`. 
 The idea is to use whatever machine learning library to train such a network and 
-transform it into a :class:`Regressor`.
+transform it into a :class:`Regressor`. For the simplest training cases 
+:func:`TrainRegressor` should be sufficient.
 
 .. class:: Regressor(n_input_features, mean=None, std=None)
 
@@ -265,6 +266,43 @@ transform it into a :class:`Regressor`.
 
     :param input:  Input of size *n_input_features* to feed into network
     :type input:  :class:`list` of :class:`float` or :class:`numpy.ndarray`
+
+
+.. method:: TrainRegressor(data_frame, features, target, loss_function,\
+                           optimizer, topology, epochs, batch_size,\
+                           randomize=False)
+
+  Trains a :class:`Regressor` using keras given a pandas dataframe as input.
+  This obviously adds pandas and keras as dependency. Check the example script!
+
+  :param data_frame:  Data with a column for each feature as well as the target
+  :param features:    Describes input features, features must be present in 
+                      *data_frame*
+  :param target:      The target, must be present in *data_frame*
+  :param loss_function: Any function that keras understands. E.g. 
+                      "mean_squared_error" or "mean_absolute_error"
+  :param optimizer:   Any optimizer that keras understands. E.g.
+                      "sgd", "rmsprop", "adagrad", "adadelta", "adam"
+  :param topology:    Every element describes number of nodes of a layer
+                      with first layer being the input layer that must have 
+                      the same size as *features*. The last layer is the
+                      output layer that must be of size 1.
+  :param epochs:      Number of training epochs
+  :param batch_size:  Training batch size
+  :param randomize:   Whether to randomize the order of training data prior to
+                      training
+
+  :type data_frame:   :class:`pandas.DataFrame`
+  :type features:     :class:`list` of :class:`str`
+  :type target:       :class:`str`
+  :type loss_function: :class:`str`
+  :type optimizer:    :class:`str`
+  :type topology:     :class:`list` of :class:`int`
+  :type epochs:       :class:`int`
+  :type batch_size:   :class:`int`
+  :type randomize:    :class:`bool`
+  
+.. literalinclude:: example_scripts/regressor_training.py
 
 
 Similar problems as for the linear combination apply. There's no guarantee

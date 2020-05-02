@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import random
 import numpy as np
 
 
 class Regressor:
-
     def __init__(self, n_input_features, mean=None, std=None):
         self._n_input_features = n_input_features
         if mean is None:
@@ -121,3 +122,64 @@ class Regressor:
         else:
             raise RuntimeError("Invalid activation function in regressor.")
 
+
+def TrainRegressor(
+    data_frame,
+    features,
+    target,
+    loss_function,
+    optimizer,
+    topology,
+    epochs,
+    batch_size,
+    randomize=False,
+):
+
+    # hidden imports which are only required for training
+    import keras
+    from keras.models import Sequential
+    from keras.layers import Dense
+
+    # check whether all required data is present in data frame
+    for f in features:
+        if f not in data_frame.keys():
+            raise RuntimeError('Feature "%s" not present in data frame' % (f))
+    if target not in data_frame.keys():
+        raise RuntimeError('Target "%s" not present in data frame' % (target))
+
+    # check topology
+    if topology[0] != len(features):
+        raise RuntimeError("First layer in topology must be size of features")
+    if topology[-1] != 1:
+        raise RuntimeError("Last layer in topology must be of size 1")
+
+    # prepare / normalize training data
+    data_frame_sel = data_frame[features + [target]]
+    data_frame_sel = data_frame_sel[data_frame_sel.notnull().all(axis=1)]
+    x = data_frame_sel[features].values
+    y = data_frame_sel[target].values
+    if randomize:
+        random_indices = list(range(x.shape[0]))
+        random.shuffle(random_indices)
+        x = x[random_indices]
+        y = y[random_indices]
+    means = x.mean(axis=0)
+    stds = x.std(axis=0)
+    x -= means
+    x /= stds
+
+    # train
+    keras_model = Sequential()
+    keras_model.add(Dense(topology[0], activation="relu", input_dim=x.shape[1]))
+    for n in topology[1:]:
+        keras_model.add(Dense(n, activation="relu"))
+    keras_model.compile(loss=loss_function, optimizer=optimizer)
+    keras_model.fit(x, y, epochs=epochs, batch_size=batch_size)
+
+    # build regressor and return
+    regressor = Regressor(len(features), means, stds)
+    for layer in keras_model.layers:
+        regressor.AddLayer(
+            layer.weights[0].numpy().transpose(), 1, bias=layer.weights[1].numpy()
+        )
+    return regressor

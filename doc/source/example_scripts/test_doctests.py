@@ -512,6 +512,18 @@ class DocTests(unittest.TestCase):
         shutil.rmtree('shift_towards_cter')
         os.remove('alignment_comparison.png')
 
+    def testRegressorTraining(self):
+        return_code, sout, serr = self.runScript('regressor_training.py')
+        if return_code != 0:
+            if "ModuleNotFoundError" in serr:
+                print("Could not import keras/pandas, skip regressor training test")
+                return
+        self.assertEqual(return_code, 0)
+        testing_rmse = float(sout.splitlines()[-1].split()[-1])
+        # there is some randomness in training but we should for sure have an 
+        # rmse below 10 if everything went well...
+        self.assertTrue(testing_rmse < 10.0)
+         
 if __name__ == "__main__":
     from ost import testutils
     testutils.RunTests()
