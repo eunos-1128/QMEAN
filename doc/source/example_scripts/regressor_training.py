@@ -32,7 +32,6 @@ regressor = TrainRegressor(df_train, features, target,loss_function,
 regressor_in = df_test[features].values
 predictions = np.zeros(regressor_in.shape[0])
 for idx in range(regressor_in.shape[0]):
-    test = regressor.Predict(regressor_in[idx])
     predictions[idx] = regressor.Predict(regressor_in[idx])
 
 # estimate root mean square error
