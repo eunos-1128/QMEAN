@@ -81,7 +81,7 @@ class GMQE:
                                                          len(str(self.profile.sequence)))
             seq.alg.AddTransitionPseudoCounts(self._profile_with_pseudo_counts)
             if self.crf_file:
-                crf_lib = seq.alg.ContextProfileDB.FromCRF(path_to_crf)
+                crf_lib = seq.alg.ContextProfileDB.FromCRF(self.crf_file)
                 seq.alg.AddAAPseudoCounts(self._profile_with_pseudo_counts, 
                                           crf_lib)
             else:
@@ -202,8 +202,8 @@ class GMQE:
         elif self.profile is not None and tpl_profile is not None:
             tpl_profile_copy = tpl_profile.Extract(0, len(tpl_profile.sequence))
             seq.alg.AddTransitionPseudoCounts(tpl_profile_copy)
-            ost.seq.alg.AddAAPseudoCounts(tpl_profile_copy)
-            ost.seq.alg.AddNullPseudoCounts(tpl_profile_copy)
+            seq.alg.AddAAPseudoCounts(tpl_profile_copy)
+            seq.alg.AddNullPseudoCounts(tpl_profile_copy)
             scores["profile_aln_score"] = \
             seq.alg.HMMScore(self.profile_with_pseudo_counts, 
                              tpl_profile_copy, seqres_aln, 0, 1)
