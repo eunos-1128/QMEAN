@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from ost import seq
 from ost import mol
 from ost import geom
@@ -23,7 +24,7 @@ from qmean import PotentialContainer
 class GMQE:
 
     def __init__(self, seqres, psipred, disco, 
-                 profile=None, potentials = None):
+                 profile=None, potentials = None, crf_file = None):
 
         if isinstance(seqres, str):
             self.seqres = seq.CreateSequence('seqres', seqres)
@@ -45,6 +46,7 @@ class GMQE:
             raise RuntimeError('DisCoContainer is inconsistent with SEQRES')
         self.disco = disco
 
+        self._profile_with_pseudo_counts = None
         if profile:
             if str(profile.sequence) != str(self.seqres):
                 raise RuntimeError('Profile is inconsistent with SEQRES')
@@ -60,6 +62,7 @@ class GMQE:
             s = conf.SwissmodelSettings()
             self.potentials = PotentialContainer.Load(s.global_potentials)
 
+        self.crf_file = crf_file
 
         self.score_calculator = GMQEScoreCalculator(self.potentials,
                                                     self.disco,
@@ -68,8 +71,29 @@ class GMQE:
                                                     self.psipred_cfi)
 
 
-    def GetScores(self, aln, n_positions = None, ca_positions = None, 
-                  c_positions = None, cb_positions = None, dssp_states = None):
+    @property
+    def profile_with_pseudo_counts(self):
+        if self._profile_with_pseudo_counts is None:
+            if self.profile is None:
+                return None
+            # enforce deep copy by using Extract function
+            self._profile_with_pseudo_counts = self.profile.Extract(0, 
+                                                         len(str(self.profile.sequence)))
+            seq.alg.AddTransitionPseudoCounts(self._profile_with_pseudo_counts)
+            if self.crf_file:
+                crf_lib = seq.alg.ContextProfileDB.FromCRF(path_to_crf)
+                seq.alg.AddAAPseudoCounts(self._profile_with_pseudo_counts, 
+                                          crf_lib)
+            else:
+                seq.alg.AddAAPseudoCounts(self._profile_with_pseudo_counts)
+            seq.alg.AddNullPseudoCounts(self._profile_with_pseudo_counts)
+
+        return self._profile_with_pseudo_counts
+
+
+    def GetScores(self, aln, seqres_aln, n_positions = None, ca_positions = None, 
+                  c_positions = None, cb_positions = None, dssp_states = None,
+                  profile_aln_score = None, tpl_profile = None):
 
         # expect exactly two sequences in aln
         if aln.GetCount() != 2:
@@ -78,6 +102,14 @@ class GMQE:
         # expect first sequence to match seqres 
         if str(aln.GetSequence(0).GetGaplessString()) != str(self.seqres):
             raise RuntimeError("Expect first seq in aln to match SEQRES")
+
+        # expect exactly two sequences in seqres_aln
+        if seqres_aln.GetCount() != 2:
+            raise RuntimeError("Expect exactly two sequences in seqres_aln")
+
+        # expect first sequence to match seqres 
+        if str(seqres_aln.GetSequence(0).GetGaplessString()) != str(self.seqres):
+            raise RuntimeError("Expect first seq in seqres_aln to match SEQRES")
 
         residue_numbers = list()
         if n_positions is None or ca_positions is None or c_positions is None or\
@@ -149,6 +181,32 @@ class GMQE:
         scores['seq_id'] = seq.alg.SequenceIdentity(aln)
         scores['seq_sim'] = seq.alg.SequenceSimilarity(aln, seq.alg.BLOSUM62, 
                                                        normalize=True)
+        scores['n_insertions'] = len(re.findall("-+", 
+                                     str(aln.GetSequence(1)).strip('-')))
+        scores['n_deletions'] = len(re.findall("-+", 
+                                    str(aln.GetSequence(0)).strip('-')))
+        scores['seqres_length'] = len(self.seqres.GetGaplessString())
+
+        seqres_covered = 0
+        seqres_tot = 0
+        for col in seqres_aln:
+            if col[0] != '-':
+                seqres_tot += 1
+                if col[1] != '-':
+                    seqres_covered += 1
+        scores["seqres_coverage"] = float(seqres_covered)/seqres_tot
+
+        if profile_aln_score is not None:
+            scores["profile_aln_score"] = profile_aln_score
+            scores["avg_entropy"] = self.profile_avg_entropy
+        elif self.profile is not None and tpl_profile is not None:
+            tpl_profile_copy = tpl_profile.Extract(0, len(tpl_profile.sequence))
+            seq.alg.AddTransitionPseudoCounts(tpl_profile_copy)
+            ost.seq.alg.AddAAPseudoCounts(tpl_profile_copy)
+            ost.seq.alg.AddNullPseudoCounts(tpl_profile_copy)
+            scores["profile_aln_score"] = \
+            seq.alg.HMMScore(self.profile_with_pseudo_counts, 
+                             tpl_profile_copy, seqres_aln, 0, 1)
+            scores["avg_entropy"] = self.profile_avg_entropy
 
         return scores
-
