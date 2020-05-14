@@ -17,13 +17,14 @@ import re
 from ost import seq
 from ost import mol
 from ost import geom
+from qmean import DisCoContainer
 from qmean import conf
 from qmean import GMQEScoreCalculator
 from qmean import PotentialContainer
 
 class GMQE:
 
-    def __init__(self, seqres, psipred, disco, 
+    def __init__(self, seqres, psipred, disco=None, 
                  profile=None, potentials = None, crf_file = None):
 
         if isinstance(seqres, str):
@@ -42,9 +43,18 @@ class GMQE:
         self.psipred_pred = seq.CreateSequence('psipred', ''.join(psipred.ss))
         self.psipred_cfi = [int(cfi) for cfi in psipred.conf]
 
-        if str(disco.GetSeqres()) != str(self.seqres):
-            raise RuntimeError('DisCoContainer is inconsistent with SEQRES')
-        self.disco = disco
+        # make DisCoContainer optional... We still need to feed "some"
+        # DisCoContainer into the GMQEScoreCalculator... If it's only an empty
+        # container, the resulting score will be zero and useless. We therefore
+        # keep track of that situation with the fake_disco variable.
+        if disco is None:
+            self.disco = DisCoContainer(self.seqres)
+            self.fake_disco = True
+        else:
+            if str(disco.GetSeqres()) != str(self.seqres):
+                raise RuntimeError('DisCoContainer is inconsistent with SEQRES')
+            self.disco = disco
+            self.fake_disco = False
 
         self._profile_with_pseudo_counts = None
         if profile:
@@ -177,6 +187,11 @@ class GMQE:
         scores = self.score_calculator.Eval(n_positions, ca_positions, 
                                             c_positions, cb_positions, 
                                             d, residue_numbers)
+
+        # if disco was not given at initialization, "dist_const" in scores
+        # is invalid and needs to be removed
+        if self.fake_disco:
+            del scores["dist_const"]
 
         scores['seq_id'] = seq.alg.SequenceIdentity(aln)
         scores['seq_sim'] = seq.alg.SequenceSimilarity(aln, seq.alg.BLOSUM62, 
