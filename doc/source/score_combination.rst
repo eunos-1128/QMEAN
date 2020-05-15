@@ -305,10 +305,58 @@ transform it into a :class:`Regressor`. For the simplest training cases
 .. literalinclude:: example_scripts/regressor_training.py
 
 
-Similar problems as for the linear combination apply. There's no guarantee
-that all input features are valid. The idea is to again train several 
-regressors and let :class:`NNScorer` figure out what regressor we need.
-Again, code is the documentation. 
+The :class:`Regressor` requires a fixed set of input scores and cannot 
+flexibly adapt if certain features are missing. Examples include scores for the
+first/last two residues in the :class:`qmean.TorsionPotential` due to missing
+dihedral angles. The :class:`NNScorer` offers a naive solution and selects the
+appropriate :class:`Regressor` in a set of alternatives that cover the possible
+combinations of input scores.
+
+.. class:: NNScorer(path)
+
+  Organizes multiple :class:`Regressor` which cover alternative combinations of 
+  input scores and selects the right one for scoring. The object must be 
+  constructed manually and is loaded from disk.
+
+  :param path: Directory containing a file 'feature_groups.json' and several 
+               stored :class:`Regressor` with naming 'nn_<idx>.dat'. The first 
+               is a json file containing a list of items. Each item at location 
+               idx is a list of score names that represent the input for the
+               the :class:`Regressor` named 'nn_<idx>.dat'.
+  :type path:  :class:`str`
+
+
+  .. method:: GetScore(score_dict, olc=None)
+
+    Extracts all valid scores from *score_dict*, selects the right internal 
+    :class:`NNScorer` and returns a score.
+
+    :param score_dict: Keys relate to the internal feature group list. All 
+                       values !(None || NaN) are selected and the 
+                       internal list of feature groups is iterated until 
+                       a group can be identified for which all values are 
+                       valid. Ordering of the internal feature groups therefore 
+                       matters. The values are ordered as defined in the found 
+                       feature group and passed to the according 
+                       :class:`Regressor`. The function returns 0.0 if no 
+                       feature group can be identified.
+    :param olc:        A common use case for the :class:`NNScorer` is to 
+                       estimate residue specific scores. When defining *olc*,
+                       a one-hot array with 20 elements is added in front
+                       of the values that are passed to the selected
+                       :class:`Regressor`. All elements are zero, the location
+                       of *olc* in the string "ACDEFGHIKLMNPQRSTVWY" is set
+                       to one. The function returns 0.0 if *olc* is not found in
+                       the specified string.
+    :type score_dict:  :class:`dict`
+    :type olc:         :class:`str`
+
+
+
+
+
+  
+      
 
 
 
