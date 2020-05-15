@@ -41,6 +41,15 @@ ${LOCAL_NN_SCORER_DIR}/nn_14.dat
 ${LOCAL_NN_SCORER_DIR}/nn_15.dat
 )
 
+set(GMQE_SCORER_DIR "${QMEAN_DATA_DIR}/scorer/gmqe_scorer")
+set(GMQE_SCORER_FILES
+${GMQE_SCORER_DIR}/feature_groups.json
+${GMQE_SCORER_DIR}/nn_0.dat
+${GMQE_SCORER_DIR}/nn_1.dat
+${GMQE_SCORER_DIR}/nn_2.dat
+${GMQE_SCORER_DIR}/nn_3.dat
+)
+
 add_custom_target(qmean_data_files ALL)
 
 copy_if_different("./" "${SHARED_DATA_PATH}/potentials" 
@@ -56,6 +65,10 @@ copy_if_different("./" "${SHARED_DATA_PATH}/scorer"
 
 copy_if_different("./" "${SHARED_DATA_PATH}/scorer/local_nn_scorer" 
                   "${LOCAL_NN_SCORER_FILES}" "QMEAN_LOCAL_NN_SCORER_FILES" 
+                  qmean_data_files) 
+
+copy_if_different("./" "${SHARED_DATA_PATH}/scorer/gmqe_scorer" 
+                  "${GMQE_SCORER_FILES}" "QMEAN_GMQE_SCORER_FILES" 
                   qmean_data_files)  
 
 
@@ -63,4 +76,5 @@ install(FILES ${POTENTIAL_FILES} DESTINATION "share/qmean/potentials")
 install(FILES ${REFERENCE_TABLE_FILES} DESTINATION "share/qmean/reference_values")
 install(FILES ${LINEAR_SCORER_FILES} DESTINATION "share/qmean/scorer")
 install(FILES ${LOCAL_NN_SCORER_FILES} DESTINATION "share/qmean/scorer/local_nn_scorer")
+install(FILES ${GMQE_SCORER_FILES} DESTINATION "share/qmean/scorer/gmqe_scorer")
 
