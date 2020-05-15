@@ -21,11 +21,12 @@ from qmean import DisCoContainer
 from qmean import conf
 from qmean import GMQEScoreCalculator
 from qmean import PotentialContainer
+from qmean.score_calculator import NNScorer
 
 class GMQE:
 
-    def __init__(self, seqres, psipred, disco=None, 
-                 profile=None, potentials = None, crf_file = None):
+    def __init__(self, seqres, psipred, disco=None, profile=None, 
+                 crf_file = None):
 
         if isinstance(seqres, str):
             self.seqres = seq.CreateSequence('seqres', seqres)
@@ -36,6 +37,7 @@ class GMQE:
 
         if str(psipred.seq) != str(self.seqres):
             raise RuntimeError('PSIPREDHandler is inconsistent with SEQRES')
+
         # we're not directly using the QMEAN psipred scoring capabilities
         # but rather hack something together... lets store the actual psipred
         # prediction as a sequence that can then be fed into the 
@@ -66,14 +68,10 @@ class GMQE:
             self.profile = None
             self.profile_avg_entropy = None
 
-        if potentials:
-            self.potentials = potentials
-        else:
-            s = conf.SwissmodelSettings()
-            self.potentials = PotentialContainer.Load(s.global_potentials)
-
+        settings = conf.SwissmodelSettings()
+        self.potentials = PotentialContainer.Load(settings.global_potentials)
+        self.nn_scorer = NNScorer(settings.gmqe_scorer)
         self.crf_file = crf_file
-
         self.score_calculator = GMQEScoreCalculator(self.potentials,
                                                     self.disco,
                                                     self.seqres,
@@ -225,3 +223,19 @@ class GMQE:
             scores["avg_entropy"] = self.profile_avg_entropy
 
         return scores
+
+
+    def PredictGMQE(self, aln, seqres_aln, n_positions = None, ca_positions = None, 
+                    c_positions = None, cb_positions = None, dssp_states = None,
+                    profile_aln_score = None, tpl_profile = None):
+
+        scores = self.GetScores(self, aln, seqres_aln, 
+                                n_positions = n_positions, 
+                                ca_positions = ca_positions, 
+                                c_positions = c_positions, 
+                                cb_positions = cb_positions, 
+                                dssp_states = dssp_states,
+                                profile_aln_score = profile_aln_score, 
+                                tpl_profile = tpl_profile)
+        return self.nn_scorer.GetScore(scores)
+
