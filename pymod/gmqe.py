@@ -227,7 +227,7 @@ class GMQE:
 
     def PredictGMQE(self, aln, seqres_aln, n_positions = None, ca_positions = None, 
                     c_positions = None, cb_positions = None, dssp_states = None,
-                    profile_aln_score = None, tpl_profile = None):
+                    profile_aln_score = None, tpl_profile = None, QMEANDisCo=None):
 
         scores = self.GetScores(self, aln, seqres_aln, 
                                 n_positions = n_positions, 
@@ -237,5 +237,9 @@ class GMQE:
                                 dssp_states = dssp_states,
                                 profile_aln_score = profile_aln_score, 
                                 tpl_profile = tpl_profile)
+
+        if QMEANDisCo is not None:
+            scores["QMEANDisCo"] = QMEANDisCo
+
         return self.nn_scorer.GetScore(scores)
 
