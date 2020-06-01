@@ -440,7 +440,7 @@ class NNScorer:
     valid_scores = dict()
 
     for k, v in score_dict.items():
-      if v == v:
+      if v == v and v is not None:
         valid_scores[k] = v
 
     final_fg_idx = -1
