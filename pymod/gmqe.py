@@ -99,7 +99,8 @@ class GMQE:
         return self._profile_with_pseudo_counts
 
 
-    def GetScores(self, aln, seqres_aln, n_positions = None, ca_positions = None, 
+    def GetScores(self, aln, seqres_aln, residue_numbers = None, 
+                  n_positions = None, ca_positions = None, 
                   c_positions = None, cb_positions = None, dssp_states = None,
                   profile_aln_score = None, tpl_profile = None):
 
@@ -119,8 +120,8 @@ class GMQE:
         if str(seqres_aln.GetSequence(0).GetGaplessString()) != str(self.seqres):
             raise RuntimeError("Expect first seq in seqres_aln to match SEQRES")
 
-        residue_numbers = list()
-        if n_positions is None or ca_positions is None or c_positions is None or\
+        if residue_numbers is None or n_positions is None or \
+           ca_positions is None or c_positions is None or\
            cb_positions is None or dssp_states is None:
             # at least one of the positions is None, expect view to be attached
             # to sequence 1
@@ -136,6 +137,7 @@ class GMQE:
             c_positions = geom.Vec3List()
             cb_positions = geom.Vec3List()
             dssp_states = list()
+            residue_numbers = list()
 
             current_rnum = 0
             for col in aln:
@@ -161,22 +163,6 @@ class GMQE:
                                                                ca.GetPos(),
                                                                c.GetPos())
                                 cb_positions.append(cb_pos)
-
-        else:
-            current_rnum = 0
-            for col in aln:
-                if col[0] != '-':
-                    current_rnum += 1
-                if col[0] != '-' and col[1] != '-':
-                    residue_numbers.append(current_rnum)
-
-            # length consistency with all other data is checked in the
-            # score_calculator
-            if len(residue_numbers) != len(n_positions):
-                raise RuntimeError("If directly providing structural data, " +\
-                                   "length of all lists must exactly match " +\
-                                   "number of aligned columns in aln!")
-
 
         # expect dssp states either as string or list of characters but
         # need ost.SequenceHandle for score_calculator
@@ -225,11 +211,13 @@ class GMQE:
         return scores
 
 
-    def PredictGMQE(self, aln, seqres_aln, n_positions = None, ca_positions = None, 
-                    c_positions = None, cb_positions = None, dssp_states = None,
+    def PredictGMQE(self, aln, seqres_aln, residue_numbers = None, 
+                    n_positions = None, ca_positions = None, c_positions = None, 
+                    cb_positions = None, dssp_states = None,
                     profile_aln_score = None, tpl_profile = None, QMEANDisCo=None):
 
-        scores = self.GetScores(self, aln, seqres_aln, 
+        scores = self.GetScores(self, aln, seqres_aln,
+                                residue_numbers = residue_numbers, 
                                 n_positions = n_positions, 
                                 ca_positions = ca_positions, 
                                 c_positions = c_positions, 
