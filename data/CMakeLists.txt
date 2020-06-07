@@ -48,6 +48,18 @@ ${GMQE_SCORER_DIR}/nn_0.dat
 ${GMQE_SCORER_DIR}/nn_1.dat
 ${GMQE_SCORER_DIR}/nn_2.dat
 ${GMQE_SCORER_DIR}/nn_3.dat
+${GMQE_SCORER_DIR}/nn_4.dat
+${GMQE_SCORER_DIR}/nn_5.dat
+${GMQE_SCORER_DIR}/nn_6.dat
+${GMQE_SCORER_DIR}/nn_7.dat
+${GMQE_SCORER_DIR}/nn_8.dat
+${GMQE_SCORER_DIR}/nn_9.dat
+${GMQE_SCORER_DIR}/nn_10.dat
+${GMQE_SCORER_DIR}/nn_11.dat
+${GMQE_SCORER_DIR}/nn_12.dat
+${GMQE_SCORER_DIR}/nn_13.dat
+${GMQE_SCORER_DIR}/nn_14.dat
+${GMQE_SCORER_DIR}/nn_15.dat
 )
 
 add_custom_target(qmean_data_files ALL)
