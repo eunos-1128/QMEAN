@@ -216,7 +216,7 @@ class GMQE:
                     cb_positions = None, dssp_states = None,
                     profile_aln_score = None, tpl_profile = None, QMEANDisCo=None):
 
-        scores = self.GetScores(self, aln, seqres_aln,
+        scores = self.GetScores(aln, seqres_aln,
                                 residue_numbers = residue_numbers, 
                                 n_positions = n_positions, 
                                 ca_positions = ca_positions, 
