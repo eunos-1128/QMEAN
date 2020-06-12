@@ -17,3 +17,4 @@ qmean.files*
 local_settings.py
 doc/build
 doc/source/example_scripts/example_out/*
+.DS_Store
