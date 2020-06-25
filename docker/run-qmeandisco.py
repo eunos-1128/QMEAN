@@ -44,12 +44,13 @@ def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm):
         "models": dict(),
         "results_page": "",
         "model_pdb": "",
+        "qmean_version": os.environ.get("VERSION_QMEAN", None),
         # Project naming may be a future feature
         "project_name": "Untitled Project",
         # This needs to be fixed once we have the data in for doing DisCo
         # sequence searches!
         "smtl_version": "2020-06-24",
-        "method": "QMEANDisCo",
+        "method": "QMEAN",
         "seqres_uploaded": None,
         # Status may chainge once we have error handling
         "status": "COMPLETED",
