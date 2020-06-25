@@ -1,17 +1,18 @@
-# OpenStructure image, dedicated for SMNG.
-
 # TODO:
 # - create a dedicated user (restricts writing of output because of permissions)
 #   note in REAMDE how to rebuild with a dedicated user, also
 #   test that this works
 # - set CMD or Entrypoint?
 # - load matplotlib once for this user to fix the fontcache thing ... PENDING
-# - would it be of any help to byte-compile all the Python here already? Or do
-#   we set the container to not byte compile at all?
 # - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
 #   Check the docs!)
 # - turn the run-qmeandisco.py into a proper QMEAN DisCo
 #   - requires HHBlits, ACCPro and maybe more software in this image
+# - make sure Python env.vars are set, no bytecode and unbuffered
+# - in the README note how to switch to a recent compounds.chemlib
+# - to be discussed: provide weekly download of compounds.chemlib?
+# - replace wget calls with curl
+# - introduce version label for Docker image/ container version
 
 FROM centos:7.4.1708
 
@@ -217,6 +218,8 @@ RUN set -eo pipefail; \
 # Version can be switched via --build-arg QMEAN_VERSION="<TAG|BRANCH>"
 ARG QMEAN_VERSION="4.0.0"
 
+ENV VERSION_QMEAN=$QMEAN_VERSION
+
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -268,8 +271,8 @@ LABEL org.openstructure.ost.license="LGPL Version 3"
 LABEL org.openstructure.qmean.license="Apache License Version 2.0, January 2004"
 LABEL org.openstructure.version="${OST_VERSION}"
 LABEL org.openstructure.qmean.version="${QMEAN_VERSION}"
-LABEL org.openstructure.ost.version.is-production="no"
-LABEL org.openstructure.qmean.version.is-production="no"
+LABEL org.openstructure.ost.version.is-production="yes"
+LABEL org.openstructure.qmean.version.is-production="yes"
 LABEL maintainer="Stefan Bienert <stefan.bienert@unibas.ch>"
 LABEL vendor1="Schwede Group (schwedelab.org)"
 LABEL vendor2="SIB - Swiss Institute of Bioinformatics"
