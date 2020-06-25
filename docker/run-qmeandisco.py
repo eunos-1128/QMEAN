@@ -1,4 +1,4 @@
-"""Run QMEAN DisCo for a mmCIF file. Writes to the same location as where the
+"""Run QMEAN DisCo for a mmCIF/ PDB file. Writes to the same location as where the
 file comes from with '.json' as suffix.
 """
 import argparse
@@ -10,8 +10,10 @@ from qmean import QMEANScorer
 from qmean import predicted_sequence_features
 
 import ost
-from ost.io import LoadMMCIF
+from ost import conop
+from ost.io import LoadMMCIF, LoadPDB
 from ost.table import *
+from ost.mol.alg import MolckSettings, Molck
 
 
 def _ParseArgs():
@@ -131,12 +133,11 @@ def _AssembleResultJSON(scorer, seqres):
     the location of a per residue score in this result list. The underlying 
     assumption there is a SEQRES numbering scheme starting from one.
 
-    :param scorer:        Scorer object from QMEAN from which to extract stuff
-    :param seqres:        SEQRES sequences for every chain, this list must have
-                          the exact same length as there are chains in the scored
-                          model
-    :type scorer:         :class:`QMEANScorer`
-    :type seqres:         :class:`list` of :class:`ost.seq.SequenceHandle`
+    :param scorer: Scorer object from QMEAN from which to extract stuff.
+    :type scorer: :class:`QMEANScorer`
+    :param seqres: SEQRES sequences for every chain, this list must have the
+                   exact same length as there are chains in the scored model.
+    :type seqres: :class:`list` of :class:`ost.seq.SequenceHandle`
     """
 
     # QMEAN gives NaN if something is not defined. JSON prefers None
@@ -202,12 +203,71 @@ def _AssembleResultJSON(scorer, seqres):
     return result
 
 
+def _GetOSTEntity(modelfile, force=None):
+    """Read an OST entity either from mmCIF or PDB. Also fetch the sequence.
+
+    :param modelfile: The path to the file containing the structure.
+    :type modelfile: :class:`str`
+    :param force: Enforce a file format, takes "mmcif" or "pdb".
+    :type force: :class:`str`
+    """
+    # Determine file format. If not forced, look at suffix.
+    sformat = force
+    if not sformat:
+        ext = modelfile.split(".")
+        if ext[-1] == "gz":
+            ext = ext[:-1]
+        if len(ext) > 1:
+            sformat = ext[-1].lower()
+        else:
+            raise RuntimeError(
+                "Could not determine format of file '%s'." % modelfile
+            )
+
+    # Load the structure
+    if sformat in ["mmcif", "cif"]:
+        sformat = "mmcif"
+        mdl_ent, mdl_seq = LoadMMCIF(modelfile, seqres=True)
+    elif sformat in ["pdb"]:
+        sformat = "pdb"
+        mdl_ent, mdl_seq = LoadPDB(modelfile, seqres=True)
+    else:
+        raise RuntimeError(
+            "Unknow/ unsuppoted file extension found for file '%s'" % modelfile
+        )
+
+    return mdl_ent, mdl_seq, sformat
+
+
 def _main():
     """Run QMEAN DisCO
     """
     opts = _ParseArgs()
 
-    mdl_ent, mdl_seq = LoadMMCIF(opts.model, seqres=True)
+    mdl_ent, mdl_seq, fmt = _GetOSTEntity(opts.model)
+
+    # We need to be careful with Molck since it alters the input structure. There
+    # should not be a problem with proper mmCIF files but with PDB.
+    # rm_non_std - removes non-amino acid residues like HOH and ligands. If those
+    #              residues appear within a peptide chain, OST gets problems
+    #              dealing with the sequence corresponding to that chain. It is
+    #              safe to remove water and ligands since QMEAN does not touch
+    #              them.
+    if fmt == "pdb":
+        Molck(
+            mdl_ent,
+            conop.GetDefaultLib(),
+            MolckSettings(
+                rm_unk_atoms=False,
+                rm_non_std=True,
+                rm_hyd_atoms=False,
+                rm_oxt_atoms=False,
+                rm_zero_occ_atoms=False,
+                colored=False,
+                map_nonstd_res=False,
+                assign_elem=False,
+            ),
+        )
 
     mdl_ent = _RenumberModel(mdl_ent, mdl_seq)
 
@@ -232,3 +292,5 @@ def _main():
 
 if __name__ == "__main__":
     _main()
+
+#  LocalWords:  OST mmCIF PDB param Molck HOH ligands QMEAN
