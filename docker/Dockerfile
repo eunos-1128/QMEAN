@@ -1,19 +1,3 @@
-# TODO:
-# - create a dedicated user (restricts writing of output because of permissions)
-#   note in REAMDE how to rebuild with a dedicated user, also
-#   test that this works
-# - set CMD or Entrypoint?
-# - load matplotlib once for this user to fix the fontcache thing ... PENDING
-# - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
-#   Check the docs!)
-# - turn the run-qmeandisco.py into a proper QMEAN DisCo
-#   - requires HHBlits, ACCPro and maybe more software in this image
-# - make sure Python env.vars are set, no bytecode and unbuffered
-# - in the README note how to switch to a recent compounds.chemlib
-# - to be discussed: provide weekly download of compounds.chemlib?
-# - replace wget calls with curl
-# - introduce version label for Docker image/ container version
-
 FROM centos:7.4.1708
 
 # Arguments, optional
@@ -205,7 +189,7 @@ RUN set -eo pipefail; \
     # Cleanup packages only needed to compile/ install things \
     # \
     yum --assumeyes remove cmake fftw-devel gcc gcc-c++ glibc-devel \
-                           libpng-devel make perl python3-devel python3-pip \
+                           libpng-devel make perl python3-devel \
                            sqlite-devel wget zlib-devel; \
     yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
@@ -251,19 +235,18 @@ RUN set -eo pipefail; \
     # Cleanup packages only needed to compile/ install things \
     # \
     yum --assumeyes remove cmake gcc gcc-c++ glibc-devel make perl \
-                           python3-devel python3-pip wget; \
+                           python3-devel wget; \
     yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/rm -rf /tmp/*; \
-    # removing pip alsp removes the entire Python 3 installation...
+    /usr/bin/rm -rf /tmp/* \
+    # removing pip also removes the entire Python 3 installation...
     yum makecache fast; \
     yum -y install epel-release; \
     yum install --assumeyes python3; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum
 
-# Copy script to run QMEANDisCo
 
 # Labels
 LABEL license=""
@@ -278,8 +261,7 @@ LABEL vendor1="Schwede Group (schwedelab.org)"
 LABEL vendor2="SIB - Swiss Institute of Bioinformatics"
 LABEL vendor3="Biozentrum - University of Basel"
 
-RUN /usr/bin/mkdir /qmean
-
+# Copy script to run QMEANDisCo
 COPY run-qmeandisco.py /qmean/
 
 # create user & group to run QMEAN
@@ -297,9 +279,28 @@ ENV QMEAN_USER="qmean" \
 RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP && \
     useradd --no-log-init -u $QMEAN_USER_ID -r -ms /bin/bash -g $QMEAN_GROUP \
             $QMEAN_USER; \
+    /usr/bin/mkdir /qmean; \
     /usr/bin/chgrp -R $QMEAN_GROUP /qmean; \
     /usr/bin/chown -R $QMEAN_USER /qmean
 
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 WORKDIR /qmean
+
+# TODO:
+# - replace wget calls with curl
+# - introduce version label for Docker image/ container version
+# - create a dedicated user (restricts writing of output because of permissions)
+#   note in README how to rebuild with a dedicated user, also
+#   test that this works
+# - set CMD or Entrypoint?
+# - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
+#   Check the docs!)
+# - turn the run-qmeandisco.py into a proper QMEAN DisCo
+#   - requires HHBlits, ACCPro and maybe more software in this image
+# - in the README note how to switch to a recent compounds.chemlib
+# - to be discussed: provide weekly download of compounds.chemlib?
+# - copy runscript from cloned repo, not build context!
 
 # LocalWords:  QMEAN arg
