@@ -1,5 +1,5 @@
-"""Run QMEAN DisCo for a mmCIF/ PDB file. Writes to the same location as where the
-file comes from with '.json' as suffix.
+"""Run QMEAN DisCo for a mmCIF/ PDB file. Writes to the same location as where
+the file comes from with '.json' as suffix.
 """
 import argparse
 import os
@@ -11,9 +11,10 @@ from qmean import predicted_sequence_features
 
 import ost
 from ost import conop
+from ost import LogLevel, LogSink
 from ost.io import LoadMMCIF, LoadPDB
 from ost.table import *
-from ost.mol.alg import MolckSettings, Molck
+from ost.mol.alg import Molck, MolckSettings
 
 
 def _ParseArgs():
@@ -38,7 +39,7 @@ def _ParseArgs():
     return opts
 
 
-def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm):
+def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm, molck_json):
     result_json = {
         # "2019-03-07T15:33:12.932"
         # 2020-03-06 15:53:48.925243
@@ -47,6 +48,7 @@ def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm):
         "results_page": "",
         "model_pdb": "",
         "qmean_version": os.environ.get("VERSION_QMEAN", None),
+        "model_modifications": molck_json,
         # Project naming may be a future feature
         "project_name": "Untitled Project",
         # This needs to be fixed once we have the data in for doing DisCo
@@ -61,7 +63,13 @@ def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm):
     # get per model scores
     mdl_for_json = {
         "original_name": file_nm,
-        "scores": scores_json,  # scores: create deep copy of entity, let the renumbered copy be equipped with bfactors, run along residues, fetch bfactor from renumbered entity and resnum/ chain name from deep copy to undo renumbering, scorer.AssignModelBFactors() seems important for that
+        "scores": scores_json,  # scores: create deep copy of entity, let the
+        # renumbered copy be equipped with bfactors, run
+        # along residues, fetch bfactor from renumbered
+        # entity and resnum/ chain name from deep copy
+        # to undo renumbering,
+        # scorer.AssignModelBFactors() seems important
+        # for that
         "chains": dict(),
     }
 
@@ -102,7 +110,7 @@ def _RenumberModel(model, seqres_list):
 
 
 def _AssembleResultJSON(scorer, seqres):
-    """ Given a QMEANScorer object, this function will extract global and local 
+    """ Given a QMEANScorer object, this function will extract global and local
     scores and return them as a dictionary. You can access them by the keys
     "global_scores" and "local_scores".
 
@@ -130,7 +138,7 @@ def _AssembleResultJSON(scorer, seqres):
     and lists with local scores as value. The local score lists have the
     same length as the according SEQRES. Assuming that the residue numbers
     in the model correspond to their location in the SEQRES, they will determine
-    the location of a per residue score in this result list. The underlying 
+    the location of a per residue score in this result list. The underlying
     assumption there is a SEQRES numbering scheme starting from one.
 
     :param scorer: Scorer object from QMEAN from which to extract stuff.
@@ -239,6 +247,38 @@ def _GetOSTEntity(modelfile, force=None):
     return mdl_ent, mdl_seq, sformat
 
 
+class _MolckToJsonLogger(LogSink):
+    """Append Molck output to results object."""
+
+    def __init__(self):
+        LogSink.__init__(self)
+        self.processed = _MolckToJsonLogger._SetupDict()
+
+    def __enter__(self):
+        PushVerbosityLevel(LogLevel.Info)
+        PushLogSink(self)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        PopVerbosityLevel()
+        PopLogSink()
+
+    def LogMessage(self, message, severity):
+        message = message.strip()
+        if message.endswith(" is not a standard amino acid --> removed"):
+            res = message.split()[0]
+            self.processed["removed_non_aa"].append(res)
+        else:
+            raise RuntimeError("Found unknown Molck output: '%s'" % message)
+
+    def ToJson(self):
+        return self.processed
+
+    @staticmethod
+    def _SetupDict():
+        return {"removed_non_aa": []}
+
+
 def _main():
     """Run QMEAN DisCO
     """
@@ -246,28 +286,31 @@ def _main():
 
     mdl_ent, mdl_seq, fmt = _GetOSTEntity(opts.model)
 
-    # We need to be careful with Molck since it alters the input structure. There
-    # should not be a problem with proper mmCIF files but with PDB.
-    # rm_non_std - removes non-amino acid residues like HOH and ligands. If those
-    #              residues appear within a peptide chain, OST gets problems
-    #              dealing with the sequence corresponding to that chain. It is
-    #              safe to remove water and ligands since QMEAN does not touch
-    #              them.
+    # We need to be careful with Molck since it alters the input structure.
+    # There should not be a problem with proper mmCIF files but with PDB.
+    # rm_non_std - removes non-amino acid residues like HOH and ligands. If
+    #              those residues appear within a peptide chain, OST gets
+    #              problems dealing with the sequence corresponding to that
+    #              chain. It is safe to remove water and ligands since QMEAN
+    #              does not touch them.
+    molck_out = _MolckToJsonLogger._SetupDict()
     if fmt == "pdb":
-        Molck(
-            mdl_ent,
-            conop.GetDefaultLib(),
-            MolckSettings(
-                rm_unk_atoms=False,
-                rm_non_std=True,
-                rm_hyd_atoms=False,
-                rm_oxt_atoms=False,
-                rm_zero_occ_atoms=False,
-                colored=False,
-                map_nonstd_res=False,
-                assign_elem=False,
-            ),
-        )
+        with _MolckToJsonLogger() as molcklogger:
+            Molck(
+                mdl_ent,
+                conop.GetDefaultLib(),
+                MolckSettings(
+                    rm_unk_atoms=False,
+                    rm_non_std=True,
+                    rm_hyd_atoms=False,
+                    rm_oxt_atoms=False,
+                    rm_zero_occ_atoms=False,
+                    colored=False,
+                    map_nonstd_res=False,
+                    assign_elem=False,
+                ),
+            )
+            molck_out = molcklogger.ToJson()
 
     mdl_ent = _RenumberModel(mdl_ent, mdl_seq)
 
@@ -278,7 +321,7 @@ def _main():
     scores_json = _AssembleResultJSON(qmean_scorer, mdl_seq)
 
     result_json = _TurnIntoQMEANServerJSON(
-        scores_json, mdl_ent, mdl_seq, os.path.basename(opts.model)
+        scores_json, mdl_ent, mdl_seq, os.path.basename(opts.model), molck_out
     )
 
     if not opts.output:
