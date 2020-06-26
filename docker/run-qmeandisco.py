@@ -1,28 +1,56 @@
 """Run QMEAN DisCo for a mmCIF/ PDB file. Writes to the same location as where
 the file comes from with '.json' as suffix.
 """
-import argparse
-import os
-import json
 from datetime import datetime
+import argparse
+import json
+import math
+import os
 
 from qmean import QMEANScorer
 from qmean import predicted_sequence_features
 
 import ost
-from ost import conop
-from ost import LogLevel, LogSink
-from ost.io import LoadMMCIF, LoadPDB
-from ost.table import *
-from ost.mol.alg import Molck, MolckSettings
+
+# from ost import conop
+from ost import (
+    LogLevel,
+    LogSink,
+    PopLogSink,
+    PopVerbosityLevel,
+    PushLogSink,
+    PushVerbosityLevel,
+)
+from ost.io import LoadMMCIF, LoadPDB, LoadSequenceList
+
+# from ost.mol.alg import Molck, MolckSettings
 
 
 def _ParseArgs():
+    """Fetch arguments from the command line call.
+    """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=__doc__,
     )
     parser.add_argument("model", help="Model file")
+    parser.add_argument(
+        "-f",
+        "--format",
+        help="Specify format of input file, mmCIF or PDB. Default is to "
+        + "determine from file extension.",
+        default=None,
+        choices=["mmcif", "pdb"],
+    )
+    parser.add_argument(
+        "-o", "--output", help="Path to write the JSON data to."
+    )
+    parser.add_argument(
+        "-s",
+        "--seqres",
+        help="File with a list of sequences corresponding to the peptide "
+        + "chains in the model.",
+    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -30,16 +58,17 @@ def _ParseArgs():
         default=0,
         help="Print more detailed output (0/1)",
     )
-    parser.add_argument(
-        "-o", "--output", help="Path to write the JSON data to."
-    )
 
     opts = parser.parse_args()
 
     return opts
 
 
-def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm, molck_json):
+def _TurnIntoQMEANServerJSON(  # pylint: disable=bad-continuation
+    scores_json, ost_ent, seqres, file_nm, molck_json, loaded_seqres
+):
+    """Add "non score" data to the QMEAN JSON output.
+    """
     result_json = {
         # "2019-03-07T15:33:12.932"
         # 2020-03-06 15:53:48.925243
@@ -63,24 +92,29 @@ def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm, molck_json):
     # get per model scores
     mdl_for_json = {
         "original_name": file_nm,
-        "scores": scores_json,  # scores: create deep copy of entity, let the
-        # renumbered copy be equipped with bfactors, run
-        # along residues, fetch bfactor from renumbered
-        # entity and resnum/ chain name from deep copy
-        # to undo renumbering,
-        # scorer.AssignModelBFactors() seems important
-        # for that
+        # scores:
+        # Right now it seems to work that residue numbering from structures
+        # matches SEQRES. But in the past there has been user input where that
+        # was broken. So in case this happens again, here is an idea for a
+        # strategy:
+        # Create deep copy of entity, let the renumbered copy be equipped with
+        # bfactors, run along residues, fetch bfactor from renumbered entity
+        # and resnum/ chain name from deep copy to undo renumbering,
+        # scorer.AssignModelBFactors() seems important for that
+        "scores": scores_json,
         "chains": dict(),
     }
 
-    for i, seq in enumerate(seqres):
+    for i, chn in enumerate(ost_ent.chains):
+        seq = seqres[i]
+        if loaded_seqres:
+            aln = predicted_sequence_features.AlignChainToSEQRES(chn, str(seq))
+            aseq = aln.GetSequence(1)
+        else:
+            aseq = seq
         mdl_for_json["chains"][seq.name] = {
             "seqres": str(seq),
-            # As soon as SEQRES becomes an input of this script,
-            # qmean.predicted_sequence_features.AlignChainToSEQRES needs to be
-            # used. That changes the way 'atomseq' is handled. Check forms.py of
-            # the QMEAN web server for this.
-            "atomseq": str(seq),
+            "atomseq": str(aseq),
             "name": "seq_chain_%d" % i,
         }
 
@@ -93,18 +127,22 @@ def _TurnIntoQMEANServerJSON(scores_json, ost_ent, seqres, file_nm, molck_json):
 
 
 def _RenumberModel(model, seqres_list):
-    ed = model.handle.EditXCS()
+    """Make residue numbers correspond to SEQRES sequence.
 
-    for ch, s in zip(model.chains, seqres_list):
-        aln = predicted_sequence_features.AlignChainToSEQRES(ch, str(s))
+    We assume that the chains and the sequence list have the same order.
+    """
+    edi = model.handle.EditXCS()
+
+    for chn, seqres in zip(model.chains, seqres_list):
+        aln = predicted_sequence_features.AlignChainToSEQRES(chn, str(seqres))
         model_chain = model.CreateEmptyView()
-        model_chain.AddChain(ch, ost.mol.INCLUDE_ALL)
+        model_chain.AddChain(chn, ost.mol.INCLUDE_ALL)
         aln.AttachView(1, model_chain)
         for i in range(aln.GetLength()):
             res = aln.GetResidue(1, i)
             if res.IsValid():
                 new_num = ost.mol.ResNum(i + 1)
-                ed.SetResidueNumber(res.handle, new_num)
+                edi.SetResidueNumber(res.handle, new_num)
 
     return model
 
@@ -145,51 +183,52 @@ def _AssembleResultJSON(scorer, seqres):
     :type scorer: :class:`QMEANScorer`
     :param seqres: SEQRES sequences for every chain, this list must have the
                    exact same length as there are chains in the scored model.
+                   Sequences must be sorted following the order of the chains.
     :type seqres: :class:`list` of :class:`ost.seq.SequenceHandle`
     """
 
     # QMEAN gives NaN if something is not defined. JSON prefers None
-    def nan_to_none(val):
-        if val != val:
+    def NaN_To_None(val):
+        if math.isnan(val):
             return None
         return val
 
     global_scores = dict()
-    global_scores["qmean4_norm_score"] = nan_to_none(scorer.qmean4_score)
-    global_scores["qmean4_z_score"] = nan_to_none(scorer.qmean4_z_score)
+    global_scores["qmean4_norm_score"] = NaN_To_None(scorer.qmean4_score)
+    global_scores["qmean4_z_score"] = NaN_To_None(scorer.qmean4_z_score)
 
     try:
-        global_scores["qmean6_norm_score"] = nan_to_none(scorer.qmean6_score)
-        global_scores["qmean6_z_score"] = nan_to_none(scorer.qmean6_z_score)
-    except Exception:
+        global_scores["qmean6_norm_score"] = NaN_To_None(scorer.qmean6_score)
+        global_scores["qmean6_z_score"] = NaN_To_None(scorer.qmean6_z_score)
+    except Exception:  # pylint: disable=broad-except
         global_scores["qmean6_norm_score"] = None
         global_scores["qmean6_z_score"] = None
 
     scores = scorer.qmean6_components
-    global_scores["interaction_norm_score"] = nan_to_none(scores["interaction"])
-    global_scores["interaction_z_score"] = nan_to_none(
+    global_scores["interaction_norm_score"] = NaN_To_None(scores["interaction"])
+    global_scores["interaction_z_score"] = NaN_To_None(
         scores["interaction_z_score"]
     )
-    global_scores["cbeta_norm_score"] = nan_to_none(scores["cbeta"])
-    global_scores["cbeta_z_score"] = nan_to_none(scores["cbeta_z_score"])
-    global_scores["packing_norm_score"] = nan_to_none(scores["packing"])
-    global_scores["packing_z_score"] = nan_to_none(scores["packing_z_score"])
-    global_scores["torsion_norm_score"] = nan_to_none(scores["torsion"])
-    global_scores["torsion_z_score"] = nan_to_none(scores["torsion_z_score"])
-    global_scores["ss_agreement_norm_score"] = nan_to_none(
+    global_scores["cbeta_norm_score"] = NaN_To_None(scores["cbeta"])
+    global_scores["cbeta_z_score"] = NaN_To_None(scores["cbeta_z_score"])
+    global_scores["packing_norm_score"] = NaN_To_None(scores["packing"])
+    global_scores["packing_z_score"] = NaN_To_None(scores["packing_z_score"])
+    global_scores["torsion_norm_score"] = NaN_To_None(scores["torsion"])
+    global_scores["torsion_z_score"] = NaN_To_None(scores["torsion_z_score"])
+    global_scores["ss_agreement_norm_score"] = NaN_To_None(
         scores["ss_agreement"]
     )
-    global_scores["ss_agreement_z_score"] = nan_to_none(
+    global_scores["ss_agreement_z_score"] = NaN_To_None(
         scores["ss_agreement_z_score"]
     )
-    global_scores["acc_agreement_norm_score"] = nan_to_none(
+    global_scores["acc_agreement_norm_score"] = NaN_To_None(
         scores["acc_agreement"]
     )
-    global_scores["acc_agreement_z_score"] = nan_to_none(
+    global_scores["acc_agreement_z_score"] = NaN_To_None(
         scores["acc_agreement_z_score"]
     )
-    global_scores["avg_local_score"] = nan_to_none(scorer.avg_local_score)
-    global_scores["avg_local_score_error"] = nan_to_none(
+    global_scores["avg_local_score"] = NaN_To_None(scorer.avg_local_score)
+    global_scores["avg_local_score_error"] = NaN_To_None(
         scorer.avg_local_score_error
     )
 
@@ -202,7 +241,7 @@ def _AssembleResultJSON(scorer, seqres):
                 raise RuntimeError(
                     "Observed ResNum not matching provided SEQRES!"
                 )
-            score_list[rnum - 1] = nan_to_none(score)
+            score_list[rnum - 1] = NaN_To_None(score)
         local_scores[chn.GetName()] = score_list
 
     result = dict()
@@ -211,7 +250,7 @@ def _AssembleResultJSON(scorer, seqres):
     return result
 
 
-def _GetOSTEntity(modelfile, force=None):
+def _GetOSTEntity(modelfile, load_seqres, force):
     """Read an OST entity either from mmCIF or PDB. Also fetch the sequence.
 
     :param modelfile: The path to the file containing the structure.
@@ -235,16 +274,24 @@ def _GetOSTEntity(modelfile, force=None):
     # Load the structure
     if sformat in ["mmcif", "cif"]:
         sformat = "mmcif"
-        mdl_ent, mdl_seq = LoadMMCIF(modelfile, seqres=True)
+        if load_seqres:
+            mdl_ent, mdl_seq = LoadMMCIF(modelfile, seqres=True)
+        else:
+            mdl_ent = LoadMMCIF(modelfile, seqres=False)
+            mdl_seq = None
     elif sformat in ["pdb"]:
         sformat = "pdb"
-        mdl_ent, mdl_seq = LoadPDB(modelfile, seqres=True)
+        if load_seqres:
+            mdl_ent, mdl_seq = LoadPDB(modelfile, seqres=True)
+        else:
+            mdl_ent = LoadPDB(modelfile, seqres=False)
+            mdl_seq = None
     else:
         raise RuntimeError(
             "Unknow/ unsuppoted file extension found for file '%s'" % modelfile
         )
 
-    return mdl_ent, mdl_seq, sformat
+    return mdl_ent.Select("peptide=true"), mdl_seq, sformat
 
 
 class _MolckToJsonLogger(LogSink):
@@ -252,7 +299,7 @@ class _MolckToJsonLogger(LogSink):
 
     def __init__(self):
         LogSink.__init__(self)
-        self.processed = _MolckToJsonLogger._SetupDict()
+        self.processed = _MolckToJsonLogger.SetupDict()
 
     def __enter__(self):
         PushVerbosityLevel(LogLevel.Info)
@@ -263,7 +310,9 @@ class _MolckToJsonLogger(LogSink):
         PopVerbosityLevel()
         PopLogSink()
 
-    def LogMessage(self, message, severity):
+    def LogMessage(self, message, severity):  # pylint: disable=unused-argument
+        """Send a message to the logger.
+        """
         message = message.strip()
         if message.endswith(" is not a standard amino acid --> removed"):
             res = message.split()[0]
@@ -272,10 +321,16 @@ class _MolckToJsonLogger(LogSink):
             raise RuntimeError("Found unknown Molck output: '%s'" % message)
 
     def ToJson(self):
+        """Return what the logger collected as JSON.
+        """
         return self.processed
 
     @staticmethod
-    def _SetupDict():
+    def SetupDict():
+        """Create the empty JSON structure.
+        This is meant for the case the logger is not in use but you still want
+        the keys, etc. of the JSON output for the full QMEAN JSON format.
+        """
         return {"removed_non_aa": []}
 
 
@@ -284,7 +339,10 @@ def _main():
     """
     opts = _ParseArgs()
 
-    mdl_ent, mdl_seq, fmt = _GetOSTEntity(opts.model)
+    load_seqres = True
+    if opts.seqres:
+        load_seqres = False
+    mdl_ent, mdl_seq, fmt = _GetOSTEntity(opts.model, load_seqres, opts.format)
 
     # We need to be careful with Molck since it alters the input structure.
     # There should not be a problem with proper mmCIF files but with PDB.
@@ -293,24 +351,28 @@ def _main():
     #              problems dealing with the sequence corresponding to that
     #              chain. It is safe to remove water and ligands since QMEAN
     #              does not touch them.
-    molck_out = _MolckToJsonLogger._SetupDict()
-    if fmt == "pdb":
-        with _MolckToJsonLogger() as molcklogger:
-            Molck(
-                mdl_ent,
-                conop.GetDefaultLib(),
-                MolckSettings(
-                    rm_unk_atoms=False,
-                    rm_non_std=True,
-                    rm_hyd_atoms=False,
-                    rm_oxt_atoms=False,
-                    rm_zero_occ_atoms=False,
-                    colored=False,
-                    map_nonstd_res=False,
-                    assign_elem=False,
-                ),
-            )
-            molck_out = molcklogger.ToJson()
+    molck_out = _MolckToJsonLogger.SetupDict()
+
+    # if fmt == "pdb":
+    #    with _MolckToJsonLogger() as molcklogger:
+    #        Molck(
+    #            mdl_ent,
+    #            conop.GetDefaultLib(),
+    #            MolckSettings(
+    #                rm_unk_atoms=False,
+    #                rm_non_std=True,
+    #                rm_hyd_atoms=False,
+    #                rm_oxt_atoms=False,
+    #                rm_zero_occ_atoms=False,
+    #                colored=False,
+    #                map_nonstd_res=False,
+    #                assign_elem=False,
+    #            ),
+    #        )
+    #        molck_out = molcklogger.ToJson()
+
+    if opts.seqres:
+        mdl_seq = LoadSequenceList(opts.seqres, format="fasta")
 
     mdl_ent = _RenumberModel(mdl_ent, mdl_seq)
 
@@ -321,7 +383,12 @@ def _main():
     scores_json = _AssembleResultJSON(qmean_scorer, mdl_seq)
 
     result_json = _TurnIntoQMEANServerJSON(
-        scores_json, mdl_ent, mdl_seq, os.path.basename(opts.model), molck_out
+        scores_json,
+        mdl_ent,
+        mdl_seq,
+        os.path.basename(opts.model),
+        molck_out,
+        not load_seqres,
     )
 
     if not opts.output:
@@ -336,4 +403,4 @@ def _main():
 if __name__ == "__main__":
     _main()
 
-#  LocalWords:  OST mmCIF PDB param Molck HOH ligands QMEAN
+#  LocalWords:  OST mmCIF PDB param Molck HOH ligands QMEAN SEQRES
