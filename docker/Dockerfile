@@ -121,7 +121,7 @@ RUN set -eo pipefail; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     /usr/bin/rm -rf /tmp/*; \
-    # removing pip alsp removes the entire Python 3 installation...
+    # removing python3-devel alsp removes the entire Python 3 installation...
     yum makecache fast; \
     yum -y install epel-release; \
     yum install --assumeyes python3; \
@@ -240,7 +240,7 @@ RUN set -eo pipefail; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     /usr/bin/rm -rf /tmp/* \
-    # removing pip also removes the entire Python 3 installation...
+    # removing python3-devel also removes the entire Python 3 installation...
     yum makecache fast; \
     yum -y install epel-release; \
     yum install --assumeyes python3; \
@@ -261,9 +261,6 @@ LABEL vendor1="Schwede Group (schwedelab.org)"
 LABEL vendor2="SIB - Swiss Institute of Bioinformatics"
 LABEL vendor3="Biozentrum - University of Basel"
 
-# Copy script to run QMEANDisCo
-COPY run-qmeandisco.py /qmean/
-
 # create user & group to run QMEAN
 # IDs can be switched via --build-arg QMEAN_USER_ID=<USER ID>,
 # e.g. --build-arg QMEAN_USER_ID=$(id -u) for your own user. That would mean
@@ -282,6 +279,9 @@ RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP && \
     /usr/bin/mkdir /qmean; \
     /usr/bin/chgrp -R $QMEAN_GROUP /qmean; \
     /usr/bin/chown -R $QMEAN_USER /qmean
+
+# Copy script to run QMEANDisCo
+COPY run-qmeandisco.py /qmean/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
