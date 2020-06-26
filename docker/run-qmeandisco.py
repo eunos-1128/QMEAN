@@ -65,7 +65,7 @@ def _ParseArgs():
 
 
 def _TurnIntoQMEANServerJSON(  # pylint: disable=bad-continuation
-    scores_json, ost_ent, seqres, file_nm, molck_json, loaded_seqres
+    scores_json, ost_ent, seqres, file_nm, loaded_seqres
 ):
     """Add "non score" data to the QMEAN JSON output.
     """
@@ -77,7 +77,7 @@ def _TurnIntoQMEANServerJSON(  # pylint: disable=bad-continuation
         "results_page": "",
         "model_pdb": "",
         "qmean_version": os.environ.get("VERSION_QMEAN", None),
-        "model_modifications": molck_json,
+        # "model_modifications": molck_json,
         # Project naming may be a future feature
         "project_name": "Untitled Project",
         # This needs to be fixed once we have the data in for doing DisCo
@@ -351,7 +351,7 @@ def _main():
     #              problems dealing with the sequence corresponding to that
     #              chain. It is safe to remove water and ligands since QMEAN
     #              does not touch them.
-    molck_out = _MolckToJsonLogger.SetupDict()
+    # molck_out = _MolckToJsonLogger.SetupDict()
 
     # if fmt == "pdb":
     #    with _MolckToJsonLogger() as molcklogger:
@@ -387,7 +387,6 @@ def _main():
         mdl_ent,
         mdl_seq,
         os.path.basename(opts.model),
-        molck_out,
         not load_seqres,
     )
 
