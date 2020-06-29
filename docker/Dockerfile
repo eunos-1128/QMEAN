@@ -9,12 +9,7 @@ ENV SCCRE_GTLB="https://git.scicore.unibas.ch/schwede" \
     CFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
     CXXFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
     PYTHONPATH="/usr/local/lib64/python3.6/site-packages/:${PYTHONPATH}" \
-    # Versions of software used, prefixed with VERSION so $VERSION_<TAB><TAB>
-    # in the shell produces a list of possible software versions ;)
-    VERSION_EIGEN="3.3.1" \
-    VERSION_SWIG="3.0.12" \
-    VERSION_BOOST="1_68_0" \
-    # Define temporary dirs for the build process
+    # Define temporary dirs for the build process \
     TEMP="/tmp" \
     TEMPDIR="/tmp" \
     TMPDIR="/tmp" \
@@ -42,6 +37,11 @@ WORKDIR ${SRC_FLDR}
 #
 # Compile & install software dependencies
 #
+# Versions of software used, prefixed with VERSION so $VERSION_<TAB><TAB>
+# in the shell produces a list of possible software versions ;)
+ENV VERSION_EIGEN="3.3.1" \
+    VERSION_SWIG="3.0.12" \
+    VERSION_BOOST="1_68_0"
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -133,9 +133,7 @@ RUN set -eo pipefail; \
 #
 # Version can be switched via --build-arg OST_VERSION="<TAG|BRANCH>"
 ARG OST_VERSION="2.0.0"
-
 ENV VERSION_OPENSTRUCTURE=$OST_VERSION
-
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -201,9 +199,7 @@ RUN set -eo pipefail; \
 #
 # Version can be switched via --build-arg QMEAN_VERSION="<TAG|BRANCH>"
 ARG QMEAN_VERSION="4.0.0"
-
 ENV VERSION_QMEAN=$QMEAN_VERSION
-
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -246,6 +242,7 @@ RUN set -eo pipefail; \
     yum install --assumeyes python3; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum
+
 
 
 # Labels
