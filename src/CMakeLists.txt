@@ -28,6 +28,7 @@ version.hh
 disco.hh
 clash_score.hh
 gmqe_scores.hh
+trg_tpl_similarity.hh
 impl/reduced_impl.hh
 impl/torsion_impl.hh
 impl/packing_impl.hh
@@ -60,6 +61,7 @@ spherical_smoother.cc
 disco.cc
 clash_score.cc
 gmqe_scores.cc
+trg_tpl_similarity.cc
 impl/reduced_impl.cc
 impl/torsion_impl.cc
 impl/packing_impl.cc

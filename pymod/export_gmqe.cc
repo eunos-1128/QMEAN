@@ -17,6 +17,7 @@
 #include <boost/python/register_ptr_to_python.hpp>
 
 #include <qmean/gmqe_scores.hh>
+#include <qmean/trg_tpl_similarity.hh>
 #include <qmean/vec_list_magic.hh>
 
 
@@ -61,7 +62,22 @@ boost::python::dict WrapEval(const GMQEScoreCalculatorPtr p,
   return return_dict;
 }
 
+TrgTplSimilarityPtr WrapSimilarityInit(const String& seqres,
+                                       const boost::python::list& residue_numbers, 
+                                       const geom::Vec3List& ca_pos,
+                                       Real distance_threshold) {
+  std::vector<int> v_residue_numbers = ListToVec<int>(residue_numbers);
+  TrgTplSimilarityPtr p(new TrgTplSimilarity(seqres, v_residue_numbers, 
+                                             ca_pos, distance_threshold));
+  return p;
+}
 
+Real WrapGetSimilarity(TrgTplSimilarityPtr p,
+                       const boost::python::list& residue_numbers,
+                       const geom::Vec3List& ca_pos) {
+  std::vector<int> v_residue_numbers = ListToVec<int>(residue_numbers);
+  return p->GetSimilarity(v_residue_numbers, ca_pos);  
+}
 
 }
 
@@ -75,4 +91,8 @@ void export_gmqe() {
                              arg("dssp_states"), arg("residue_numbers")))
   ;
 
+  class_<TrgTplSimilarity>("TrgTplSimilarity", no_init)
+    .def("__init__", make_constructor(&WrapSimilarityInit))
+    .def("GetSimilarity", &WrapGetSimilarity)  
+  ;
 }
