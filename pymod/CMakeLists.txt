@@ -26,6 +26,7 @@ export_spherical_smoother.cc
 export_disco.cc
 export_clash.cc
 export_gmqe.cc
+export_extract_data_helper.cc
 wrap_qmean.cc
 )
 

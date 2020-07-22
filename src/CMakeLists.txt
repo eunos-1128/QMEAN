@@ -29,6 +29,7 @@ disco.hh
 clash_score.hh
 gmqe_scores.hh
 trg_tpl_similarity.hh
+extract_data_helper.hh
 impl/reduced_impl.hh
 impl/torsion_impl.hh
 impl/packing_impl.hh
@@ -62,6 +63,7 @@ disco.cc
 clash_score.cc
 gmqe_scores.cc
 trg_tpl_similarity.cc
+extract_data_helper.cc
 impl/reduced_impl.cc
 impl/torsion_impl.cc
 impl/packing_impl.cc
