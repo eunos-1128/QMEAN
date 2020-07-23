@@ -30,9 +30,7 @@ modelling etc.).
 The features are combined with a :class:`NNScorer` which is trained to predict
 the full-atomic lDDT score of the final model.
 
-To avoid repeating pre-processing steps that are common for all models of a
-certain target sequence, GMQE calculation is delegated to a target specific
-scorer class:
+.. literalinclude:: example_scripts/gmqe_example.py
 
 .. class:: GMQE(seqres, psipred, disco=None, profile=None, crf_file = None)
 
@@ -213,8 +211,7 @@ scorer class:
 
     
 
-    :returns:                 The predicted lDDT: GMQE
-
-
-
+    :returns:                 A :class:`tuple` with the predicted lDDT (GMQE)
+                              as first element and a :class:`dict` containing
+                              the underlying scores as second element.
 
