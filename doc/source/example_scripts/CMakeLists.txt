@@ -75,6 +75,11 @@ set(DOC_TEST_DATA
   example_data/shift_into_middle_local_scores.txt
   example_data/shift_towards_cter_local_scores.txt
   example_data/housing.csv
+  example_data/1crn.1.A.hhm
+  example_data/1crn_dc.dat
+  example_data/1crn_3szs_aln.fasta
+  example_data/3szs.2.A.pdb
+  example_data/3szs.2.A.hhm
 )
 
 set (DOC_TEST_SCRIPTS
@@ -95,6 +100,7 @@ set (DOC_TEST_SCRIPTS
   assess_membrane_model_quality.py
   reproduce_fig4_from_publication.py
   regressor_training.py
+  gmqe_example.py
 )
 
 add_custom_target(doctest)
