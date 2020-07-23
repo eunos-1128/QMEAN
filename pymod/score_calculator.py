@@ -433,23 +433,14 @@ class NNScorer:
         raise RuntimeError("Specified NNScorer directory does not contain "\
                            "a neural network for every entry in "\
                            "feature_groups.json")
-      self.nn.append(Regressor(nn_path))
-      if self.nn[-1].layer_sizes[0] != len(fg) + len(self.aa_string):
-        raise RuntimeError("Input layer of loaded NN is inconsistent with "\
-                           "number of features as defined in "\
-                           "feature_groups.json!")
+      self.nn.append(Regressor.Load(nn_path))
 
-  def GetScore(self, score_dict, olc):
-
-    try:
-      aa_idx = self.aa_string.index(olc)
-    except:
-      return 0.0
+  def GetScore(self, score_dict, olc = None):
 
     valid_scores = dict()
 
     for k, v in score_dict.items():
-      if v == v:
+      if v == v and v is not None:
         valid_scores[k] = v
 
     final_fg_idx = -1
@@ -466,10 +457,16 @@ class NNScorer:
     if final_fg_idx == -1:
       return 0.0
 
-    input_features = list([0.0] * len(self.aa_string))
-    input_features[aa_idx] = 1.0
+    input_features = list()
+    if olc is not None:
+      try:
+        aa_idx = self.aa_string.index(olc)
+        input_features = list([0.0] * len(self.aa_string))
+        input_features[aa_idx] = 1.0
+      except:
+        return 0.0
+
     for f in self.feature_groups[final_fg_idx]:
       input_features.append(valid_scores[f])
 
     return self.nn[final_fg_idx].Predict(input_features)
-

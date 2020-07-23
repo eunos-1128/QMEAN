@@ -29,6 +29,8 @@ void export_CBPacking();
 void export_HBond();
 void export_disco();
 void export_clash();
+void export_gmqe();
+void export_extract_data_helper();
 
 using namespace boost::python;
 
@@ -53,5 +55,7 @@ BOOST_PYTHON_MODULE(_qmean)
   export_HBond();
   export_disco();
   export_clash();
+  export_gmqe();
+  export_extract_data_helper();
 }
 
