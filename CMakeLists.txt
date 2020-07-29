@@ -61,6 +61,8 @@ endif()
 
 file(MAKE_DIRECTORY ${STAGE_DIR} ${HEADER_STAGE_PATH} ${LIB_STAGE_PATH})
 
+setup_compiler_flags()
+
 # Python needed before Boost
 find_package(Python 3.6.0 REQUIRED)
 # Split version string
