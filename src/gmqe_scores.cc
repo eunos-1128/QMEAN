@@ -36,7 +36,7 @@ GMQEScoreCalculator::GMQEScoreCalculator(PotentialContainerPtr potentials,
                              "psipred prediction!");
   }
 
-  if(seqres.GetLength() != psipred_cfi.size()) {
+  if(seqres.GetLength() != static_cast<int>(psipred_cfi.size())) {
     throw std::runtime_error("Provided SEQRES is inconsistent with provided " 
                              "psipred confidences!");    
   }
@@ -237,7 +237,7 @@ void GMQEScoreCalculator::Eval(const geom::Vec3List& n_positions,
     throw std::runtime_error("Expect resnums and positions to be of same size");
   }
 
-  if(residue_numbers.size() != dssp_states.GetLength()) {
+  if(static_cast<int>(residue_numbers.size()) != dssp_states.GetLength()) {
     throw std::runtime_error("Expect resnums and dssp states to be of same size!");
   }
 

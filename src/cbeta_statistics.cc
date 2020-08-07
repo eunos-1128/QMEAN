@@ -74,7 +74,7 @@ Real CBetaStatistic::GetCount(ost::conop::AminoAcid a, ost::conop::AminoAcid b, 
     throw std::runtime_error("Cannot get count for invalid AminoAcid!");
   }
 
-  if(dist_bin >= opts_.number_of_bins){
+  if(static_cast<int>(dist_bin) >= opts_.number_of_bins){
     throw std::runtime_error("Cannot get count for invalid bin!");
   }
 

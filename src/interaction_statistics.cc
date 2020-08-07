@@ -74,7 +74,7 @@ Real InteractionStatistic::GetCount(atom::ChemType a, atom::ChemType b, uint dis
     throw std::runtime_error("Cannot get count for invalid ChemType!");
   }
 
-  if(dist_bin >= opts_.number_of_bins){
+  if(static_cast<int>(dist_bin) >= opts_.number_of_bins){
     throw std::runtime_error("Cannot get count for invalid distance bin!");
   }
 

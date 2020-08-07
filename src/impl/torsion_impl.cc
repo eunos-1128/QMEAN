@@ -79,11 +79,11 @@ String TorsionOpts::FindStat(const std::vector<String>& residues){
     //iterate over all three positions
     for(int i=0;i<3;++i){
       //"all" matches every residue
-      if(single_ids[i].str().find("all")!=(-1)){
+      if(single_ids[i].str().find("all")!=std::string::npos){
         continue;
       }
       //check, whether currrent residue matches current id position
-      if(single_ids[i].str().find(residues[i])==-1){
+      if(single_ids[i].str().find(residues[i])==std::string::npos){
         match=false;
         break;
       }

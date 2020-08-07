@@ -82,7 +82,7 @@ Real CBPackingStatistic::GetCount(ost::conop::AminoAcid aa, uint bin) const{
     throw std::runtime_error("Cannot get count for invalid amino acid!");
   }
 
-  if(bin >= opts_.max_counts+1){
+  if(static_cast<int>(bin) >= opts_.max_counts+1){
     throw std::runtime_error("Cannot get count for invalid bin!");
   }
 

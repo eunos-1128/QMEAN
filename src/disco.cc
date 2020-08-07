@@ -599,7 +599,7 @@ DisCoContainer::DisCoContainer(const ost::seq::SequenceHandle& seqres):
             seqsim_clustering_cutoff_(std::numeric_limits<Real>::quiet_NaN()) {
 
   // check whether the seqres contains a gap
-  if(seqres_.GetLength() != seqres_.GetGaplessString().size()) {
+  if(seqres_.GetLength() != static_cast<int>(seqres_.GetGaplessString().size())) {
     throw std::runtime_error("The provided SEQRES must not contain a gap!");
   }
 
@@ -811,7 +811,7 @@ void DisCoContainer::AddData(const ost::seq::AlignmentHandle& aln,
                              "exactly match with the internal SEQRES!");
   }
 
-  int max_idx = seqres_.GetLength();
+  uint max_idx = seqres_.GetLength();
   for(uint i = 0; i < pos_seqres_mapping.size(); ++i) {
     if(pos_seqres_mapping[i] < 1 || pos_seqres_mapping[i] > max_idx) {
       std::stringstream ss;
@@ -901,7 +901,6 @@ void DisCoContainer::CalculateConstraints(Real dist_cutoff, Real gamma,
                          cluster_weights, avg_cluster_seqsim, avg_cluster_seqid);
 
   // estimate all the distances
-  Real squared_dist_cutoff = dist_cutoff_ * dist_cutoff_;
   // the pair describes: (idx in pos_ / aln_, dist multiplied by 1000)
   ost::TriMatrix<std::vector<std::pair<uint16_t, uint16_t> >* > 
   pairwise_distances(0);
