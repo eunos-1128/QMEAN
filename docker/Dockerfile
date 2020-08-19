@@ -131,7 +131,7 @@ RUN set -eo pipefail; \
 # Install OpenStructure
 #
 # Version can be switched via --build-arg OST_VERSION="<TAG|BRANCH>"
-ARG OST_VERSION="2.0.0"
+ARG OST_VERSION="2.1.0-rc3"
 ENV VERSION_OPENSTRUCTURE=$OST_VERSION
 RUN set -eo pipefail; \
     # \
@@ -197,7 +197,7 @@ RUN set -eo pipefail; \
 # Install QMEAN
 #
 # Version can be switched via --build-arg QMEAN_VERSION="<TAG|BRANCH>"
-ARG QMEAN_VERSION="4.0.0"
+ARG QMEAN_VERSION="4.1.0-rc2"
 ENV VERSION_QMEAN=$QMEAN_VERSION
 RUN set -eo pipefail; \
     # \
@@ -249,8 +249,8 @@ LABEL org.openstructure.ost.license="LGPL Version 3"
 LABEL org.openstructure.qmean.license="Apache License Version 2.0, January 2004"
 LABEL org.openstructure.version="${OST_VERSION}"
 LABEL org.openstructure.qmean.version="${QMEAN_VERSION}"
-LABEL org.openstructure.ost.version.is-production="yes"
-LABEL org.openstructure.qmean.version.is-production="yes"
+LABEL org.openstructure.ost.version.is-production="no"
+LABEL org.openstructure.qmean.version.is-production="no"
 #   This is a counter to be increased with every built & uploaded image
 LABEL org.openstructure.qmean.docker.image.increment="1"
 LABEL maintainer="Stefan Bienert <stefan.bienert@unibas.ch>"
@@ -286,13 +286,14 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /qmean
 
 # TODO:
-# - introduce version label for Docker image/ container version
+# - set CMD or Entrypoint?
+#   - CMD for just run QMEANDisCo as an app
+#   - entrypoint script to switch to celery
+# - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
+#   Check the docs!)
 # - create a dedicated user (restricts writing of output because of permissions)
 #   note in README how to rebuild with a dedicated user, also
 #   test that this works
-# - set CMD or Entrypoint?
-# - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
-#   Check the docs!)
 # - turn the run-qmeandisco.py into a proper QMEAN DisCo
 #   - requires HHBlits, ACCPro and maybe more software in this image
 # - in the README note how to switch to a recent compounds.chemlib
