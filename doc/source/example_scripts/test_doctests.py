@@ -512,6 +512,43 @@ class DocTests(unittest.TestCase):
         shutil.rmtree('shift_towards_cter')
         os.remove('alignment_comparison.png')
 
+    def testRegressorTraining(self):
+        return_code, sout, serr = self.runScript('regressor_training.py')
+        if return_code != 0:
+            if "ModuleNotFoundError" in serr:
+                print("Could not import keras/pandas, skip regressor training test")
+                return
+        self.assertEqual(return_code, 0)
+        testing_rmse = float(sout.splitlines()[-1].split()[-1])
+        # there is some randomness in training but we should for sure have an 
+        # rmse below 10 if everything went well...
+        self.assertTrue(testing_rmse < 10.0)
+
+    def testGMQE(self):
+        return_code, sout, serr = self.runScript('gmqe_example.py')
+        self.assertEqual(return_code, 0)
+        exp_gmqe = 0.677
+        exp_scores = {'dist_const': 0.8093481659889221, 
+                      'reduced': 0.15201421082019806, 
+                      'cb_packing': 0.003967251628637314, 
+                      'torsion': -0.18035820126533508, 
+                      'ss_agreement': 0.2522673010826111, 
+                      'coverage': 1.0, 'seq_id': 30.434782028198242, 
+                      'seq_sim': 0.39275363087654114, 'n_insertions': 0, 
+                      'n_deletions': 0, 'seqres_length': 46, 
+                      'seqres_coverage': 1.0, 
+                      'profile_aln_score': 137.37026977539062, 
+                      'avg_entropy': 1.3449710607528687}
+        sout = sout.splitlines()
+        self.assertEqual(len(sout), 2)
+        gmqe = float(sout[0].split()[-1])
+        scores = eval(sout[1][7:])
+        self.assertAlmostEqual(gmqe, exp_gmqe, 2)
+        for score_name in exp_scores.keys():
+            self.assertTrue(score_name in scores)
+            self.assertAlmostEqual(exp_scores[score_name], 
+                                   scores[score_name], 2)
+         
 if __name__ == "__main__":
     from ost import testutils
     testutils.RunTests()

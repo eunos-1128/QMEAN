@@ -32,4 +32,5 @@ Contents:
    Combining Scores <score_combination>
    Membrane Detection <membrane>
    Distance Constraints (DisCo) <disco>
+   Global Model Quality Estimate (GMQE) <gmqe>
    License <license>

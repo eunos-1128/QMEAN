@@ -201,20 +201,162 @@ usage of the ost table class.
 Multi-Layer Perceptron scoring
 --------------------------------------------------------------------------------
 
-To be independent from any machine learning library, QMEAN comes with an own
-implementation of a multi-layer perceptron to evaluate a fully connected
-feed-forward neural network, the :class:`Regressor`. The idea is to use
-whatever machine learning library to train such a network and then dump
-it to disk in a way that it can be read by the :class:`Regressor`.
+To be independent from any machine learning library, QMEAN comes with a 
+lightweight multi-layer perceptron implementation: the :class:`Regressor`. 
+The idea is to use whatever machine learning library to train such a network and 
+transform it into a :class:`Regressor`. For the simplest training cases 
+:func:`TrainRegressor` should be sufficient.
 
-Right now, theres no documentation on :class:`Regressor`. The interested
-user can figure out the data format and functionality by studying the file
-mlp_regressor.py.
+.. class:: Regressor(n_input_features, mean=None, std=None)
 
-Similar problems as for the linear combination apply. There's no guarantee
-that all input features are valid. The idea is to again train several 
-regressors and let :class:`NNScorer` figure out what regressor we need.
-Again, code is the documentation. 
+  Lighweight implementation of a fully connected multi-layer perceptron with 
+  in-built data normalization. Before traversing the layers, data is normalized 
+  as (input-mean)/std.
+
+  :param n_input_features: The number of input features to expect
+  :param mean: Mean value for every input feature (*n_input_features* values) 
+               for data normalization. All values set to 0.0 if not provided.
+  :param std: Standard deviation for every input feature (*n_input_features* 
+              values) for data normalization. All values set to 1.0 if not 
+              provided.
+
+  :type n_input_features: :class:`int`
+  :type mean: :class:`list` of :class:`float` or :class:`numpy.ndarray`
+  :type mean: :class:`list` of :class:`float` or :class:`numpy.ndarray`
+   
+
+  .. method:: AddLayer(weights, activation_function, bias=None)
+
+    Adds another layer *i*. Given the weight matrix M, the new layer
+    is derived from a simple matrix multiplication M*layer[*i*-1], where
+    the input layer is considered to be layer 0. Postprocessing 
+    consists of adding bias values and perform a final activation.
+
+    :param weights:  Weight matrix with shape (m,n). n is the number of
+                     elements of the previous layer and m determines the
+                     number of elements in the added layer.
+    :param activation_function: 0: no activation, 1: ReLU (Rectified Linear 
+                                Unit) activation
+    :param bias:     Bias that is applied to layer before executing the 
+                     activation function. Size must be consistent with
+                     number of rows (m) in *weights*. All values set to 0.0 if 
+                     not provided.
+    :type weights:  :class:`numpy.ndarray`
+    :type activation_function: :class:`int`
+    :type bias:  :class:`list` of :class:`float` or :class:`numpy.ndarray`
+
+  .. method:: Save(filepath)
+
+    Dumps regressor in binary format
+
+    :param filepath: Path to dump regressor
+    :type filepath: :class:`str`
+
+  .. method:: Load(filepath)
+
+    Static method to load previously dumped regressor
+
+    :param filepath: Path to dumped regressor
+    :type filepath: :class:`str`
+    
+  .. method:: Predict(input)
+
+    Normalizes input, traverses all layers an returns first element of last 
+    layer: the prediction
+
+    :param input:  Input of size *n_input_features* to feed into network
+    :type input:  :class:`list` of :class:`float` or :class:`numpy.ndarray`
+
+
+.. method:: TrainRegressor(data_frame, features, target, loss_function,\
+                           optimizer, topology, epochs, batch_size,\
+                           randomize=False)
+
+  Trains a :class:`Regressor` using keras given a pandas dataframe as input.
+  This obviously adds pandas and keras as dependency. Check the example script!
+
+  :param data_frame:  Data with a column for each feature as well as the target
+  :param features:    Describes input features, features must be present in 
+                      *data_frame*
+  :param target:      The target, must be present in *data_frame*
+  :param loss_function: Any function that keras understands. E.g. 
+                      "mean_squared_error" or "mean_absolute_error"
+  :param optimizer:   Any optimizer that keras understands. E.g.
+                      "sgd", "rmsprop", "adagrad", "adadelta", "adam"
+  :param topology:    Every element describes number of nodes of a layer
+                      with first layer being the input layer that must have 
+                      the same size as *features*. The last layer is the
+                      output layer that must be of size 1.
+  :param epochs:      Number of training epochs
+  :param batch_size:  Training batch size
+  :param randomize:   Whether to randomize the order of training data prior to
+                      training
+
+  :type data_frame:   :class:`pandas.DataFrame`
+  :type features:     :class:`list` of :class:`str`
+  :type target:       :class:`str`
+  :type loss_function: :class:`str`
+  :type optimizer:    :class:`str`
+  :type topology:     :class:`list` of :class:`int`
+  :type epochs:       :class:`int`
+  :type batch_size:   :class:`int`
+  :type randomize:    :class:`bool`
+  
+.. literalinclude:: example_scripts/regressor_training.py
+
+
+The :class:`Regressor` requires a fixed set of input scores and cannot 
+flexibly adapt if certain features are missing. Examples include scores for the
+first/last two residues in the :class:`qmean.TorsionPotential` due to missing
+dihedral angles. The :class:`NNScorer` offers a naive solution and selects the
+appropriate :class:`Regressor` in a set of alternatives that cover the possible
+combinations of input scores.
+
+.. class:: NNScorer(path)
+
+  Organizes multiple :class:`Regressor` which cover alternative combinations of 
+  input scores and selects the right one for scoring. The object must be 
+  constructed manually and is loaded from disk.
+
+  :param path: Directory containing a file 'feature_groups.json' and several 
+               stored :class:`Regressor` with naming 'nn_<idx>.dat'. The first 
+               is a json file containing a list of items. Each item at location 
+               idx is a list of score names that represent the input for the
+               the :class:`Regressor` named 'nn_<idx>.dat'.
+  :type path:  :class:`str`
+
+
+  .. method:: GetScore(score_dict, olc=None)
+
+    Extracts all valid scores from *score_dict*, selects the right internal 
+    :class:`NNScorer` and returns a score.
+
+    :param score_dict: Keys relate to the internal feature group list. All 
+                       values !(None || NaN) are selected and the 
+                       internal list of feature groups is iterated until 
+                       a group can be identified for which all values are 
+                       valid. Ordering of the internal feature groups therefore 
+                       matters. The values are ordered as defined in the found 
+                       feature group and passed to the according 
+                       :class:`Regressor`. The function returns 0.0 if no 
+                       feature group can be identified.
+    :param olc:        A common use case for the :class:`NNScorer` is to 
+                       estimate residue specific scores. When defining *olc*,
+                       a one-hot array with 20 elements is added in front
+                       of the values that are passed to the selected
+                       :class:`Regressor`. All elements are zero, the location
+                       of *olc* in the string "ACDEFGHIKLMNPQRSTVWY" is set
+                       to one. The function returns 0.0 if *olc* is not found in
+                       the specified string.
+    :type score_dict:  :class:`dict`
+    :type olc:         :class:`str`
+
+
+
+
+
+  
+      
 
 
 
