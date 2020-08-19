@@ -1,3 +1,5 @@
+#!/usr/local/bin/ost
+
 """Run QMEAN DisCo for a mmCIF/ PDB file. Writes to the same location as where
 the file comes from with '.json' as suffix.
 """
@@ -6,6 +8,7 @@ import argparse
 import json
 import math
 import os
+#import tempfile
 
 from qmean import QMEANScorer
 from qmean import predicted_sequence_features
@@ -333,6 +336,21 @@ class _MolckToJsonLogger(LogSink):
         """
         return {"removed_non_aa": []}
 
+'''
+def _RunAccPred():
+    """Get solvent accesibility prediction.
+    """
+    # get an alignment ready
+    aln_handle, aln_filename = tempfile.mkstemp(text=True,
+                                                dir=os.getenv('TMP', None))
+    def _PrepareSS_ACCPro(msa):
+      # write to alignment to tmp-file
+      os.write(aln_handle, ("%d\n" % msa.GetCount()).encode())
+      for seq in msa.sequences:
+        os.write(aln_handle, ("%s\n" % str(seq).replace('-', '.')).encode())
+      os.close(aln_handle)
+      return aln_filename
+'''
 
 def _main():
     """Run QMEAN DisCO
@@ -375,6 +393,8 @@ def _main():
         mdl_seq = LoadSequenceList(opts.seqres, format="fasta")
 
     mdl_ent = _RenumberModel(mdl_ent, mdl_seq)
+
+    #_RunAccPred()
 
     qmean_scorer = QMEANScorer(
         mdl_ent, psipred=None, accpro=None, dc=None, use_nn=True
