@@ -41,7 +41,7 @@ WORKDIR ${SRC_FLDR}
 # in the shell produces a list of possible software versions ;)
 ENV VERSION_EIGEN="3.3.1" \
     VERSION_SWIG="3.0.12" \
-    VERSION_BOOST="1_68_0"
+    VERSION_BOOST="1.68.0"
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -50,7 +50,7 @@ RUN set -eo pipefail; \
     yum -y install epel-release; \
     yum update --assumeyes; \
     yum install --assumeyes bzip2 gcc-c++ make pcre-devel python3 \
-                            python3-devel which wget zlib-static; \
+                            python3-devel which zlib-static; \
     yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
     # \
@@ -69,8 +69,7 @@ RUN set -eo pipefail; \
     # Install: Eigen \
     # \
     cd ${SRC_FLDR}; \
-    /usr/bin/wget -nv -nc -O eigen.tar.bz2 \
-                http://bitbucket.org/eigen/eigen/get/${VERSION_EIGEN}.tar.bz2; \
+    /usr/bin/curl -o eigen.tar.bz2 -L https://gitlab.com/libeigen/eigen/-/archive/${VERSION_EIGEN}/eigen-${VERSION_EIGEN}.tar.bz2; \
     /usr/bin/mkdir eigen/; \
     /usr/bin/tar --strip-components=1 -C eigen/ -xf eigen.tar.bz2; \
     /usr/bin/rm -rf eigen.tar.bz2; \
@@ -80,8 +79,8 @@ RUN set -eo pipefail; \
     # Install: Boost \
     # \
     cd ${SRC_FLDR} && \
-    /usr/bin/wget -nv -nc -O boost.tar.bz2 \
-    https://sourceforge.net/projects/boost/files/boost/1.68.0/boost_${VERSION_BOOST}.tar.bz2/download; \
+    /usr/bin/curl -o boost.tar.bz2 -L \
+    https://sourceforge.net/projects/boost/files/boost/${VERSION_BOOST}/boost_${VERSION_BOOST//\./_}.tar.bz2/download; \
     /usr/bin/mkdir boost; \
     /usr/bin/tar --strip-components=1 -C boost -xf boost.tar.bz2; \
     /usr/bin/rm -f boost.tar.bz2; \
@@ -99,7 +98,7 @@ RUN set -eo pipefail; \
     # Install: SWIG \
     # \
     cd ${SRC_FLDR}; \
-    /usr/bin/wget -nv -nc -O swig.tar.gz \
+    /usr/bin/curl -o swig.tar.gz -L \
     https://sourceforge.net/projects/swig/files/swig/swig-${VERSION_SWIG}/swig-${VERSION_SWIG}.tar.gz; \
     /usr/bin/mkdir swig; \
     /usr/bin/tar --strip-components=1 -C swig/ -xf swig.tar.gz; \
@@ -115,7 +114,7 @@ RUN set -eo pipefail; \
     # image size low. \
     # \
     yum --assumeyes remove bzip2 gcc gcc-c++ glibc-devel make pcre-devel perl \
-                           python3-devel python3-pip wget which zlib-devel \
+                           python3-devel python3-pip which zlib-devel \
                            zlib-static; \
     yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
@@ -143,12 +142,12 @@ RUN set -eo pipefail; \
     yum update --assumeyes;        \
     yum install --assumeyes cmake fftw fftw-devel gcc-c++ libpng \
                             libpng-devel libtiff-devel make python3-devel \
-                            sqlite-devel wget \
+                            sqlite-devel \
     yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
     cd ${SRC_FLDR}; \
     /usr/bin/mkdir ost; \
-    /usr/bin/wget -nv -nc -O ost.tar.gz \
+    /usr/bin/curl -o ost.tar.gz -L \
          ${SCCRE_GTLB}/openstructure/repository/${OST_VERSION}/archive.tar.gz; \
     /usr/bin/tar --strip-components=1 -C ost -xf ost.tar.gz; \
     /usr/bin/rm -f ost.tar.gz; \
@@ -168,7 +167,7 @@ RUN set -eo pipefail; \
     # 1st run: get everything to build a compounds library
     /usr/bin/make chemdict_tool; \
     # get the compounds dictionary from RCSB PDB
-    /usr/bin/wget -nv -nc -O components.cif.gz \
+    /usr/bin/curl -o components.cif.gz -L \
                   ftp://ftp.wwpdb.org/pub/pdb/data/monomers/components.cif.gz; \
     stage/bin/chemdict_tool create components.cif.gz compounds.chemlib pdb; \
     stage/bin/chemdict_tool update modules/conop/data/charmm.cif compounds.chemlib charmm; \
@@ -188,7 +187,7 @@ RUN set -eo pipefail; \
     # \
     yum --assumeyes remove cmake fftw-devel gcc gcc-c++ glibc-devel \
                            libpng-devel make perl python3-devel \
-                           sqlite-devel wget zlib-devel; \
+                           sqlite-devel zlib-devel; \
     yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
@@ -207,10 +206,10 @@ RUN set -eo pipefail; \
     yum makecache fast;            \
     yum -y install epel-release;   \
     yum update --assumeyes;        \
-    yum install --assumeyes cmake gcc-c++ make python3-devel wget; \
+    yum install --assumeyes cmake gcc-c++ make python3-devel; \
     yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/wget -nv -nc -O qmean.tar.gz \
+    /usr/bin/curl -o qmean.tar.gz -L \
             ${SCCRE_GTLB}/QMEAN/repository/${QMEAN_VERSION}/archive.tar.gz; \
     /usr/bin/mkdir qmean; \
     /usr/bin/tar --strip-components=1 -C qmean -xf qmean.tar.gz; \
@@ -231,7 +230,7 @@ RUN set -eo pipefail; \
     # Cleanup packages only needed to compile/ install things \
     # \
     yum --assumeyes remove cmake gcc gcc-c++ glibc-devel make perl \
-                           python3-devel wget; \
+                           python3-devel; \
     yum --assumeyes autoremove; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
@@ -242,7 +241,6 @@ RUN set -eo pipefail; \
     yum install --assumeyes python3; \
     yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum
-
 
 
 # Labels
@@ -286,7 +284,6 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /qmean
 
 # TODO:
-# - replace wget calls with curl
 # - introduce version label for Docker image/ container version
 # - create a dedicated user (restricts writing of output because of permissions)
 #   note in README how to rebuild with a dedicated user, also
