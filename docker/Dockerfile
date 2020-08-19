@@ -243,6 +243,7 @@ RUN set -eo pipefail; \
     /usr/bin/rm -rf /var/cache/yum
 
 
+
 # Labels
 LABEL license=""
 LABEL org.openstructure.ost.license="LGPL Version 3"
@@ -284,6 +285,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /qmean
+
+COPY docker-entrypoint.sh /qmean
+ENTRYPOINT ["/qmean/docker-entrypoint.sh"]
+CMD ["qmeandisco"]
 
 # TODO:
 # - set CMD or Entrypoint?
