@@ -251,6 +251,8 @@ LABEL org.openstructure.version="${OST_VERSION}"
 LABEL org.openstructure.qmean.version="${QMEAN_VERSION}"
 LABEL org.openstructure.ost.version.is-production="yes"
 LABEL org.openstructure.qmean.version.is-production="yes"
+#   This is a counter to be increased with every built & uploaded image
+LABEL org.openstructure.qmean.docker.image.increment="1"
 LABEL maintainer="Stefan Bienert <stefan.bienert@unibas.ch>"
 LABEL vendor1="Schwede Group (schwedelab.org)"
 LABEL vendor2="SIB - Swiss Institute of Bioinformatics"
