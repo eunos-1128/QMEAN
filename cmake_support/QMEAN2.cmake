@@ -899,3 +899,36 @@ macro(find_path_recursive VARIABLE)
     set(_fst_subs ${_tmp_dlist})
   endwhile(_fst_subs)
 endmacro(find_path_recursive)
+
+
+function(get_compiler_version _OUTPUT_VERSION)
+  exec_program(${CMAKE_CXX_COMPILER}
+               ARGS ${CMAKE_CXX_COMPILER_ARG1} -dumpversion
+               OUTPUT_VARIABLE _COMPILER_VERSION
+  )
+  string(REGEX REPLACE "([0-9])\\.([0-9])(\\.[0-9])?" "\\1\\2"
+    _COMPILER_VERSION ${_COMPILER_VERSION})
+
+  set(${_OUTPUT_VERSION} ${_COMPILER_VERSION} PARENT_SCOPE)
+endfunction(get_compiler_version)
+
+
+macro(setup_compiler_flags)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    get_compiler_version(_GCC_VERSION)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
+    if(_GCC_VERSION MATCHES "44")
+      # gcc 4.4. is very strict about aliasing rules. the shared_count
+      # implementation that is used boost's shared_ptr violates these rules. To
+      # silence the warnings and prevent miscompiles, enable
+      #  -fno-strict-aliasing
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
+    endif()
+    #message(STATUS "GCC VERSION " ${_GCC_VERSION})
+    if (_GCC_VERSION LESS "60")
+      # for older compilers we need to enable C++11
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    endif()
+  endif()
+endmacro(setup_compiler_flags)
+

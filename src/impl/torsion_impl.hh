@@ -35,7 +35,7 @@ public:
   void Serialize(DS& ds){
 
     if(ds.IsSource()){
-      int num_of_groups;
+      int num_of_groups = 0;
       ds & num_of_groups;
       for(int i=0;i<6;++i){
         num_of_bins.push_back(0);

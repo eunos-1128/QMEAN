@@ -91,15 +91,15 @@ Real HBondStatistic::GetCount(uint state, uint d_bin, uint alpha_bin, uint beta_
     throw std::runtime_error("Cannot get count for invalid state!");
   }
 
-  if(alpha_bin >= opts_.alpha_bins){
+  if(static_cast<int>(alpha_bin) >= opts_.alpha_bins){
     throw std::runtime_error("Cannot get count for invalid alpha bin!");
   }
 
-  if(beta_bin >= opts_.beta_bins){
+  if(static_cast<int>(beta_bin) >= opts_.beta_bins){
     throw std::runtime_error("Cannot get count for invalid beta bin!");
   }
 
-  if(gamma_bin >= opts_.gamma_bins){
+  if(static_cast<int>(gamma_bin) >= opts_.gamma_bins){
     throw std::runtime_error("Cannot get count for invalid gamma bin!");
   }
 

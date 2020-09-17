@@ -152,7 +152,6 @@ bool HBondPotentialImpl::VisitResidue(const ost::mol::ResidueHandle& res){
   std::vector<HBondSpatialOrganizerItem> in_reach = env_.FindWithin(ca_pos, 9.0);
   int num = res.GetNumber().GetNum();
   String chain_name = res.GetChain().GetName();
-  int diff;
 
   if(!is_proline){
     //current residue as donor

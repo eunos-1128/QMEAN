@@ -429,7 +429,7 @@ public:
     uint32_t total=this->CalculateNumberOfBuckets();
     buckets_.resize(total);
 
-    for (int i=0; i<total; ++i)
+    for (uint32_t i=0; i<total; ++i)
       buckets_[i] = rhs.buckets_.at(i);
     //memcpy(&buckets_.front(), &rhs.buckets_.front(), sizeof(V)*total);
   }

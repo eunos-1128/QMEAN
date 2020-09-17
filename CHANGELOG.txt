@@ -1,4 +1,4 @@
-Changes in Release 4.X.X
+Changes in Release 4.1.0
 --------------------------------------------------------------------------------
 
  * GMQE (Global Model Quality Estimate) to predict expected quality of a protein
