@@ -65,12 +65,12 @@ Real ReducedStatistic::GetTotalCount() const{
 
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;
-  for (size_t i=0; i<ost::conop::XXX; ++i) {
-    for (size_t j=0; j<ost::conop::XXX; ++j) {
-      for (size_t k=0; k<opts_.num_dist_bins; ++k) {
-        for (size_t l=0; l<opts_.num_angle_bins; ++l) {
-          for (size_t m=0; m<opts_.num_angle_bins; ++m) {
-            for (size_t n=0; n<opts_.num_dihedral_bins; ++n) {
+  for (int i=0; i<ost::conop::XXX; ++i) {
+    for (int j=0; j<ost::conop::XXX; ++j) {
+      for (int k=0; k<opts_.num_dist_bins; ++k) {
+        for (int l=0; l<opts_.num_angle_bins; ++l) {
+          for (int m=0; m<opts_.num_angle_bins; ++m) {
+            for (int n=0; n<opts_.num_dihedral_bins; ++n) {
               count+=histo_.Get(Index(i, j, k, l, m, n));
             }
           }
@@ -89,10 +89,10 @@ Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoA
 
   typedef ReducedHistogram::IndexType Index;
   Real count=0.0;
-  for (size_t k=0; k<opts_.num_dist_bins; ++k) {
-    for (size_t l=0; l<opts_.num_angle_bins; ++l) {
-      for (size_t m=0; m<opts_.num_angle_bins; ++m) {
-        for (size_t n=0; n<opts_.num_dihedral_bins; ++n) {
+  for (int k=0; k<opts_.num_dist_bins; ++k) {
+    for (int l=0; l<opts_.num_angle_bins; ++l) {
+      for (int m=0; m<opts_.num_angle_bins; ++m) {
+        for (int n=0; n<opts_.num_dihedral_bins; ++n) {
           count+=histo_.Get(Index(aa_one, aa_two, k, l, m, n));
         }
       }
@@ -108,19 +108,19 @@ Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoA
     throw std::runtime_error("Cannot get count of invalid amino acid!"); 
   }
 
-  if(dist_bin >= opts_.num_dist_bins){
+  if(static_cast<int>(dist_bin) >= opts_.num_dist_bins){
     throw std::runtime_error("Cannot get count of invalid distance bin!");
   }
 
-  if(alpha_bin >= opts_.num_angle_bins){
+  if(static_cast<int>(alpha_bin) >= opts_.num_angle_bins){
     throw std::runtime_error("Cannot get count of invalid alpha bin!");
   }
 
-  if(beta_bin >= opts_.num_angle_bins){
+  if(static_cast<int>(beta_bin) >= opts_.num_angle_bins){
     throw std::runtime_error("Cannot get count of invalid beta bin!");
   }
 
-  if(gamma_bin >= opts_.num_dihedral_bins){
+  if(static_cast<int>(gamma_bin) >= opts_.num_dihedral_bins){
     throw std::runtime_error("Cannot get count of invalid gamma bin!");
   }
 
@@ -130,19 +130,19 @@ Real ReducedStatistic::GetCount(ost::conop::AminoAcid aa_one, ost::conop::AminoA
 
 Real ReducedStatistic::GetCount(uint dist_bin, uint alpha_bin, uint beta_bin, uint gamma_bin) const{
 
-  if(dist_bin >= opts_.num_dist_bins){
+  if(static_cast<int>(dist_bin) >= opts_.num_dist_bins){
     throw std::runtime_error("Cannot get count of invalid distance bin!");
   }
 
-  if(alpha_bin >= opts_.num_angle_bins){
+  if(static_cast<int>(alpha_bin) >= opts_.num_angle_bins){
     throw std::runtime_error("Cannot get count of invalid alpha bin!");
   }
 
-  if(beta_bin >= opts_.num_angle_bins){
+  if(static_cast<int>(beta_bin) >= opts_.num_angle_bins){
     throw std::runtime_error("Cannot get count of invalid beta bin!");
   }
 
-  if(gamma_bin >= opts_.num_dihedral_bins){
+  if(static_cast<int>(gamma_bin) >= opts_.num_dihedral_bins){
     throw std::runtime_error("Cannot get count of invalid gamma bin!");
   }
 

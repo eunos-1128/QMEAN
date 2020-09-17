@@ -90,13 +90,13 @@ void ReducedPotential::Fill(ReducedStatisticPtr stats, const String& reference_s
     throw io::IOException(ss.str());
   }
 
-  for (size_t i=0; i<ost::conop::XXX; ++i) {
-    for (size_t j=0; j<ost::conop::XXX; ++j) {
+  for (int i=0; i<ost::conop::XXX; ++i) {
+    for (int j=0; j<ost::conop::XXX; ++j) {
       Real sequence_count = stats->GetCount(ost::conop::AminoAcid(i), ost::conop::AminoAcid(j));
-      for (size_t k=0; k<opts_.num_dist_bins; ++k) {
-        for (size_t l=0; l<opts_.num_angle_bins; ++l) {
-          for (size_t m=0; m<opts_.num_angle_bins; ++m) {
-            for (size_t n=0; n<opts_.num_dihedral_bins; ++n) {
+      for (int k=0; k<opts_.num_dist_bins; ++k) {
+        for (int l=0; l<opts_.num_angle_bins; ++l) {
+          for (int m=0; m<opts_.num_angle_bins; ++m) {
+            for (int n=0; n<opts_.num_dihedral_bins; ++n) {
               Real propensity = 0.0;
               Real sequence_conformation_count = stats->GetCount(ost::conop::AminoAcid(i), ost::conop::AminoAcid(j), k, l, m, n);
               if(sequence_count>0 && reference[k][l][m][n]>0){

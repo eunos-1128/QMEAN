@@ -65,7 +65,7 @@ std::vector<Real> SphericalSmoother::Smooth(std::vector<Real>& values){
 
   //fill the values in the visitor pattern
   int j;
-  for(int i=0;i<values.size();++i){
+  for(size_t i=0;i<values.size();++i){
     j=0;
     for(std::vector<int>::iterator it=value_distributor_[i].begin();it!=value_distributor_[i].end();++it,++j){
       visitor_pattern_[i][j].second=values[*it];
@@ -76,7 +76,7 @@ std::vector<Real> SphericalSmoother::Smooth(std::vector<Real>& values){
 
   std::vector<Real> result;
 
-  for(int i=0;i<values.size();++i){
+  for(size_t i=0;i<values.size();++i){
     //check for nan
     if(values[i]!=values[i]){
       result.push_back(std::numeric_limits<Real>::quiet_NaN());

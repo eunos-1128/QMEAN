@@ -19,7 +19,7 @@ namespace qmean{
 
 TorsionStatistic::TorsionStatistic(std::vector<String>& gi, std::vector<int>& nob){
 
-  for(int i=0;i<gi.size();++i){
+  for(size_t i=0;i<gi.size();++i){
     histos_[gi[i]]=TorsionHistogram(ContinuousClassifier(nob[0], -M_PI, M_PI),
                                     ContinuousClassifier(nob[1], -M_PI, M_PI),
                                     ContinuousClassifier(nob[2], -M_PI, M_PI),

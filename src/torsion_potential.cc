@@ -26,7 +26,7 @@ TorsionPotentialPtr TorsionPotential::Create(TorsionStatisticPtr& stat, Real sig
   p->opts_=stat->GetOpts();
   p->opts_.sigma=sigma;
 
-  for(int i=0;i<p->opts_.group_identifier.size();++i){
+  for(size_t i=0;i<p->opts_.group_identifier.size();++i){
     p->energies_[p->opts_.group_identifier[i]]=TorsionEnergies(0.0,
                                                   ContinuousClassifier(p->opts_.num_of_bins[0], -M_PI, M_PI),
                                                   ContinuousClassifier(p->opts_.num_of_bins[1], -M_PI, M_PI),
@@ -108,7 +108,6 @@ Real TorsionPotential::GetEnergy(const String& group_id, std::vector<Real>& angl
   count_=0;
 
   std::vector<Real> new_angles(angles);
-  Real new_angle;
 
   if(energies_.find(group_id) == energies_.end()){
     return std::numeric_limits<Real>::quiet_NaN();
