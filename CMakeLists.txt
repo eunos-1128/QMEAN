@@ -70,7 +70,7 @@ string(REPLACE "." ";" _python_version_list ${Python_VERSION})
 list(GET _python_version_list 0 Python_VERSION_MAJOR)
 list(GET _python_version_list 1 Python_VERSION_MINOR)
 # where Python modules live
-set(PYTHON_MODULE_PATH "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}/site-packages/")
+set(PYTHON_MODULE_PATH "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/")
 
 setup_boost()
 
