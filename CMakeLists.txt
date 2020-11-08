@@ -75,7 +75,7 @@ set(PYTHON_MODULE_PATH "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/si
 setup_boost()
 
 find_package(OPENSTRUCTURE 2.1.0 REQUIRED
-             COMPONENTS mol seq seq_alg mol_alg conop)
+             COMPONENTS mol seq seq_alg mol_alg conop db)
 
 include_directories(${Boost_INCLUDE_DIRS}
                     ${OST_INCLUDE_DIR})
