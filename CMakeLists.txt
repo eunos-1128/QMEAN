@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.12.1 FATAL_ERROR)
 cmake_policy(SET CMP0060 NEW)
 
 set (QMEAN_VERSION_MAJOR 4)
-set (QMEAN_VERSION_MINOR 1)
+set (QMEAN_VERSION_MINOR 2)
 set (QMEAN_VERSION_PATCH 0)
 set (QMEAN_VERSION_STRING ${QMEAN_VERSION_MAJOR}.${QMEAN_VERSION_MINOR}.${QMEAN_VERSION_PATCH} )
 
@@ -74,7 +74,7 @@ set(PYTHON_MODULE_PATH "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/si
 
 setup_boost()
 
-find_package(OPENSTRUCTURE 2.1.0 REQUIRED
+find_package(OPENSTRUCTURE 2.2.0 REQUIRED
              COMPONENTS mol seq seq_alg mol_alg conop db)
 
 include_directories(${Boost_INCLUDE_DIRS}
