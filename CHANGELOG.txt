@@ -1,4 +1,4 @@
-Changes in Release 4.x
+Changes in Release 4.2.0
 --------------------------------------------------------------------------------
 
  * Detect Boost and Python using functionality provided by CMake instead of our 
