@@ -91,7 +91,7 @@ Real PackingStatistic::GetCount(atom::ChemType a, uint bin) const{
     throw std::runtime_error("Cannot get count for invalid atom!");
   }
 
-  if(bin > opts_.max_counts){
+  if(static_cast<int>(bin) > opts_.max_counts){
     throw std::runtime_error("Cannot get count for invalid bin!");
   }
 
@@ -100,7 +100,7 @@ Real PackingStatistic::GetCount(atom::ChemType a, uint bin) const{
 
 Real PackingStatistic::GetCount(uint bin) const{
 
-  if(bin > opts_.max_counts){
+  if(static_cast<int>(bin) > opts_.max_counts){
     throw std::runtime_error("Cannot get count for invalid bin!");
   }
 

@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <ost/geom/vec3.hh>
-
+#include <boost/shared_ptr.hpp>
 
 
 namespace qmean {

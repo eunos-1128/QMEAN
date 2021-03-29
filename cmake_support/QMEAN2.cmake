@@ -83,7 +83,7 @@ macro(compile_py_files module out_dir compiled_files_name)
     get_filename_component(_in_name ${input_file} NAME)
     file(MAKE_DIRECTORY  ${out_dir})
     add_custom_command(TARGET ${module}
-                       COMMAND ${PYTHON_BINARY} -c "import py_compile;py_compile.compile(\"${_in_file}\",\"${_out_file}\",\"${_in_name}\",doraise=True)"
+                       COMMAND ${Python_EXECUTABLE} -c "import py_compile;py_compile.compile(\"${_in_file}\",\"${_out_file}\",\"${_in_name}\",doraise=True)"
                        VERBATIM DEPENDS ${input_file}
                        )
   endforeach()
@@ -467,7 +467,7 @@ macro(pymod)
   
   set(PYMOD_STAGE_DIR "${LIB_STAGE_PATH}/${PYMOD_DIR}")
   file(MAKE_DIRECTORY ${PYMOD_STAGE_DIR})
-  include_directories(${PYTHON_INCLUDE_PATH})
+  include_directories(${Python_INCLUDE_DIRS})
   #-----------------------------------------------------------------------------
   # compile and link C++ wrappers
   #-----------------------------------------------------------------------------
@@ -487,7 +487,7 @@ macro(pymod)
     endif()
 
     target_link_libraries("_${_LIB_NAME}" ${_PARENT_LIB_NAME} 
-                          ${PYTHON_LIBRARIES} ${BOOST_PYTHON_LIBRARIES})
+                          ${Python_LIBRARIES} ${BOOST_PYTHON_LIBRARIES})
 
     set_target_properties("_${_LIB_NAME}"
                           PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PYMOD_STAGE_DIR})
@@ -603,7 +603,7 @@ add_dependencies(check codetest)
 # 
 # Set variable VAR (in parent scope) to an updated PYTHONPATH env. variable 
 # which includes OST path. This can then be used to call python scripts
-# with commands such as: sh -c "PYTHONPATH=${VAR} ${PYTHON_BINARY} ..."
+# with commands such as: sh -c "PYTHONPATH=${VAR} ${Python_EXECUTABLE} ..."
 #-------------------------------------------------------------------------------
 macro(get_python_path VAR)
   set(${VAR} $ENV{PYTHONPATH})
@@ -728,7 +728,7 @@ macro(qmean_unittest)
 
     get_python_path(python_path)
 
-    set (PY_TESTS_CMD "PYTHONPATH=${python_path} QMEAN_PYTHON_BINARY=${PYTHON_BINARY}  ${PYTHON_BINARY}")
+    set (PY_TESTS_CMD "PYTHONPATH=${python_path} QMEAN_PYTHON_BINARY=${Python_EXECUTABLE}  ${Python_EXECUTABLE}")
 
     add_custom_target("${py_test}_run"
                 sh -c "${PY_TESTS_CMD} ${py_twp}"
@@ -763,7 +763,7 @@ endmacro(qmean_unittest)
 #-------------------------------------------------------------------------------
 macro(qmean_find_python_module MODULE)
   if (NOT PYTHON_MODULE_${MODULE})
-    execute_process(COMMAND ${PYTHON_BINARY} -c "import ${MODULE}"
+    execute_process(COMMAND ${Python_EXECUTABLE} -c "import ${MODULE}"
                     OUTPUT_QUIET ERROR_QUIET
                     RESULT_VARIABLE _IMPORT_ERROR)
     if (_IMPORT_ERROR)
@@ -798,7 +798,7 @@ macro(qmean_match_boost_python_version)
     list(GET _BOOST_PYTHON_LIBRARY ${_LIB_INDEX} _BP_LIB_PATH)
     set(_BOOST_PYTHON_LIBRARY ${_BP_LIB_PATH})
   endif()
-  set(CMAKE_REQUIRED_FLAGS "-I${PYTHON_INCLUDE_PATH} -I${Boost_INCLUDE_DIR} ${PYTHON_LIBRARIES} ${_BOOST_PYTHON_LIBRARY}")
+  set(CMAKE_REQUIRED_FLAGS "-I${Python_INCLUDE_DIRS} -I${Boost_INCLUDE_DIR} ${Python_LIBRARIES} ${_BOOST_PYTHON_LIBRARY}")
   check_cxx_source_runs(
 "#include <boost/python.hpp>
 
@@ -899,3 +899,67 @@ macro(find_path_recursive VARIABLE)
     set(_fst_subs ${_tmp_dlist})
   endwhile(_fst_subs)
 endmacro(find_path_recursive)
+
+
+function(get_compiler_version _OUTPUT_VERSION)
+  exec_program(${CMAKE_CXX_COMPILER}
+               ARGS ${CMAKE_CXX_COMPILER_ARG1} -dumpversion
+               OUTPUT_VARIABLE _COMPILER_VERSION
+  )
+  string(REGEX REPLACE "([0-9])\\.([0-9])(\\.[0-9])?" "\\1\\2"
+    _COMPILER_VERSION ${_COMPILER_VERSION})
+
+  set(${_OUTPUT_VERSION} ${_COMPILER_VERSION} PARENT_SCOPE)
+endfunction(get_compiler_version)
+
+
+macro(setup_compiler_flags)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    get_compiler_version(_GCC_VERSION)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
+    if(_GCC_VERSION MATCHES "44")
+      # gcc 4.4. is very strict about aliasing rules. the shared_count
+      # implementation that is used boost's shared_ptr violates these rules. To
+      # silence the warnings and prevent miscompiles, enable
+      #  -fno-strict-aliasing
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
+    endif()
+    #message(STATUS "GCC VERSION " ${_GCC_VERSION})
+    if (_GCC_VERSION LESS "60")
+      # for older compilers we need to enable C++11
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    endif()
+  endif()
+endmacro(setup_compiler_flags)
+
+
+set(_BOOST_MIN_VERSION 1.53)
+
+macro(setup_boost)
+  # starting with CMake 3.11 we could use the following instead of the foreach
+  # find_package(Boost ${_BOOST_MIN_VERSION} COMPONENTS
+  #              python${Python_VERSION_MAJOR}${Python_VERSION_MINOR} REQUIRED)
+  # set(BOOST_PYTHON_LIBRARIES ${Boost_LIBRARIES})
+  # see https://cmake.org/cmake/help/v3.11/module/FindBoost.html
+  foreach(_python_lib_name python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}
+                           python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}
+                           python${Python_VERSION_MAJOR}
+                           python)
+    find_package(Boost ${_BOOST_MIN_VERSION} COMPONENTS ${_python_lib_name} QUIET)
+    if(Boost_FOUND)
+      message(STATUS "Found Boost package: " ${_python_lib_name})
+      set(BOOST_PYTHON_LIBRARIES ${Boost_LIBRARIES})
+      break()
+    else()
+      message(STATUS "Boost package not found: " ${_python_lib_name}
+                     ". Trying alternative names!")
+    endif()
+  endforeach(_python_lib_name)
+  if(NOT BOOST_PYTHON_LIBRARIES)
+    message(FATAL_ERROR "Failed to find any Boost Python library!")
+  endif()
+  set(Boost_LIBRARIES)
+  find_package(Boost ${_BOOST_MIN_VERSION}
+               COMPONENTS filesystem system REQUIRED)
+  set(BOOST_LIBRARIES ${Boost_LIBRARIES})
+endmacro(setup_boost)

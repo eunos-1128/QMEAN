@@ -61,15 +61,6 @@ CMake in there by giving it the path to your OpenStructure installation
     cd build
     cmake ../ -DOST_ROOT=path_to_ost_build/stage -DOPTIMIZE=1
 
-If you're working on a Debian based system, cmake might have trouble
-to find the appropriate Python library. This can manually be specified.
-Following additional cmake flag does the job on Ubuntu 18.04 and
-Debian 9, you might have to adapt if your Python version differs:
-
-  .. code-block:: bash
-
-    -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython3.6m.so
-
 build and run unit tests:
 
   .. code-block:: bash

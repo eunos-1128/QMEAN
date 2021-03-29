@@ -75,10 +75,10 @@ void HBondPotential::Fill(HBondStatisticPtr stat){
       throw std::runtime_error(ss.str());
     }
     expectation_value = 0.0;
-    for(uint j = 0; j < opts_.d_bins; ++j){
-      for(uint k = 0; k < opts_.alpha_bins; ++k){
-        for(uint l = 0; l < opts_.beta_bins; ++l){
-          for(uint m = 0; m < opts_.gamma_bins; ++m){
+    for(int j = 0; j < opts_.d_bins; ++j){
+      for(int k = 0; k < opts_.alpha_bins; ++k){
+        for(int l = 0; l < opts_.beta_bins; ++l){
+          for(int m = 0; m < opts_.gamma_bins; ++m){
             count = stat->GetCount(i,j,k,l,m);
             frac = std::max((count/state_count)/ref_value,1.0);
             e = -log(frac);
@@ -89,10 +89,10 @@ void HBondPotential::Fill(HBondStatisticPtr stat){
       }
     }
     expectation_value = std::abs(expectation_value);
-    for(uint j = 0; j < opts_.d_bins; ++j){
-      for(uint k = 0; k < opts_.alpha_bins; ++k){
-        for(uint l = 0; l < opts_.beta_bins; ++l){
-          for(uint m = 0; m < opts_.gamma_bins; ++m){
+    for(int j = 0; j < opts_.d_bins; ++j){
+      for(int k = 0; k < opts_.alpha_bins; ++k){
+        for(int l = 0; l < opts_.beta_bins; ++l){
+          for(int m = 0; m < opts_.gamma_bins; ++m){
             e = energies_.Get(Index(i,j,k,l,m));
             energies_.Set(Index(i,j,k,l,m),e/expectation_value);            
           }

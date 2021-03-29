@@ -28,7 +28,7 @@ TrgTplSimilarity::TrgTplSimilarity(const String& seqres,
   }
 
   for(auto it = residue_numbers.begin(); it != residue_numbers.end(); ++it) {
-    if(*it < 1 || *it > seqres.size()) {
+    if(*it < 1 || *it > static_cast<int>(seqres.size())) {
       throw std::runtime_error("invalid residue number observed");
     }
   }

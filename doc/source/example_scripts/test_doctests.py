@@ -527,7 +527,7 @@ class DocTests(unittest.TestCase):
     def testGMQE(self):
         return_code, sout, serr = self.runScript('gmqe_example.py')
         self.assertEqual(return_code, 0)
-        exp_gmqe = 0.677
+        exp_gmqe = 0.73466
         exp_scores = {'dist_const': 0.8093481659889221, 
                       'reduced': 0.15201421082019806, 
                       'cb_packing': 0.003967251628637314, 

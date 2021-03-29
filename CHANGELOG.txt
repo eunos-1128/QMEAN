@@ -1,4 +1,15 @@
-Changes in Release 4.X.X
+Changes in Release 4.2.0
+--------------------------------------------------------------------------------
+
+ * Detect Boost and Python using functionality provided by CMake instead of our 
+   own code. You might have to adapt CMake flags when building QMEAN to 
+   variables specified here: 
+   https://cmake.org/cmake/help/latest/module/FindPython.html
+ * Several minor bug fixes, improvements
+
+
+
+Changes in Release 4.1.0
 --------------------------------------------------------------------------------
 
  * GMQE (Global Model Quality Estimate) to predict expected quality of a protein
