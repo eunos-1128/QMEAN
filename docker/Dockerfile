@@ -42,7 +42,6 @@ WORKDIR ${SRC_FLDR}
 # Versions of software used, prefixed with VERSION so $VERSION_<TAB><TAB>
 # in the shell produces a list of possible software versions ;)
 ENV VERSION_EIGEN="3.3.1" \
-    VERSION_SWIG="3.0.12" \
     VERSION_BOOST="1.68.0" \
     VERSION_CMAKE="3.17.3"
 RUN set -eo pipefail; \
@@ -111,20 +110,6 @@ RUN set -eo pipefail; \
     ./b2 install; \
     cd ${SRC_FLDR}; \
     /usr/bin/rm -rf boost; \
-    # \
-    # Install: SWIG \
-    # \
-    cd ${SRC_FLDR}; \
-    /usr/bin/curl -o swig.tar.gz -L https://sourceforge.net/projects/swig/files/swig/swig-${VERSION_SWIG}/swig-${VERSION_SWIG}.tar.gz; \
-    /usr/bin/mkdir swig; \
-    /usr/bin/tar --strip-components=1 -C swig/ -xf swig.tar.gz; \
-    /usr/bin/rm -rf swig.tar.gz; \
-    cd swig/; \
-    ./configure --without-python --prefix=/usr/local/; \
-    /usr/bin/make -j ${CPUS_FOR_MAKE}; \
-    /usr/bin/make install; \
-    cd ${SRC_FLDR}; \
-    /usr/bin/rm -rf swig; \
     # \
     # Cleanup packages only needed to compile/ install things to keep the \
     # image size low. \
