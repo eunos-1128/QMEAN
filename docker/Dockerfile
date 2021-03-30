@@ -41,9 +41,10 @@ WORKDIR ${SRC_FLDR}
 #
 # Versions of software used, prefixed with VERSION so $VERSION_<TAB><TAB>
 # in the shell produces a list of possible software versions ;)
-ENV VERSION_EIGEN="3.3.1" \
-    VERSION_BOOST="1.68.0" \
-    VERSION_CMAKE="3.17.3"
+ENV VERSION_BOOST="1.68.0" \
+    VERSION_CMAKE="3.17.3" \
+    VERSION_EIGEN="3.3.1" \
+    VERSION_PSIPRED="3.5"
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -110,6 +111,22 @@ RUN set -eo pipefail; \
     ./b2 install; \
     cd ${SRC_FLDR}; \
     /usr/bin/rm -rf boost; \
+    # \
+    # Install PsiPred \
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/mkdir psipred; \
+    /usr/bin/curl -o psipred.tar.gz -L http://bioinfadmin.cs.ucl.ac.uk/downloads/psipred/old_versions/psipred${VERSION_PSIPRED}.tar.gz; \
+    /usr/bin/tar --strip-components=1 -C psipred -xf psipred.tar.gz; \
+    /usr/bin/rm -f psipred.tar.gz; \
+    cd psipred/src; \
+    /usr/bin/make -j ${CPUS_FOR_MAKE}; \
+    /usr/bin/cp {chkparse,pfilt,psipass2,psipred,seq2mtx} /usr/local/bin/; \
+    cd ..; \
+    /usr/bin/cp {runpsipred_single,runpsipred} /usr/local/bin/; \
+    /usr/bin/cp -r data /usr/local/; \
+    cd ${SRC_FLDR}; \
+    /usr/bin/rm -rf psipred; \
     # \
     # Cleanup packages only needed to compile/ install things to keep the \
     # image size low. \

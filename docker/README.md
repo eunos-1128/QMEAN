@@ -7,7 +7,7 @@ https://swissmodel.expasy.org/qmean/),
 [Docker](https://git.scicore.unibas.ch/schwede/QMEAN/container_registry))
 dedicated to the 3D Beacons project ([Git](https://github.com/3D-Beacons)).
 More specifically its a containerised [QMEANDisCo](
-https://pubmed.ncbi.nlm.nih.gov/31697312) instance, helping the 3D Beacons
+https://doi.org/10.1093/bioinformatics/btz828) instance, helping the 3D Beacons
 back-end to get common scores for structural models.
 
 Per se, the image and QMEAN script can be used as foundation for different QMEAN
@@ -17,7 +17,7 @@ calculated.
 
 What this container will do, is simply take a [mmCIF](http://mmcif.rcsb.org)
 file, calculate the [QMEANDisCo](
-https://pubmed.ncbi.nlm.nih.gov/31697312) score of the peptides found in the
+https://doi.org/10.1093/bioinformatics/btz828) score of the peptides found in the
 input and return the local & global scores in JSON format as output.
 
 
