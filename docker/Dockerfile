@@ -4,16 +4,17 @@ FROM centos:7.4.1708
 ARG CPUS_FOR_MAKE=1
 
 # Environment variables
-ENV SCCRE_GTLB="https://git.scicore.unibas.ch/schwede" \
-    SRC_FLDR="/tmp" \
-    CFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
+ENV CFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
+    HHLIB="/usr/local" \
+    LD_LIBRARY_PATH="/usr/local/lib64:/usr/local/lib:$LD_LIBRARY_PATH" \
+    PERL5LIB="/usr/local/scripts" \
     PYTHONPATH="/usr/local/lib64/python3.6/site-packages/:${PYTHONPATH}" \
-    # Define temporary dirs for the build process \
+    SCCRE_GTLB="https://git.scicore.unibas.ch/schwede" \
+    SRC_FLDR="/tmp" \
     TEMP="/tmp" \
     TEMPDIR="/tmp" \
-    TMPDIR="/tmp" \
     TMP="/tmp" \
-    LD_LIBRARY_PATH="/usr/local/lib64:/usr/local/lib:$LD_LIBRARY_PATH"
+    TMPDIR="/tmp"
 
 # Define environment variables depending on other variables
 ENV CXXFLAGS=${CFLAGS}
@@ -41,9 +42,11 @@ WORKDIR ${SRC_FLDR}
 #
 # Versions of software used, prefixed with VERSION so $VERSION_<TAB><TAB>
 # in the shell produces a list of possible software versions ;)
-ENV VERSION_BOOST="1.68.0" \
+ENV VERSION_BLAST="2.2.26" \
+    VERSION_BOOST="1.68.0" \
     VERSION_CMAKE="3.17.3" \
     VERSION_EIGEN="3.3.1" \
+    VERSION_HHBLITS="3.3.0" \
     VERSION_PSIPRED="3.5"
 RUN set -eo pipefail; \
     # \
@@ -54,7 +57,7 @@ RUN set -eo pipefail; \
     /usr/bin/yum update --assumeyes; \
     /usr/bin/yum install --assumeyes openssl-devel bzip2 gcc-c++ make \
                                      pcre-devel python3 python3-devel \
-                                     which zlib-static; \
+                                     which zlib-static perl; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     # \
@@ -128,11 +131,43 @@ RUN set -eo pipefail; \
     cd ${SRC_FLDR}; \
     /usr/bin/rm -rf psipred; \
     # \
+    # Install BLAST 2.2.26 (this is the old version, not BLAST+)\
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/mkdir blast; \
+    /usr/bin/curl -o blast.tar.gz -L https://ftp.ncbi.nlm.nih.gov/blast/executables/legacy.NOTSUPPORTED/${VERSION_BLAST}/blast-${VERSION_BLAST}-x64-linux.tar.gz; \
+    /usr/bin/tar --strip-components=1 -C blast -xf blast.tar.gz; \
+    /usr/bin/rm -f blast.tar.gz; \
+    /usr/bin/cp blast/bin/* /usr/local/bin/; \
+    /usr/bin/mkdir -p /usr/local/data/; \
+    /usr/bin/cp blast/data/* /usr/local/data/; \
+    /usr/bin/rm -rf blast; \
+    # \
+    # Install HHblits \
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/mkdir hh-suite; \
+    /usr/bin/curl -o hh-suite.tar.gz -L https://github.com/soedinglab/hh-suite/archive/refs/tags/v${VERSION_HHBLITS}.tar.gz; \
+    /usr/bin/tar --strip-components=1 -C hh-suite -xf hh-suite.tar.gz; \
+    /usr/bin/rm -f hh-suite.tar.gz; \
+    cd hh-suite; \
+    # Fix paths settings in a Perl module of the HH-Suite
+    /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
+    /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/data/\/usr\/local\/data/g' scripts/HHPaths.pm; \
+    /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/blast\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
+    #/usr/bin/sed -i 's/\/cluster\/databases\/pdb\/all/\/scicore\/data\/databases\/PDB/g' scripts/HHPaths.pm; \
+    #/usr/bin/sed -i 's/\/cluster\/databases\/dssp\/bin\/dsspcmbi//g' scripts/HHPaths.pm; \
+    /usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local; \
+    /usr/bin/make -j ${CPUS_FOR_MAKE} NO_PNG=1; \
+    /usr/bin/make install INSTALL_DIR=/usr/local; \
+    cd ${SRC_FLDR}; \
+    /usr/bin/rm -rf hh-suite; \
+    # \
     # Cleanup packages only needed to compile/ install things to keep the \
     # image size low. \
     # \
     /usr/bin/yum --assumeyes remove openssl-devel bzip2 gcc gcc-c++ \
-                                    glibc-devel make pcre-devel perl \
+                                    glibc-devel make pcre-devel \
                                     python3-devel python3-pip which zlib-devel \
                                     zlib-static; \
     /usr/bin/yum --assumeyes autoremove; \
@@ -202,7 +237,7 @@ RUN set -eo pipefail; \
     # Cleanup packages only needed to compile/ install things \
     # \
     /usr/bin/yum --assumeyes remove fftw-devel gcc gcc-c++ glibc-devel \
-                             libpng-devel make perl python3-devel \
+                             libpng-devel make python3-devel \
                              sqlite-devel zlib-devel; \
     /usr/bin/yum --assumeyes autoremove; \
     /usr/bin/yum --assumeyes clean all; \
@@ -240,8 +275,7 @@ RUN set -eo pipefail; \
     # \
     # Cleanup packages only needed to compile/ install things \
     # \
-    /usr/bin/yum --assumeyes remove gcc gcc-c++ glibc-devel make perl \
-                                    python3-devel; \
+    /usr/bin/yum --assumeyes remove gcc gcc-c++ glibc-devel make python3-devel; \
     /usr/bin/yum --assumeyes autoremove; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
