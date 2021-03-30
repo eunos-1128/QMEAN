@@ -3,11 +3,10 @@ FROM centos:7.4.1708
 # Arguments, optional
 ARG CPUS_FOR_MAKE=1
 
-# environment variables
+# Environment variables
 ENV SCCRE_GTLB="https://git.scicore.unibas.ch/schwede" \
     SRC_FLDR="/tmp" \
     CFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
-    CXXFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
     PYTHONPATH="/usr/local/lib64/python3.6/site-packages/:${PYTHONPATH}" \
     # Define temporary dirs for the build process \
     TEMP="/tmp" \
@@ -15,6 +14,9 @@ ENV SCCRE_GTLB="https://git.scicore.unibas.ch/schwede" \
     TMPDIR="/tmp" \
     TMP="/tmp" \
     LD_LIBRARY_PATH="/usr/local/lib64:/usr/local/lib:$LD_LIBRARY_PATH"
+
+# Define environment variables depending on other variables
+ENV CXXFLAGS=${CFLAGS}
 
 # Set up TMP env var. For some reason, it can't be established using ENV in a
 # CentOS image.
@@ -47,12 +49,13 @@ RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
     # \
-    yum makecache fast; \
-    yum -y install epel-release; \
-    yum update --assumeyes; \
-    yum install --assumeyes openssl-devel bzip2 gcc-c++ make pcre-devel python3 \
-                            python3-devel which zlib-static; \
-    yum --assumeyes clean all;      \
+    /usr/bin/yum makecache fast; \
+    /usr/bin/yum -y install epel-release; \
+    /usr/bin/yum update --assumeyes; \
+    /usr/bin/yum install --assumeyes openssl-devel bzip2 gcc-c++ make \
+                                     pcre-devel python3 python3-devel \
+                                     which zlib-static; \
+    /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     # \
     # Install Python modules \
@@ -67,7 +70,7 @@ RUN set -eo pipefail; \
     # Import matplot once to generate the fontcache \
     echo "import matplotlib.pyplot" | /usr/bin/python3; \
     # \
-    # Install a recent version of CMake \
+    # Install: a recent version of CMake \
     # \
     cd ${SRC_FLDR}; \
     /usr/bin/curl -o cmake.tar.gz -L https://github.com/Kitware/CMake/releases/download/v${VERSION_CMAKE}/cmake-${VERSION_CMAKE}.tar.gz; \
@@ -78,67 +81,68 @@ RUN set -eo pipefail; \
     ../bootstrap; \
     /usr/bin/make -j ${CPUS_FOR_MAKE}; \
     /usr/bin/make install; \
-     # \
-     # Install: Eigen \
-     # \
-     cd ${SRC_FLDR}; \
-     /usr/bin/curl -o eigen.tar.bz2 -L https://gitlab.com/libeigen/eigen/-/archive/${VERSION_EIGEN}/eigen-${VERSION_EIGEN}.tar.bz2; \
-     /usr/bin/mkdir eigen/; \
-     /usr/bin/tar --strip-components=1 -C eigen/ -xf eigen.tar.bz2; \
-     /usr/bin/rm -rf eigen.tar.bz2; \
-     /usr/bin/mv eigen/Eigen /usr/local/include; \
-     /usr/bin/rm -rf eigen; \
-     # \
-     # Install: Boost \
-     # \
-     cd ${SRC_FLDR} && \
-     /usr/bin/curl -o boost.tar.bz2 -L \
-     https://sourceforge.net/projects/boost/files/boost/${VERSION_BOOST}/boost_${VERSION_BOOST//\./_}.tar.bz2/download; \
-     /usr/bin/mkdir boost; \
-     /usr/bin/tar --strip-components=1 -C boost -xf boost.tar.bz2; \
-     /usr/bin/rm -f boost.tar.bz2; \
-     cd boost; \
-     # Python 3.6 in CentOS uses pymalloc, hence there is a 'm' at the end of
-     # the include dir which Boost 1.68.0 does not consider.
-     /usr/bin/sed -i 's/includes ?= \$(prefix)\/include\/python\$(version)/includes ?= \$(prefix)\/include\/python\$(version)m/g' \
-                  tools/build/src/tools/python.jam; \
-     ./bootstrap.sh --prefix=/usr/local --with-python=/usr/bin/python3; \
-     ./b2 --without-mpi; \
-     ./b2 install; \
-     cd ${SRC_FLDR}; \
-     /usr/bin/rm -rf boost; \
-     # \
-     # Install: SWIG \
-     # \
-     cd ${SRC_FLDR}; \
-     /usr/bin/curl -o swig.tar.gz -L \
-     https://sourceforge.net/projects/swig/files/swig/swig-${VERSION_SWIG}/swig-${VERSION_SWIG}.tar.gz; \
-     /usr/bin/mkdir swig; \
-     /usr/bin/tar --strip-components=1 -C swig/ -xf swig.tar.gz; \
-     /usr/bin/rm -rf swig.tar.gz; \
-     cd swig/; \
-     ./configure --without-python --prefix=/usr/local/; \
-     /usr/bin/make -j ${CPUS_FOR_MAKE}; \
-     /usr/bin/make install; \
-     cd ${SRC_FLDR}; \
-     /usr/bin/rm -rf swig; \
-     # \
-     # Cleanup packages only needed to compile/ install things to keep the \
-     # image size low. \
-     # \
-     yum --assumeyes remove openssl-devel bzip2 gcc gcc-c++ glibc-devel make pcre-devel perl \
-                            python3-devel python3-pip which zlib-devel \
-                            zlib-static; \
-     yum --assumeyes autoremove; \
-     yum --assumeyes clean all; \
-     /usr/bin/rm -rf /var/cache/yum; \
-     /usr/bin/rm -rf /tmp/*; \
-     # removing python3-devel alsp removes the entire Python 3 installation...
-     yum makecache fast; \
-     yum -y install epel-release; \
-     yum install --assumeyes python3; \
-     yum --assumeyes clean all; \
-     /usr/bin/rm -rf /var/cache/yum
+    cd ${SRC_FLDR}; \
+    /usr/bin/rm -rf cmake; \
+    # \
+    # Install: Eigen \
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/curl -o eigen.tar.bz2 -L https://gitlab.com/libeigen/eigen/-/archive/${VERSION_EIGEN}/eigen-${VERSION_EIGEN}.tar.bz2; \
+    /usr/bin/mkdir eigen/; \
+    /usr/bin/tar --strip-components=1 -C eigen/ -xf eigen.tar.bz2; \
+    /usr/bin/rm -rf eigen.tar.bz2; \
+    /usr/bin/mv eigen/Eigen /usr/local/include; \
+    /usr/bin/rm -rf eigen; \
+    # \
+    # Install: Boost \
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/curl -o boost.tar.bz2 -L https://sourceforge.net/projects/boost/files/boost/${VERSION_BOOST}/boost_${VERSION_BOOST//\./_}.tar.bz2/download; \
+    /usr/bin/mkdir boost; \
+    /usr/bin/tar --strip-components=1 -C boost -xf boost.tar.bz2; \
+    /usr/bin/rm -f boost.tar.bz2; \
+    cd boost; \
+    # Python 3.6 in CentOS uses pymalloc, hence there is a 'm' at the end of
+    # the include dir which Boost 1.68.0 does not consider.
+    /usr/bin/sed -i 's/includes ?= \$(prefix)\/include\/python\$(version)/includes ?= \$(prefix)\/include\/python\$(version)m/g' \
+                 tools/build/src/tools/python.jam; \
+    ./bootstrap.sh --prefix=/usr/local --with-python=/usr/bin/python3; \
+    ./b2 --without-mpi; \
+    ./b2 install; \
+    cd ${SRC_FLDR}; \
+    /usr/bin/rm -rf boost; \
+    # \
+    # Install: SWIG \
+    # \
+    cd ${SRC_FLDR}; \
+    /usr/bin/curl -o swig.tar.gz -L https://sourceforge.net/projects/swig/files/swig/swig-${VERSION_SWIG}/swig-${VERSION_SWIG}.tar.gz; \
+    /usr/bin/mkdir swig; \
+    /usr/bin/tar --strip-components=1 -C swig/ -xf swig.tar.gz; \
+    /usr/bin/rm -rf swig.tar.gz; \
+    cd swig/; \
+    ./configure --without-python --prefix=/usr/local/; \
+    /usr/bin/make -j ${CPUS_FOR_MAKE}; \
+    /usr/bin/make install; \
+    cd ${SRC_FLDR}; \
+    /usr/bin/rm -rf swig; \
+    # \
+    # Cleanup packages only needed to compile/ install things to keep the \
+    # image size low. \
+    # \
+    /usr/bin/yum --assumeyes remove openssl-devel bzip2 gcc gcc-c++ \
+                                    glibc-devel make pcre-devel perl \
+                                    python3-devel python3-pip which zlib-devel \
+                                    zlib-static; \
+    /usr/bin/yum --assumeyes autoremove; \
+    /usr/bin/yum --assumeyes clean all; \
+    /usr/bin/rm -rf /var/cache/yum; \
+    /usr/bin/rm -rf /tmp/*; \
+    # removing python3-devel also removes the entire Python 3 installation...
+    /usr/bin/yum makecache fast; \
+    /usr/bin/yum -y install epel-release; \
+    /usr/bin/yum install --assumeyes python3; \
+    /usr/bin/yum --assumeyes clean all; \
+    /usr/bin/rm -rf /var/cache/yum
 
 #
 # Install OpenStructure
@@ -150,41 +154,37 @@ RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
     # \
-    yum makecache fast;            \
-    yum -y install epel-release;   \
-    yum update --assumeyes;        \
-    yum install --assumeyes fftw fftw-devel gcc-c++ libpng \
-                            libpng-devel libtiff-devel make python3-devel \
-                            sqlite-devel \
-    yum --assumeyes clean all;      \
+    /usr/bin/yum makecache fast; \
+    /usr/bin/yum -y install epel-release; \
+    /usr/bin/yum update --assumeyes; \
+    /usr/bin/yum install --assumeyes fftw fftw-devel gcc-c++ libpng \
+                                          libpng-devel libtiff-devel make \
+                                          python3-devel \
+                                          sqlite-devel \
+    /usr/bin/yum --assumeyes clean all;      \
     /usr/bin/rm -rf /var/cache/yum; \
     cd ${SRC_FLDR}; \
     /usr/bin/mkdir ost; \
-    /usr/bin/curl -o ost.tar.gz -L \
-         ${SCCRE_GTLB}/openstructure/repository/${OST_VERSION}/archive.tar.gz; \
+    /usr/bin/curl -o ost.tar.gz -L ${SCCRE_GTLB}/openstructure/repository/${OST_VERSION}/archive.tar.gz; \
     /usr/bin/tar --strip-components=1 -C ost -xf ost.tar.gz; \
     /usr/bin/rm -f ost.tar.gz; \
     /usr/bin/mkdir ost/build; \
     cd ost/build; \
-    # The following to calls to `sed` are needed since the CMake version in
-    # CentOS 7 is too low.
-    #/usr/bin/sed -i 's/cmake_minimum_required(VERSION 3.12.1 FATAL_ERROR)/cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)/' ../CMakeLists.txt; \
-    /usr/bin/sed -i 's/cmake_policy(SET CMP0060 NEW)//' ../CMakeLists.txt; \
     /usr/local/bin/cmake ..  -DCOMPILE_TMTOOLS=OFF \
-                       -DENABLE_INFO=OFF     \
-                       -DENABLE_GFX=OFF      \
-                       -DENABLE_GUI=OFF      \
-                       -DUSE_NUMPY=OFF         \
-                       -DUSE_RPATH=1         \
-                       -DOPTIMIZE=1;         \
+                             -DENABLE_INFO=OFF \
+                             -DENABLE_GFX=OFF \
+                             -DENABLE_GUI=OFF \
+                             -DUSE_NUMPY=OFF \
+                             -DUSE_RPATH=1 \
+                             -DOPTIMIZE=1; \
     # 1st run: get everything to build a compounds library
-    /usr/bin/make chemdict_tool; \
+    /usr/bin/make -j ${CPUS_FOR_MAKE} chemdict_tool; \
     # get the compounds dictionary from RCSB PDB
-    /usr/bin/curl -o components.cif.gz -L \
-                  ftp://ftp.wwpdb.org/pub/pdb/data/monomers/components.cif.gz; \
+    /usr/bin/curl -o components.cif.gz -L ftp://ftp.wwpdb.org/pub/pdb/data/monomers/components.cif.gz; \
     stage/bin/chemdict_tool create components.cif.gz compounds.chemlib pdb; \
-    stage/bin/chemdict_tool update modules/conop/data/charmm.cif compounds.chemlib charmm; \
-    ## 2nd run: build OST with a compounds library
+    stage/bin/chemdict_tool update modules/conop/data/charmm.cif \
+                                   compounds.chemlib charmm; \
+    # 2nd run: build OST with a compounds library
     /usr/local/bin/cmake .. -DCOMPOUND_LIB=compounds.chemlib; \
     /usr/bin/make -j ${CPUS_FOR_MAKE}; \
     /usr/bin/make check; \
@@ -193,16 +193,17 @@ RUN set -eo pipefail; \
     /usr/bin/rm -rf ost; \
     # make the compounds.chemlib interchangeable: move to its own dir and link
     /usr/bin/mkdir /compound_lib; \
-    /usr/bin/mv /usr/local/share/openstructure/compounds.chemlib /compound_lib/; \
+    /usr/bin/mv /usr/local/share/openstructure/compounds.chemlib \
+                /compound_lib/; \
     ln -s /compound_lib/compounds.chemlib /usr/local/share/openstructure/; \
     # \
     # Cleanup packages only needed to compile/ install things \
     # \
-    yum --assumeyes remove fftw-devel gcc gcc-c++ glibc-devel \
-                           libpng-devel make perl python3-devel \
-                           sqlite-devel zlib-devel; \
-    yum --assumeyes autoremove; \
-    yum --assumeyes clean all; \
+    /usr/bin/yum --assumeyes remove fftw-devel gcc gcc-c++ glibc-devel \
+                             libpng-devel make perl python3-devel \
+                             sqlite-devel zlib-devel; \
+    /usr/bin/yum --assumeyes autoremove; \
+    /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     /usr/bin/rm -rf /tmp/*
 
@@ -216,23 +217,18 @@ RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
     # \
-    yum makecache fast;            \
-    yum -y install epel-release;   \
-    yum update --assumeyes;        \
-    yum install --assumeyes gcc-c++ make python3-devel; \
-    yum --assumeyes clean all;      \
+    /usr/bin/yum makecache fast; \
+    /usr/bin/yum -y install epel-release; \
+    /usr/bin/yum update --assumeyes; \
+    /usr/bin/yum install --assumeyes gcc-c++ make python3-devel; \
+    /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/curl -o qmean.tar.gz -L \
-            ${SCCRE_GTLB}/QMEAN/repository/${QMEAN_VERSION}/archive.tar.gz; \
+    /usr/bin/curl -o qmean.tar.gz -L ${SCCRE_GTLB}/QMEAN/repository/${QMEAN_VERSION}/archive.tar.gz; \
     /usr/bin/mkdir qmean; \
     /usr/bin/tar --strip-components=1 -C qmean -xf qmean.tar.gz; \
     /usr/bin/rm -f qmean.tar.gz; \
     /usr/bin/mkdir qmean/build; \
     cd qmean/build; \
-    # The following to calls to `sed` are needed since the CMake version in
-    # CentOS 7 is too low.
-    #/usr/bin/sed -i 's/cmake_minimum_required(VERSION 3.12.1 FATAL_ERROR)/cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)/' ../CMakeLists.txt; \
-    /usr/bin/sed -i 's/cmake_policy(SET CMP0060 NEW)//' ../CMakeLists.txt; \
     /usr/local/bin/cmake .. -DOPTIMIZE=1 -DOST_ROOT=/usr/local; \
     /usr/bin/make -j ${CPUS_FOR_MAKE}; \
     /usr/bin/make check; \
@@ -242,17 +238,17 @@ RUN set -eo pipefail; \
     # \
     # Cleanup packages only needed to compile/ install things \
     # \
-    yum --assumeyes remove gcc gcc-c++ glibc-devel make perl \
-                           python3-devel; \
-    yum --assumeyes autoremove; \
-    yum --assumeyes clean all; \
+    /usr/bin/yum --assumeyes remove gcc gcc-c++ glibc-devel make perl \
+                                    python3-devel; \
+    /usr/bin/yum --assumeyes autoremove; \
+    /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/rm -rf /tmp/* \
+    /usr/bin/rm -rf /tmp/*; \
     # removing python3-devel also removes the entire Python 3 installation...
-    yum makecache fast; \
-    yum -y install epel-release; \
-    yum install --assumeyes python3; \
-    yum --assumeyes clean all; \
+    /usr/bin/yum makecache fast; \
+    /usr/bin/yum -y install epel-release; \
+    /usr/bin/yum install --assumeyes python3; \
+    /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum
 
 # only for the hackathon
@@ -267,10 +263,10 @@ LABEL org.openstructure.ost.license="LGPL Version 3"
 LABEL org.openstructure.qmean.license="Apache License Version 2.0, January 2004"
 LABEL org.openstructure.version="${OST_VERSION}"
 LABEL org.openstructure.qmean.version="${QMEAN_VERSION}"
-LABEL org.openstructure.ost.version.is-production="no"
-LABEL org.openstructure.qmean.version.is-production="no"
+LABEL org.openstructure.ost.version.is-production="yes"
+LABEL org.openstructure.qmean.version.is-production="yes"
 #   This is a counter to be increased with every built & uploaded image
-LABEL org.openstructure.qmean.docker.image.increment="1"
+LABEL org.openstructure.qmean.docker.image.increment="2"
 LABEL maintainer="Stefan Bienert <stefan.bienert@unibas.ch>"
 LABEL vendor1="Schwede Group (schwedelab.org)"
 LABEL vendor2="SIB - Swiss Institute of Bioinformatics"
@@ -307,6 +303,8 @@ COPY docker-entrypoint.sh /qmean
 ENTRYPOINT ["/qmean/docker-entrypoint.sh"]
 CMD ["qmeandisco"]
 
+USER $QMEAN_USER
+
 # TODO:
 # - check if SWIG is needed
 # - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
@@ -319,5 +317,11 @@ CMD ["qmeandisco"]
 # - in the README note how to switch to a recent compounds.chemlib
 # - to be discussed: provide weekly download of compounds.chemlib?
 # - copy runscript from cloned repo, not build context!
+# - run as user qmean, make sure that swapping the compounds library also works
+# - put into docs how to create a compounds library with this container
+# - mention in docs how to build a container with dedicated uid to fit into your
+#   system
+# - place docker-entrypoint.sh and qmeandisco script in a non-writable folder for
+#   security reasons, folder should also be not mountable
 
-# # LocalWords:  QMEAN arg
+# LocalWords:  QMEAN arg
