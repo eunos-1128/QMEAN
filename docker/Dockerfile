@@ -179,6 +179,8 @@ RUN set -eo pipefail; \
                     /usr/local/sspro/data/pdb_large/old/ \
                     /usr/local/sspro/data/pdb_large/new/ \
                     /usr/local/sspro/blast2.2.8 \
+                    /usr/local/sspro/model/sspro \
+                    /usr/local/sspro/test \
                     /usr/local/sspro/configure.pl~; \
     /usr/bin/chmod -R og+rx /usr/local/sspro/; \
     # \
