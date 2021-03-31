@@ -47,7 +47,8 @@ ENV VERSION_BLAST="2.2.26" \
     VERSION_CMAKE="3.17.3" \
     VERSION_EIGEN="3.3.1" \
     VERSION_HHBLITS="3.3.0" \
-    VERSION_PSIPRED="3.5"
+    VERSION_PSIPRED="3.5" \
+    VERSION_SSPRO="4.03"
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -55,9 +56,9 @@ RUN set -eo pipefail; \
     /usr/bin/yum makecache fast; \
     /usr/bin/yum -y install epel-release; \
     /usr/bin/yum update --assumeyes; \
-    /usr/bin/yum install --assumeyes openssl-devel bzip2 gcc-c++ make \
-                                     pcre-devel python3 python3-devel \
-                                     which zlib-static perl; \
+    /usr/bin/yum install --assumeyes bzip2 gcc-c++ compat-libstdc++-33.i686 \
+                                     glibc.i686 make openssl-devel pcre-devel \
+                                     perl python3 python3-devel zlib-static; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     # \
@@ -163,13 +164,30 @@ RUN set -eo pipefail; \
     cd ${SRC_FLDR}; \
     /usr/bin/rm -rf hh-suite; \
     # \
+    # Install SSpro and clean up outdated/ unused files \
+    # \
+    /usr/bin/mkdir /usr/local/sspro; \
+    /usr/bin/curl -o sspro.tar.gz -L http://download.igb.uci.edu/sspro4.tar.gz; \
+    /usr/bin/tar --strip-components=1 -C /usr/local/sspro -xf sspro.tar.gz; \
+    /usr/bin/rm -f sspro4.tar.gz; \
+    cd /usr/local/sspro; \
+    /usr/bin/sed -i 's/\/home\/baldig\/jianlin\/sspro4\//\/usr\/local\/sspro\//g' \
+                 configure.pl; \
+    /usr/bin/perl configure.pl; \
+    /usr/bin/rm -rf /usr/local/sspro/data/nr /usr/local/sspro/data/big \
+                    /usr/local/sspro/data/pdb_small \
+                    /usr/local/sspro/data/pdb_large/old/ \
+                    /usr/local/sspro/data/pdb_large/new/ \
+                    /usr/local/sspro/blast2.2.8 \
+                    /usr/local/sspro/configure.pl~; \
+    /usr/bin/chmod -R og+rx /usr/local/sspro/; \
+    # \
     # Cleanup packages only needed to compile/ install things to keep the \
     # image size low. \
     # \
-    /usr/bin/yum --assumeyes remove openssl-devel bzip2 gcc gcc-c++ \
-                                    glibc-devel make pcre-devel \
-                                    python3-devel python3-pip which zlib-devel \
-                                    zlib-static; \
+    /usr/bin/yum --assumeyes remove bzip2 gcc gcc-c++ glibc-devel make \
+                                    pcre-devel openssl-devel python3-devel \
+                                    python3-pip zlib-devel zlib-static; \
     /usr/bin/yum --assumeyes autoremove; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
@@ -329,6 +347,11 @@ RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP && \
 
 # Copy script to run QMEANDisCo
 COPY run-qmeandisco.py /qmean/
+COPY predict_ss_sa.pl /qmean/
+COPY homology_sa.pl /qmean/
+COPY homology_ss.pl /qmean/
+COPY getACCAligns.pl /qmean/
+COPY getSSAligns.pl /qmean/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
