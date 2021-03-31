@@ -349,9 +349,7 @@ RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP && \
 COPY run-qmeandisco.py /qmean/
 COPY predict_ss_sa.pl /qmean/
 COPY homology_sa.pl /qmean/
-COPY homology_ss.pl /qmean/
 COPY getACCAligns.pl /qmean/
-COPY getSSAligns.pl /qmean/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
