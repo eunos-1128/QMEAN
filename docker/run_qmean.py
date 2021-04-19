@@ -6,17 +6,22 @@ import hashlib
 import math
 import tempfile
 import subprocess
+import sys
 
-import qmean
 import ost
 from ost import io
 from ost import conop
 from ost import mol
 from ost import seq
 from ost.bindings import hhblits3
+
+import qmean
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from qmean.predicted_sequence_features import AlignChainToSEQRES
+from qmean import DisCoContainer
+from qmean import ExtractTemplateDataDisCo
+from qmean import DisCoDataContainers
 
 
 class _MolckLogger(ost.LogSink):
@@ -27,6 +32,77 @@ class _MolckLogger(ost.LogSink):
 
     def LogMessage(self, message, severity):
         self.full_message += message
+
+
+class _ChainClusterIndex:
+    def __init__(self, index_path, dates_path):
+        # both are lazy loaded, in particular the dates might never be used...
+        self.index_path = index_path
+        self.dates_path = dates_path
+        self._index = None
+        self._dates = None
+
+
+    def get_clusters(self, seq_hash, datefilter = None):
+
+        clusters = list()
+        if seq_hash in self.index:
+            clusters = self.index[seq_hash]
+
+        if datefilter is None:
+            return clusters
+
+        filtered_clusters = list()
+        thresh_date = datetime.datetime.strptime(datefilter, '%Y-%m-%d')
+        for cluster in clusters:
+            filtered_cluster = list()
+            for smt_id in cluster:
+                rel_date = datetime.datetime.strptime(self.get_date(smt_id), '%Y-%m-%d')
+                if rel_date < thresh_date:
+                    filtered_cluster.append(smt_id)
+            if len(filtered_cluster) > 0:
+                filtered_clusters.append(filtered_cluster)
+        return filtered_clusters
+
+
+    def get_date(self, smt_id):
+        pdb_id = smt_id.split('.')[0].upper()
+        if pdb_id not in self.dates:
+            raise RuntimeError(f'Could not find {pdb_id} in dates file')
+        return self.dates[pdb_id]
+
+
+    @property
+    def index(self):
+        if self._index is None:
+            self._index = dict()
+            with open(self.index_path, 'r') as fh:
+                stuff = fh.readlines()
+            for line in stuff:
+                split_line = line.split()
+                clusters = list()
+                for item in split_line[1:]:
+                    clusters.append(item.split(','))
+                self._index[split_line[0]] = clusters
+        return self._index
+
+
+    @property
+    def dates(self):
+        if self._dates is None:
+            with open(self.dates_path, 'r') as fh:
+                stuff = fh.readlines()
+            header = stuff[0].split(',')
+            if 'pdb_id' not in header or 'release_date' not in header:
+                raise RuntimeError(f'ill formatted file: {self.dates_path}')
+            pdb_id_idx = header.index('pdb_id')
+            release_date_idx = header.index('release_date')
+            for line in stuff[1:]:
+                split_line = line.split(',')
+                pdb_id = split_line[pdb_id_idx].upper()
+                date = split_line[release_date_idx]
+                self._dates[pdb_id] = date
+        return self._dates
 
 
 def _get_seq_name(sequence):
@@ -71,10 +147,74 @@ def _run_accpro(fasta_file, msa, workdir, seqlen):
         return data[2].strip().replace('-', 'b')
 
 
-def _seqanno(s, workdir, uniclust30, do_disco=False):
+def _get_dc(workdir, target_seq, hh, a3m_file, smtldir, datefilter=None, 
+            store_dc=True):
 
-    seqanno_workdir = os.path.join(workdir, s.GetName())
-    hh = hhblits3.HHblits(s,  '/usr/local', working_dir=seqanno_workdir)
+    db = os.path.join(smtldir, 'smtl_uniq')
+    hhr_file = hh.Search(a3m_file, db, prefix='hhm100', options={'premerge': 0})
+
+    if hhr_file is None:
+        LogError('HHblits search did not produce any results, aborting')
+        sys.exit(-1)
+
+    index_file = os.path.join(smtldir, 'CHAINCLUSTERINDEX')
+    dates_file = os.path.join(smtldir, 'dates.csv')
+    chain_cluster_index = _ChainClusterIndex(index_file, dates_file)
+
+    binary_tpl = DisCoDataContainers(os.path.join(smtldir, 'indexer.dat'),
+                                     os.path.join(smtldir, 'seqres_data.dat'),
+                                     os.path.join(smtldir, 'atomseq_data.dat'),
+                                     os.path.join(smtldir, 'ca_pos_data.dat'))
+
+    dc = DisCoContainer(target_seq)
+    header, hits = hhblits3.ParseHHblitsOutput(open(hhr_file))
+    target_len = len(target_seq)
+    
+    for hit in hits:
+        start = hit.aln.sequences[0].offset
+        end = start + len(hit.aln.sequences[0].gapless_string)
+        clusters = chain_cluster_index.get_clusters(hit.hit_id, datefilter)
+        for cluster in clusters:
+            tpl = cluster[0]
+            aln = ost.seq.CreateAlignment(target_seq.Copy(),
+                                              ost.seq.CreateSequence(tpl,
+                                                             '-' * target_len))
+            aln[start:end].Replace(hit.aln[:])
+            aln.SetSequenceOffset(1, hit.aln.sequences[1].offset)
+            pdb_id, assembly_id, chain_name = tpl.split('.')
+
+            # use try except block, if certain template cannot be 
+            # found in binary SMTL...
+            try:
+                binary_tpl_assembly = '.'.join([pdb_id, assembly_id])
+                tpl_data = ExtractTemplateDataDisCo(binary_tpl_assembly, 
+                                                    chain_name, aln, binary_tpl)
+
+            except Exception as e:
+                ost.LogError(f'Cannot extract data from template {tpl} ({e})')
+                continue
+            # THE ALIGNMENT SHOULD BE THE ATOMSEQ ALN AS IN A SWISS-MODEL PROJECT
+            dc.AddData(aln, tpl_data.ca_positions, tpl_data.residue_numbers)
+
+    # just set everything to default values...
+    disco_dist_thresh = 15.0
+    disco_gamma = 70.0
+    disco_seqsim_thresh = 0.5
+    disco_bin_size = 0.5
+    dc.CalculateConstraints(disco_dist_thresh, disco_gamma, 
+                            disco_seqsim_thresh, disco_bin_size)
+
+    if store_dc:
+        out_path = os.path.join(workdir, 'qmean_dc.dat')
+        dc.Save(out_path)
+
+    return dc
+
+
+def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
+
+    seqanno_workdir = os.path.join(workdir, target_seq.GetName())
+    hh = hhblits3.HHblits(target_seq,  '/usr/local', working_dir=seqanno_workdir)
     a3m_file = hh.BuildQueryMSA(uniclust30)
     with open(a3m_file) as fh:
         a3m_content = hhblits3.ParseA3M(fh)
@@ -86,13 +226,14 @@ def _seqanno(s, workdir, uniclust30, do_disco=False):
     data = dict()
     data['ss'] = a3m_content['ss_pred']
     data['conf'] = [int(c) for c in a3m_content['ss_conf']]
-    data['seq'] = str(s)
+    data['seq'] = str(target_seq)
     psipred_handler = PSIPREDHandler(data)
 
     # accpro must be called separately
     # accpro fails in rare circumstances we still want to continue in
     # this case (we do the same in SWISS-MODEL)
-    acc = _run_accpro(hh.filename, prof['msa'], seqanno_workdir, len(s))
+    acc = _run_accpro(hh.filename, prof['msa'], seqanno_workdir, 
+                      len(target_seq))
     if acc is None:
         accpro_handler = None
     else:
@@ -100,7 +241,8 @@ def _seqanno(s, workdir, uniclust30, do_disco=False):
         accpro_handler = ACCPROHandler(data)
 
     if do_disco:
-        dc = None # do fancy stuff
+        dc = _get_dc(seqanno_workdir, target_seq, hh, a3m_file, smtldir, 
+                     datefilter)
     else:
         dc = None
 
@@ -160,6 +302,12 @@ class ModelScorer:
         for s in self.seqres_list:
             psipred_handler_list.append(psipred_handler[s.GetName()])
             accpro_handler_list.append(accpro_handler[s.GetName()])
+
+        if scoring_function == 'QMEANDisCo':
+            disco_container_list = list()
+            for s in self.seqres_list:
+                disco_container_list.append(disco_container[s.GetName()]) 
+
 
         scorer = qmean.QMEANScorer(self.processed_model.Select('peptide=True'), 
                                    psipred=psipred_handler_list, 
@@ -235,7 +383,7 @@ class ModelScorer:
             if len(entity.residues)==0:
                 raise Exception(f'No residues found in model file: {self.model_path}')
         else:
-            raise RuntimeError(f'Unknow/ unsuppoted file extension found for file {self.model_path}.')
+            raise RuntimeError(f'Unknown/ unsupported file extension found for file {self.model_path}.')
         self.model = entity
 
 
@@ -355,7 +503,8 @@ class ModelScorer:
 
 
 class ModelScorerContainer:
-    def __init__(self, method, model_paths, seqres_path, workdir, uniclust30):
+    def __init__(self, method, model_paths, seqres_path, workdir, uniclust30,
+                 smtldir, datefilter):
         self.created = datetime.datetime.now().isoformat(timespec='seconds')
         self.method = method
         self.qmean_version = qmean.qmean_version
@@ -372,19 +521,13 @@ class ModelScorerContainer:
         # - self.psipred_handler
         # - self.accpro_handler
         # - self.disco_container
-        self._seqanno(workdir, uniclust30)
+        self._seqanno(workdir, uniclust30, smtldir, datefilter)
 
-        # do scoring
-        self.score()
-
-
-    def score(self):
-        for m in self.models:
-            m.score(self.psipred_handler, self.accpro_handler, 
-                    self.disco_container, self.method)
+        # perform scoring on all models
+        self._score()
 
 
-    def to_json(self, out_path):
+    def to_json(self):
         out_dict = dict()
         out_dict['created'] = self.created
         out_dict['method'] = self.method
@@ -421,16 +564,22 @@ class ModelScorerContainer:
         return seqres
 
 
-    def _seqanno(self, workdir, uniclust30):
+    def _seqanno(self, workdir, uniclust30, smtldir, datefilter):
         self.psipred_handler = dict()
         self.accpro_handler = dict()
         self.disco_container = dict()
         for s in self.seqres_list:
-            p,a,d = _seqanno(s, workdir, uniclust30, 
-                             do_disco = self.method == "QMEANDisCo")
+            p,a,d = _seqanno(s, workdir, uniclust30, self.method=="QMEANDisCo",
+                             smtldir, datefilter)
             self.psipred_handler[s.GetName()] = p
             self.accpro_handler[s.GetName()] = a
             self.disco_container[s.GetName()] = d
+
+
+    def _score(self):
+        for m in self.models:
+            m.score(self.psipred_handler, self.accpro_handler, 
+                    self.disco_container, self.method)
 
 
 
@@ -444,6 +593,8 @@ def main():
     parser.add_argument('--workdir', dest='workdir', required=True)
     parser.add_argument('--complib', dest='complib', required=True)
     parser.add_argument('--uniclust30', dest='uniclust30', required=True)
+    parser.add_argument('--smtldir', dest='smtldir', default=None)
+    parser.add_argument('--datefilter', dest='datefilter', default=None)
     args = parser.parse_args()
 
 
@@ -469,6 +620,20 @@ def main():
         if not os.path.exists(full):
             raise RuntimeError(f'Expect {full} to be present in uniclust30')
 
+    if args.method == 'QMEANDisCo' and args.smtldir is None:
+        raise RuntimeError('Require smtldir to run QMEANDisCo')
+
+    if args.smtldir:
+        expected_files = ['smtl_uniq_cs219.ffdata', 'smtl_uniq_cs219.ffindex', 
+                          'smtl_uniq_hhm.ffdata', 'smtl_uniq_hhm.ffindex', 
+                          'CHAINCLUSTERINDEX', 'dates.csv', 'indexer.dat', 
+                          'seqres_data.dat', 'atomseq_data.dat', 
+                          'ca_pos_data.dat']
+        for f in expected_files:
+            p = os.path.join(args.smtldir, f)
+            if not os.path.exists(p):
+                raise RuntimeError(f'expect {p} to be present')
+
     # load and set user defined compound library, don't assume it to be available
     # from the container
     if not os.path.exists(args.complib):
@@ -481,14 +646,14 @@ def main():
     # Load/process models and do scoring #
     ######################################
     data = ModelScorerContainer(args.method, args.models, args.seqres, 
-                                args.workdir, args.uniclust30)
-
+                                args.workdir, args.uniclust30, args.smtldir,
+                                args.datefilter)
 
     ###############
     # Dump output #
     ###############
     with open(args.out, 'w') as fh:
-        json.dump(data.to_json(args.out), fh)
+        json.dump(data.to_json(), fh)
 
 
 if __name__ == "__main__":
