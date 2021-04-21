@@ -1,3 +1,5 @@
+#!/usr/local/bin/ost
+
 import argparse
 import datetime
 import json
