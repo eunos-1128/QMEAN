@@ -523,7 +523,7 @@ class ModelScorerContainer:
         # - self.psipred_handler
         # - self.accpro_handler
         # - self.disco_container
-        self._seqanno(workdir, uniclust30, smtldir, datefilter)
+        self._do_seqres_features(workdir, uniclust30, smtldir, datefilter)
 
         # perform scoring on all models
         self._score()
@@ -566,7 +566,7 @@ class ModelScorerContainer:
         return seqres
 
 
-    def _seqanno(self, workdir, uniclust30, smtldir, datefilter):
+    def _do_seqres_features(self, workdir, uniclust30, smtldir, datefilter):
         self.psipred_handler = dict()
         self.accpro_handler = dict()
         self.disco_container = dict()
