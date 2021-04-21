@@ -605,6 +605,8 @@ def _parse_args():
         print('OPENSTRUCTURE:', os.getenv('VERSION_OPENSTRUCTURE'))
         sys.exit(0)
 
+    if len(args.models) > 1000:
+        raise RuntimeError('Can only score a maximum of 1000 models at once')
 
     for model_path in args.models:
         if not os.path.exists(model_path):
