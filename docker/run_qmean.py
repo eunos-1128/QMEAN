@@ -583,7 +583,7 @@ class ModelScorerContainer:
 
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--method', dest='method', choices=['QMEAN', 
                         'QMEANDisCo', 'QMEANBrane'], default='QMEANDisCo')
@@ -657,5 +657,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _main()
 
