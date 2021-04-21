@@ -26,14 +26,17 @@ from qmean import ExtractTemplateDataDisCo
 from qmean import DisCoDataContainers
 
 
-class _MolckLogger(ost.LogSink):
+class _Logger(ost.LogSink):
     '''Append Molck output to results object.'''
     def __init__(self):
         ost.LogSink.__init__(self)
         self.full_message = ''
+        self.error_message = ''
 
     def LogMessage(self, message, severity):
         self.full_message += message
+        if severity == 0:
+            self.error_message += message
 
 
 class _ChainClusterIndex:
@@ -151,7 +154,13 @@ def _get_dc(workdir, target_seq, hh, a3m_file, smtldir, datefilter=None,
             store_dc=True):
 
     db = os.path.join(smtldir, 'smtl_uniq')
+
+    # hhblits prints stuff in stderr, let's setup yet another logger and swallow
+    # everything. Check later if something went wrong...
+    logger = _Logger()
+    ost.PushLogSink(logger)
     hhr_file = hh.Search(a3m_file, db, prefix='hhm100', options={'premerge': 0})
+    ost.PopLogSink()
 
     if hhr_file is None:
         LogError('HHblits search did not produce any results, aborting')
@@ -215,7 +224,14 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
 
     seqanno_workdir = os.path.join(workdir, target_seq.GetName())
     hh = hhblits3.HHblits(target_seq,  '/usr/local', working_dir=seqanno_workdir)
+
+    # hhblits prints stuff in stderr, let's setup yet another logger and swallow
+    # everything. Check later if something went wrong...
+    logger = _Logger()
+    ost.PushLogSink(logger)
     a3m_file = hh.BuildQueryMSA(uniclust30)
+    ost.PopLogSink()
+
     with open(a3m_file) as fh:
         a3m_content = hhblits3.ParseA3M(fh)
 
@@ -419,7 +435,7 @@ class ModelScorer:
         pre_atom_count = len(self.processed_model.atoms)
         pre_res_count = len(self.processed_model.residues)
         ost.PushVerbosityLevel(ost.LogLevel.Info)
-        molcklogger = _MolckLogger()
+        molcklogger = _Logger()
         ost.PushLogSink(molcklogger)
         molck_settings = mol.alg.MolckSettings(rm_unk_atoms=True, 
                                                rm_non_std=True,
@@ -648,6 +664,10 @@ def _main():
 
     args = _parse_args()
 
+    # start logging
+    logger = _Logger()
+    ost.PushLogSink(logger)
+
     # load and set compound library if provided
     if args.complib:
         complib = conop.CompoundLib.Load(args.complib)
@@ -663,8 +683,10 @@ def _main():
     ###############
     # Dump output #
     ###############
+    out = data.to_json()
+    out['error_log'] = logger.error_message
     with open(args.out, 'w') as fh:
-        json.dump(data.to_json(), fh)
+        json.dump(out, fh)
 
 
 if __name__ == "__main__":
