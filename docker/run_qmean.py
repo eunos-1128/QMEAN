@@ -33,11 +33,16 @@ class _Logger(ost.LogSink):
         ost.LogSink.__init__(self)
         self.full_message = ""
         self.error_message = ""
+        self.info_message = ""
 
     def LogMessage(self, message, severity):
         self.full_message += message
-        if severity == 0:
+        # deal with errors
+        if severity == ost.LogLevel.Error:
             self.error_message += message
+        # deal with info
+        if severity == ost.LogLevel.Info:
+            self.info_message += message
 
 
 class _ChainClusterIndex:
@@ -427,6 +432,8 @@ class ModelScorer:
             )
         sformat = ext[-1].lower()
 
+        # increase loglevel, as we would pollute the info log with weird stuff
+        ost.PushVerbosityLevel(ost.LogLevel.Error)
         # Load the structure
         if sformat in ["mmcif", "cif"]:
             entity = io.LoadMMCIF(self.model_path)
@@ -444,6 +451,9 @@ class ModelScorer:
             raise RuntimeError(
                 f"Unknown/ unsupported file extension found for file {self.model_path}."
             )
+
+        # restore old loglevel
+        ost.PopVerbosityLevel()
         self.model = entity
 
     def _process_model(self):
@@ -766,6 +776,12 @@ def _main():
     # start logging
     logger = _Logger()
     ost.PushLogSink(logger)
+    ost.PushVerbosityLevel(ost.LogLevel.Info)
+
+
+    ost.LogInfo('asdf')
+    ost.LogError('error')
+
 
     # load and set compound library if provided
     if args.complib:
@@ -788,8 +804,10 @@ def _main():
     ###############
     # Dump output #
     ###############
+    ost.LogInfo('hello')
     out = data.to_json()
     out["error_log"] = logger.error_message
+    out["info_log"] = logger.info_message
     with open(args.out, "w") as fh:
         json.dump(out, fh)
 
