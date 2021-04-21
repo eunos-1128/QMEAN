@@ -695,7 +695,6 @@ def _parse_args():
     parser.add_argument("--out", dest="out", default="out.json")
     parser.add_argument("--seqres", dest="seqres", default=None)
     parser.add_argument("--workdir", dest="workdir", required=True)
-    parser.add_argument("--complib", dest="complib", default=None)
     parser.add_argument("--uniclust30", dest="uniclust30", required=True)
     parser.add_argument("--smtldir", dest="smtldir", default=None)
     parser.add_argument("--datefilter", dest="datefilter", default=None)
@@ -762,31 +761,21 @@ def _parse_args():
                     f"If datefilter argument is provided, you additionally need to provide the SMTL specific {p}"
                 )
 
-    if args.complib:
-        if not os.path.exists(args.complib):
-            raise RuntimeError(f"specified path {args.complib} does not exist")
+    # check what complib is used and report to logger
+    creation_date = conop.GetDefaultLib().GetCreationDate()
+    ost.LogInfo(f'Use compound library with creation date {creation_date}')
 
     return args
 
 
 def _main():
 
-    args = _parse_args()
-
     # start logging
     logger = _Logger()
     ost.PushLogSink(logger)
     ost.PushVerbosityLevel(ost.LogLevel.Info)
 
-
-    ost.LogInfo('asdf')
-    ost.LogError('error')
-
-
-    # load and set compound library if provided
-    if args.complib:
-        complib = conop.CompoundLib.Load(args.complib)
-        conop.SetDefaultLib(complib)
+    args = _parse_args()
 
     ######################################
     # Load/process models and do scoring #
@@ -804,7 +793,6 @@ def _main():
     ###############
     # Dump output #
     ###############
-    ost.LogInfo('hello')
     out = data.to_json()
     out["error_log"] = logger.error_message
     out["info_log"] = logger.info_message
