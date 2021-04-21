@@ -644,13 +644,21 @@ def _parse_args():
     if args.smtldir:
         expected_files = ['smtl_uniq_cs219.ffdata', 'smtl_uniq_cs219.ffindex', 
                           'smtl_uniq_hhm.ffdata', 'smtl_uniq_hhm.ffindex', 
-                          'CHAINCLUSTERINDEX', 'dates.csv', 'indexer.dat', 
+                          'CHAINCLUSTERINDEX', 'indexer.dat', 
                           'seqres_data.dat', 'atomseq_data.dat', 
                           'ca_pos_data.dat']
+
         for f in expected_files:
             p = os.path.join(args.smtldir, f)
             if not os.path.exists(p):
                 raise RuntimeError(f'expect {p} to be present')
+
+        # only if date-filter is specified, we additionally need dates.csv'
+        if args.datefilter:
+            p = os.path.join(args.smtldir, 'dates.csv')
+            if not os.path.exists(p):
+                raise RuntimeError(f'If datefilter argument is provided, you additionally need to provide the SMTL specific {p}') 
+
 
     if args.complib:
         if not os.path.exists(args.complib):
