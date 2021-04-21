@@ -597,12 +597,22 @@ def _main():
     parser.add_argument('--uniclust30', dest='uniclust30', required=True)
     parser.add_argument('--smtldir', dest='smtldir', default=None)
     parser.add_argument('--datefilter', dest='datefilter', default=None)
+    parser.add_argument('--version', dest='version', action='store_true')
     args = parser.parse_args()
 
 
     ##########################
     # Setup and input checks #
     ##########################
+
+    # if version flag is set, we just print some stuff and abort
+    if args.version:
+        print('QMEAN container entry point running')
+        print('QMEAN:', os.getenv('VERSION_QMEAN'))
+        print('OPENSTRUCTURE:', os.getenv('VERSION_OPENSTRUCTURE'))
+        sys.exit(0)
+
+
     for model_path in args.models:
         if not os.path.exists(model_path):
             raise RuntimeError(f'specified path {model_path} does not exist')
