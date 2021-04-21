@@ -583,9 +583,7 @@ class ModelScorerContainer:
             m.score(self.psipred_handler, self.accpro_handler, 
                     self.disco_container, self.method)
 
-
-
-def _main():
+def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--method', dest='method', choices=['QMEAN', 
                         'QMEANDisCo', 'QMEANBrane'], default='QMEANDisCo')
@@ -599,11 +597,6 @@ def _main():
     parser.add_argument('--datefilter', dest='datefilter', default=None)
     parser.add_argument('--version', dest='version', action='store_true')
     args = parser.parse_args()
-
-
-    ##########################
-    # Setup and input checks #
-    ##########################
 
     # if version flag is set, we just print some stuff and abort
     if args.version:
@@ -620,9 +613,6 @@ def _main():
     if args.seqres:
         if not os.path.exists(args.seqres):
             raise RuntimeError(f'specified path {args.seqres} does not exist')
-
-    if not os.path.exists(args.complib):
-        raise RuntimeError(f'specified path {args.complib} does not exist')
 
     expected_uniclust30_suffixes = ['_a3m.ffdata', '_a3m.ffindex',
                                     '_hhm.ffdata', '_hhm.ffindex',
@@ -646,13 +636,22 @@ def _main():
             if not os.path.exists(p):
                 raise RuntimeError(f'expect {p} to be present')
 
-    # load and set compound library if provided
     if args.complib:
         if not os.path.exists(args.complib):
             raise RuntimeError(f'specified path {args.complib} does not exist')
+
+    return args
+
+
+
+def _main():
+
+    args = _parse_args()
+
+    # load and set compound library if provided
+    if args.complib:
         complib = conop.CompoundLib.Load(args.complib)
         conop.SetDefaultLib(complib)
-
 
     ######################################
     # Load/process models and do scoring #
