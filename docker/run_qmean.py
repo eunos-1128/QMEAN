@@ -593,7 +593,7 @@ def _main():
     parser.add_argument('--out', dest='out', default='out.json')
     parser.add_argument('--seqres', dest='seqres', default=None)
     parser.add_argument('--workdir', dest='workdir', required=True)
-    parser.add_argument('--complib', dest='complib', required=True)
+    parser.add_argument('--complib', dest='complib', default=None)
     parser.add_argument('--uniclust30', dest='uniclust30', required=True)
     parser.add_argument('--smtldir', dest='smtldir', default=None)
     parser.add_argument('--datefilter', dest='datefilter', default=None)
@@ -636,12 +636,12 @@ def _main():
             if not os.path.exists(p):
                 raise RuntimeError(f'expect {p} to be present')
 
-    # load and set user defined compound library, don't assume it to be available
-    # from the container
-    if not os.path.exists(args.complib):
-        raise RuntimeError(f'specified path {args.complib} does not exist')
-    complib = conop.CompoundLib.Load(args.complib)
-    conop.SetDefaultLib(complib)
+    # load and set compound library if provided
+    if args.complib:
+        if not os.path.exists(args.complib):
+            raise RuntimeError(f'specified path {args.complib} does not exist')
+        complib = conop.CompoundLib.Load(args.complib)
+        conop.SetDefaultLib(complib)
 
 
     ######################################
