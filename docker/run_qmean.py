@@ -123,9 +123,7 @@ def _run_accpro(fasta_file, msa, workdir, seqlen):
             fh.write(f'{s_with_dot}\n')
     
     cmd = ['perl', '/qmean/predict_ss_sa.pl', fasta_file, acc_out, acc_in]
-    cmd = ' '.join(cmd)
-    job = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, 
-                         stderr=subprocess.PIPE)
+    job = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     sout = job.stdout.decode()
     serr = job.stderr.decode()
