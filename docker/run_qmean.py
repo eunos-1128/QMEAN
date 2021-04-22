@@ -9,6 +9,7 @@ import math
 import tempfile
 import subprocess
 import sys
+import shutil
 
 import ost
 from ost import io
@@ -687,7 +688,7 @@ def _parse_args():
     parser.add_argument("--models", required=True, dest="models", nargs="+")
     parser.add_argument("--out", dest="out", default="out.json")
     parser.add_argument("--seqres", dest="seqres", default=None)
-    parser.add_argument("--workdir", dest="workdir", required=True)
+    parser.add_argument("--workdir", dest="workdir", default=None)
     parser.add_argument("--uniclust30", dest="uniclust30", required=True)
     parser.add_argument("--smtldir", dest="smtldir", default=None)
     parser.add_argument("--datefilter", dest="datefilter", default=None)
@@ -711,6 +712,19 @@ def _parse_args():
     if args.seqres:
         if not os.path.exists(args.seqres):
             raise RuntimeError(f"specified path {args.seqres} does not exist")
+
+    if args.workdir:
+        # user defined workdir
+        # create if it doesnt exist and disable cleanup in the end
+        if not os.path.exists(args.workdir):
+            os.makedirs(args.workdir)
+        args.cleanup_workdir=False
+        ost.LogInfo(f"User defined workdir: {args.workdir}")
+    else:
+        # use tmp directory as workdir which is cleaned up in the end
+        args.workdir = tempfile.mkdtemp()
+        args.cleanup_workdir=True
+        ost.LogInfo(f"Tmp workdir: {args.workdir}")
 
     expected_uniclust30_suffixes = [
         "_a3m.ffdata",
@@ -800,6 +814,12 @@ def _main():
     out.update(data_out)
     with open(args.out, "w") as fh:
         json.dump(out, fh)
+
+    ###########
+    # Cleanup #
+    ###########
+    if args.cleanup_workdir:
+        shutil.rmtree(args.workdir)
 
 
 if __name__ == "__main__":
