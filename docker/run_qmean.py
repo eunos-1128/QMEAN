@@ -247,12 +247,10 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
     logger = _Logger()
     ost.PushLogSink(logger)
     a3m_file = hh.BuildQueryMSA(uniclust30)
-    ost.PopLogSink()
-
     with open(a3m_file) as fh:
         a3m_content = hhblits3.ParseA3M(fh)
-
     hhm_file = hh.A3MToProfile(a3m_file)
+    ost.PopLogSink()
     prof = hhblits3.ParseHHM(open(hhm_file))
 
     # data for PSIPREDHandler can be fetched from a3m_content
