@@ -601,10 +601,7 @@ class ModelScorerContainer:
         smtldir,
         datefilter,
     ):
-        self.created = datetime.datetime.now().isoformat(timespec="seconds")
         self.method = method
-        self.qmean_version = qmean.qmean_version
-        self.smtl_version = None
         self._seqres_list = None
 
         # load SEQRES and setup models
@@ -624,10 +621,6 @@ class ModelScorerContainer:
 
     def to_json(self):
         out_dict = dict()
-        out_dict["created"] = self.created
-        out_dict["method"] = self.method
-        out_dict["qmean_version"] = self.qmean_version
-        out_dict["smtl_version"] = self.smtl_version
         out_dict["models"] = dict()
         for m_idx, m in enumerate(self.models):
             identifier = str(m_idx)
@@ -775,7 +768,15 @@ def _main():
     ost.PushLogSink(logger)
     ost.PushVerbosityLevel(ost.LogLevel.Info)
 
+    ##############################################
+    # Parse arguments and already prepare output #
+    ##############################################
     args = _parse_args()
+    out = dict()
+    out["qmean_version"] = qmean.qmean_version
+    out["smtl_version"] = None
+    out["created"] = datetime.datetime.now().isoformat(timespec="seconds") 
+    out["method"] = args.method
 
     ######################################
     # Load/process models and do scoring #
@@ -790,12 +791,13 @@ def _main():
         args.datefilter,
     )
 
-    ###############
-    # Dump output #
-    ###############
-    out = data.to_json()
+    ###############################
+    # Finalize output and dump it #
+    ###############################
     out["error_log"] = logger.error_message
     out["info_log"] = logger.info_message
+    data_out = data.to_json()
+    out.update(data_out)
     with open(args.out, "w") as fh:
         json.dump(out, fh)
 
