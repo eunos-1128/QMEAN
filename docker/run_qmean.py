@@ -690,7 +690,6 @@ def _parse_args():
     parser.add_argument("--seqres", dest="seqres", default=None)
     parser.add_argument("--workdir", dest="workdir", default=None)
     parser.add_argument("--uniclust30", dest="uniclust30", required=True)
-    parser.add_argument("--smtldir", dest="smtldir", default=None)
     parser.add_argument("--datefilter", dest="datefilter", default=None)
     parser.add_argument("--version", dest="version", action="store_true")
     args = parser.parse_args()
@@ -739,10 +738,12 @@ def _parse_args():
         if not os.path.exists(full):
             raise RuntimeError(f"Expect {full} to be present in uniclust30")
 
-    if args.method == "QMEANDisCo" and args.smtldir is None:
-        raise RuntimeError("Require smtldir to run QMEANDisCo")
+    if args.method == "QMEANDisCo":
+        # expect smtl to be mounted at /smtl
+        if not os.path.exists("/smtl"):
+            raise RuntimeError("For running QMEANDisCo you need to mount the downloadable SMTL data to /smtl")
 
-    if args.smtldir:
+
         expected_files = [
             "smtl_uniq_cs219.ffdata",
             "smtl_uniq_cs219.ffindex",
@@ -756,13 +757,13 @@ def _parse_args():
         ]
 
         for f in expected_files:
-            p = os.path.join(args.smtldir, f)
+            p = os.path.join("/smtl", f)
             if not os.path.exists(p):
                 raise RuntimeError(f"expect {p} to be present")
 
         # only if date-filter is specified, we additionally need dates.csv'
         if args.datefilter:
-            p = os.path.join(args.smtldir, "dates.csv")
+            p = os.path.join("/smtl", "dates.csv")
             if not os.path.exists(p):
                 raise RuntimeError(
                     f"If datefilter argument is provided, you additionally need to provide the SMTL specific {p}"
@@ -801,7 +802,7 @@ def _main():
         args.seqres,
         args.workdir,
         args.uniclust30,
-        args.smtldir,
+        "/smtl",
         args.datefilter,
     )
 
