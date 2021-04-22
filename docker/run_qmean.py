@@ -679,13 +679,13 @@ class ModelScorerContainer:
 
 def _parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("models", nargs="+")
     parser.add_argument(
         "--method",
         dest="method",
         choices=["QMEAN", "QMEANDisCo", "QMEANBrane"],
         default="QMEANDisCo",
     )
-    parser.add_argument("--models", required=True, dest="models", nargs="+")
     parser.add_argument("--out", dest="out", default="out.json")
     parser.add_argument("--seqres", dest="seqres", default=None)
     parser.add_argument("--workdir", dest="workdir", default=None)
