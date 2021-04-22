@@ -689,7 +689,6 @@ def _parse_args():
     parser.add_argument("--out", dest="out", default="out.json")
     parser.add_argument("--seqres", dest="seqres", default=None)
     parser.add_argument("--workdir", dest="workdir", default=None)
-    parser.add_argument("--uniclust30", dest="uniclust30", required=True)
     parser.add_argument("--datefilter", dest="datefilter", default=None)
     parser.add_argument("--version", dest="version", action="store_true")
     args = parser.parse_args()
@@ -725,6 +724,12 @@ def _parse_args():
         args.cleanup_workdir=True
         ost.LogInfo(f"Tmp workdir: {args.workdir}")
 
+
+    # uniclust30 is expected to be mounted at /uniclust30
+    # however, we don't know the prefix...
+    if not os.path.exists("/uniclust30"):
+        raise RuntimeError("You must mount UniClust30 to /uniclust30")
+
     expected_uniclust30_suffixes = [
         "_a3m.ffdata",
         "_a3m.ffindex",
@@ -733,10 +738,43 @@ def _parse_args():
         "_cs219.ffdata",
         "_cs219.ffindex",
     ]
-    for suffix in expected_uniclust30_suffixes:
-        full = args.uniclust30 + suffix
-        if not os.path.exists(full):
-            raise RuntimeError(f"Expect {full} to be present in uniclust30")
+
+    uniclust_files = os.listdir("/uniclust30")
+
+    # go over all files, check whether they have a valid suffix
+    # and basically collect for each unique prefix, all observed suffixes
+    prefixes = dict()
+    for f in uniclust_files:
+        for s in expected_uniclust30_suffixes:
+            if f.endswith(s):
+                prefix = f[:-len(s)]
+                if prefix not in prefixes:
+                    prefixes[prefix] = list()
+                prefixes[prefix].append(s)
+                break
+
+    # we can now check whether the expected suffixes are complete for 
+    # each unique prefix
+    complete_prefixes = list()
+    for prefix, suffixes in prefixes.items():
+        if sorted(suffixes) == sorted(expected_uniclust30_suffixes):
+            complete_prefixes.append(os.path.join("/uniclust30", prefix))
+
+    if len(complete_prefixes) == 1:
+        args.uniclust30 = complete_prefixes[0]
+        ost.LogInfo(f"Use UniClust30: {args.uniclust30}")
+    elif len(complete_prefixes) == 0:
+        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files with "
+        msg += "equal prefix must be present for the following suffixes: "
+        msg += ", ".join(expected_uniclust30_suffixes)
+        raise RuntimeError(msg)
+    else:
+        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files with "
+        msg += "equal prefix must be present for the following suffixes: "
+        msg += ", ".join(expected_uniclust30_suffixes)
+        msg += "\n Several prefixes fulfilled this criterium: "
+        msg += ', '.join(complete_prefixes)
+        raise RuntimeError(msg)
 
     if args.method == "QMEANDisCo":
         # expect smtl to be mounted at /smtl
