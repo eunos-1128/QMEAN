@@ -677,18 +677,18 @@ class ModelScorerContainer:
 
 def _parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("models", nargs="+")
+    parser.add_argument("models", nargs="+", help = "Models in PDB or mmCIF format (also compressed, i.e. mmcif.gz)")
     parser.add_argument(
         "--method",
         dest="method",
         choices=["QMEAN", "QMEANDisCo", "QMEANBrane"],
-        default="QMEANDisCo",
+        default="QMEANDisCo", help = "Used scoring function - Default: QMEANDisCo"
     )
-    parser.add_argument("--out", dest="out", default="out.json")
-    parser.add_argument("--seqres", dest="seqres", default=None)
-    parser.add_argument("--workdir", dest="workdir", default=None)
-    parser.add_argument("--datefilter", dest="datefilter", default=None)
-    parser.add_argument("--version", dest="version", action="store_true")
+    parser.add_argument("--out", dest="out", default="out.json", help = "Destination for JSON formatted output")
+    parser.add_argument("--seqres", dest="seqres", default=None, help = "SEQRES for models in FASTA format - Single sequence for homomers/homo-oligomers - Multiple sequences for hetero-oligomers with name based matching")
+    parser.add_argument("--workdir", dest="workdir", default=None, help = "Location for intermediate output, normally temporary. If given, output remains for debug purposes")
+    parser.add_argument("--datefilter", dest="datefilter", default=None, help = "Debug purposes")
+    parser.add_argument("--version", dest="version", action="store_true", help = "Display version and exit")
     args = parser.parse_args()
 
     # if version flag is set, we just print some stuff and abort
