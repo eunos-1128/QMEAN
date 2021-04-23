@@ -677,18 +677,45 @@ class ModelScorerContainer:
 
 def _parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("models", nargs="+", help = "Models in PDB or mmCIF format (also compressed, i.e. mmcif.gz)")
+    parser.add_argument(
+        "models",
+        nargs="+",
+        help="Models in PDB or mmCIF format (also compressed, i.e. mmcif.gz)",
+    )
     parser.add_argument(
         "--method",
         dest="method",
         choices=["QMEAN", "QMEANDisCo", "QMEANBrane"],
-        default="QMEANDisCo", help = "Used scoring function - Default: QMEANDisCo"
+        default="QMEANDisCo",
+        help="Used scoring function - Default: QMEANDisCo",
     )
-    parser.add_argument("--out", dest="out", default="out.json", help = "Destination for JSON formatted output")
-    parser.add_argument("--seqres", dest="seqres", default=None, help = "SEQRES for models in FASTA format - Single sequence for homomers/homo-oligomers - Multiple sequences for hetero-oligomers with name based matching")
-    parser.add_argument("--workdir", dest="workdir", default=None, help = "Location for intermediate output, normally temporary. If given, output remains for debug purposes")
-    parser.add_argument("--datefilter", dest="datefilter", default=None, help = "Debug purposes")
-    parser.add_argument("--version", dest="version", action="store_true", help = "Display version and exit")
+    parser.add_argument(
+        "--out",
+        dest="out",
+        default="out.json",
+        help="Destination for JSON formatted output",
+    )
+    parser.add_argument(
+        "--seqres",
+        dest="seqres",
+        default=None,
+        help="SEQRES for models in FASTA format - Single sequence for homomers/homo-oligomers - Multiple sequences for hetero-oligomers with name based matching",
+    )
+    parser.add_argument(
+        "--workdir",
+        dest="workdir",
+        default=None,
+        help="Location for intermediate output, normally temporary. If given, output remains for debug purposes",
+    )
+    parser.add_argument(
+        "--datefilter", dest="datefilter", default=None, help="Debug purposes"
+    )
+    parser.add_argument(
+        "--version",
+        dest="version",
+        action="store_true",
+        help="Display version and exit",
+    )
     args = parser.parse_args()
 
     # if version flag is set, we just print some stuff and abort
@@ -714,14 +741,13 @@ def _parse_args():
         # create if it doesnt exist and disable cleanup in the end
         if not os.path.exists(args.workdir):
             os.makedirs(args.workdir)
-        args.cleanup_workdir=False
+        args.cleanup_workdir = False
         ost.LogInfo(f"User defined workdir: {args.workdir}")
     else:
         # use tmp directory as workdir which is cleaned up in the end
         args.workdir = tempfile.mkdtemp()
-        args.cleanup_workdir=True
+        args.cleanup_workdir = True
         ost.LogInfo(f"Tmp workdir: {args.workdir}")
-
 
     # uniclust30 is expected to be mounted at /uniclust30
     # however, we don't know the prefix...
@@ -745,13 +771,13 @@ def _parse_args():
     for f in uniclust_files:
         for s in expected_uniclust30_suffixes:
             if f.endswith(s):
-                prefix = f[:-len(s)]
+                prefix = f[: -len(s)]
                 if prefix not in prefixes:
                     prefixes[prefix] = list()
                 prefixes[prefix].append(s)
                 break
 
-    # we can now check whether the expected suffixes are complete for 
+    # we can now check whether the expected suffixes are complete for
     # each unique prefix
     complete_prefixes = list()
     for prefix, suffixes in prefixes.items():
@@ -762,23 +788,24 @@ def _parse_args():
         args.uniclust30 = complete_prefixes[0]
         ost.LogInfo(f"Use UniClust30: {args.uniclust30}")
     elif len(complete_prefixes) == 0:
-        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files with "
-        msg += "equal prefix must be present for the following suffixes: "
+        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files "
+        msg += "with equal prefix must be present for the following suffixes: "
         msg += ", ".join(expected_uniclust30_suffixes)
         raise RuntimeError(msg)
     else:
-        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files with "
-        msg += "equal prefix must be present for the following suffixes: "
+        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files "
+        msg += "with equal prefix must be present for the following suffixes: "
         msg += ", ".join(expected_uniclust30_suffixes)
         msg += "\n Several prefixes fulfilled this criterium: "
-        msg += ', '.join(complete_prefixes)
+        msg += ", ".join(complete_prefixes)
         raise RuntimeError(msg)
 
     if args.method == "QMEANDisCo":
         # expect smtl to be mounted at /smtl
         if not os.path.exists("/smtl"):
-            raise RuntimeError("For running QMEANDisCo you need to mount the downloadable SMTL data to /smtl")
-
+            raise RuntimeError(
+                "For running QMEANDisCo you need to mount the downloadable SMTL data to /smtl"
+            )
 
         expected_files = [
             "smtl_uniq_cs219.ffdata",
@@ -807,7 +834,7 @@ def _parse_args():
 
     # check what complib is used and report to logger
     creation_date = conop.GetDefaultLib().GetCreationDate()
-    ost.LogInfo(f'Use compound library with creation date {creation_date}')
+    ost.LogInfo(f"Use compound library with creation date {creation_date}")
 
     return args
 
@@ -826,7 +853,7 @@ def _main():
     out = dict()
     out["qmean_version"] = qmean.qmean_version
     out["smtl_version"] = None
-    out["created"] = datetime.datetime.now().isoformat(timespec="seconds") 
+    out["created"] = datetime.datetime.now().isoformat(timespec="seconds")
     out["method"] = args.method
 
     ######################################
