@@ -489,6 +489,7 @@ class ModelScorer:
         ############################
         pre_atom_count = len(self.processed_model.atoms)
         pre_res_count = len(self.processed_model.residues)
+        pre_ch_count = len(self.processed_model.chains)
         ost.PushVerbosityLevel(ost.LogLevel.Info)
         molcklogger = _Logger()
         ost.PushLogSink(molcklogger)
@@ -516,6 +517,9 @@ class ModelScorer:
         )
         self.preprocessing_log["residuesRemoved"] = pre_res_count - len(
             self.processed_model.residues
+        )
+        self.preprocessing_log["chainsRemoved"] = pre_ch_count - len(
+            self.processed_model.chains
         )
         self.peptide_processed_model = self.processed_model.Select(
             "peptide=true"
