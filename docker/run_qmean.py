@@ -259,7 +259,7 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
         logger = _Logger()
         ost.PushLogSink(logger)
         a3m = hh.BuildQueryMSA(uniclust30)
-        with open(a3m_file) as fh:
+        with open(a3m) as fh:
             a3m_content = hhblits3.ParseA3M(fh)
         ost.PopLogSink()
 
@@ -714,7 +714,98 @@ class ModelScorerContainer:
             )
 
 
+def _get_uniclust30():
+    # uniclust30 is expected to be mounted at /uniclust30
+    # however, we don't know the prefix...
+    if not os.path.exists("/uniclust30"):
+        raise RuntimeError("You must mount UniClust30 to /uniclust30")
+
+    expected_uniclust30_suffixes = [
+        "_a3m.ffdata",
+        "_a3m.ffindex",
+        "_hhm.ffdata",
+        "_hhm.ffindex",
+        "_cs219.ffdata",
+        "_cs219.ffindex",
+    ]
+
+    uniclust_files = os.listdir("/uniclust30")
+
+    # go over all files, check whether they have a valid suffix
+    # and basically collect for each unique prefix, all observed suffixes
+    prefixes = dict()
+    for f in uniclust_files:
+        for s in expected_uniclust30_suffixes:
+            if f.endswith(s):
+                prefix = f[: -len(s)]
+                if prefix not in prefixes:
+                    prefixes[prefix] = list()
+                prefixes[prefix].append(s)
+                break
+
+    # we can now check whether the expected suffixes are complete for
+    # each unique prefix
+    complete_prefixes = list()
+    for prefix, suffixes in prefixes.items():
+        if sorted(suffixes) == sorted(expected_uniclust30_suffixes):
+            complete_prefixes.append(os.path.join("/uniclust30", prefix))
+
+    if len(complete_prefixes) == 1:
+        return complete_prefixes[0]
+    elif len(complete_prefixes) == 0:
+        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files "
+        msg += "with equal prefix must be present for the following suffixes: "
+        msg += ", ".join(expected_uniclust30_suffixes)
+        raise RuntimeError(msg)
+    else:
+        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files "
+        msg += "with equal prefix must be present for the following suffixes: "
+        msg += ", ".join(expected_uniclust30_suffixes)
+        msg += "\n Several prefixes fulfilled this criterium: "
+        msg += ", ".join(complete_prefixes)
+        raise RuntimeError(msg)
+
+
+def _check_smtl(args):
+    # expect smtl to be mounted at /smtl
+    if not os.path.exists("/smtl"):
+        raise RuntimeError(
+            "For running QMEANDisCo you need to mount the downloadable SMTL data to /smtl"
+        )
+
+    expected_files = [
+        "smtl_uniq_cs219.ffdata",
+        "smtl_uniq_cs219.ffindex",
+        "smtl_uniq_hhm.ffdata",
+        "smtl_uniq_hhm.ffindex",
+        "CHAINCLUSTERINDEX",
+        "indexer.dat",
+        "seqres_data.dat",
+        "atomseq_data.dat",
+        "ca_pos_data.dat",
+        "VERSION"
+    ]
+
+    for f in expected_files:
+        p = os.path.join("/smtl", f)
+        if not os.path.exists(p):
+            raise RuntimeError(f"expect {p} to be present")
+
+    # only if date-filter is specified, we additionally need dates.csv'
+    if args.datefilter:
+        p = os.path.join("/smtl", "dates.csv")
+        if not os.path.exists(p):
+            raise RuntimeError(
+                f"If datefilter argument is provided, you additionally need to provide the SMTL specific {p}"
+            )
+
+
 def _parse_args():
+
+    ####################
+    # Define Arguments #
+    ####################
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "models",
@@ -770,13 +861,16 @@ def _parse_args():
         print("OPENSTRUCTURE:", os.getenv("VERSION_OPENSTRUCTURE"))
         sys.exit(0)
 
+    ######################################
+    # Argument checks and postprocessing #
+    ######################################
+
     if len(args.models) >= 1000:
         raise RuntimeError("Can only score a maximum of 999 models at once")
 
     for model_path in args.models:
         if not os.path.exists(model_path):
             raise RuntimeError(f"specified path {model_path} does not exist")
-
 
     if args.workdir:
         # user defined workdir
@@ -804,6 +898,7 @@ def _parse_args():
             raise RuntimeError(f"failed to load seqres file: {args.seqres}")
     args.seqres = seqres
 
+    # Deal with profiles
     if args.profiles:
         if not args.seqres:
             raise RuntimeError("Must set seqres if providing profiles")
@@ -823,91 +918,13 @@ def _parse_args():
             shutil.copy(p, os.path.join(seqanno_workdir, 
                                         hhblits3.HHblits.OUTPUT_PREFIX + '.a3m'))
 
+    # Check for valid uniclust30 and report to logger
+    args.uniclust30 = _get_uniclust30()
+    ost.LogInfo(f"Use UniClust30: {args.uniclust30}")
 
-
-    # uniclust30 is expected to be mounted at /uniclust30
-    # however, we don't know the prefix...
-    if not os.path.exists("/uniclust30"):
-        raise RuntimeError("You must mount UniClust30 to /uniclust30")
-
-    expected_uniclust30_suffixes = [
-        "_a3m.ffdata",
-        "_a3m.ffindex",
-        "_hhm.ffdata",
-        "_hhm.ffindex",
-        "_cs219.ffdata",
-        "_cs219.ffindex",
-    ]
-
-    uniclust_files = os.listdir("/uniclust30")
-
-    # go over all files, check whether they have a valid suffix
-    # and basically collect for each unique prefix, all observed suffixes
-    prefixes = dict()
-    for f in uniclust_files:
-        for s in expected_uniclust30_suffixes:
-            if f.endswith(s):
-                prefix = f[: -len(s)]
-                if prefix not in prefixes:
-                    prefixes[prefix] = list()
-                prefixes[prefix].append(s)
-                break
-
-    # we can now check whether the expected suffixes are complete for
-    # each unique prefix
-    complete_prefixes = list()
-    for prefix, suffixes in prefixes.items():
-        if sorted(suffixes) == sorted(expected_uniclust30_suffixes):
-            complete_prefixes.append(os.path.join("/uniclust30", prefix))
-
-    if len(complete_prefixes) == 1:
-        args.uniclust30 = complete_prefixes[0]
-        ost.LogInfo(f"Use UniClust30: {args.uniclust30}")
-    elif len(complete_prefixes) == 0:
-        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files "
-        msg += "with equal prefix must be present for the following suffixes: "
-        msg += ", ".join(expected_uniclust30_suffixes)
-        raise RuntimeError(msg)
-    else:
-        msg = "Expect valid UniClust30 to be mounted at /uniclust30. Files "
-        msg += "with equal prefix must be present for the following suffixes: "
-        msg += ", ".join(expected_uniclust30_suffixes)
-        msg += "\n Several prefixes fulfilled this criterium: "
-        msg += ", ".join(complete_prefixes)
-        raise RuntimeError(msg)
-
+    # Check for valid SMTL in case of QMEANDisCo
     if args.method == "QMEANDisCo":
-        # expect smtl to be mounted at /smtl
-        if not os.path.exists("/smtl"):
-            raise RuntimeError(
-                "For running QMEANDisCo you need to mount the downloadable SMTL data to /smtl"
-            )
-
-        expected_files = [
-            "smtl_uniq_cs219.ffdata",
-            "smtl_uniq_cs219.ffindex",
-            "smtl_uniq_hhm.ffdata",
-            "smtl_uniq_hhm.ffindex",
-            "CHAINCLUSTERINDEX",
-            "indexer.dat",
-            "seqres_data.dat",
-            "atomseq_data.dat",
-            "ca_pos_data.dat",
-            "VERSION"
-        ]
-
-        for f in expected_files:
-            p = os.path.join("/smtl", f)
-            if not os.path.exists(p):
-                raise RuntimeError(f"expect {p} to be present")
-
-        # only if date-filter is specified, we additionally need dates.csv'
-        if args.datefilter:
-            p = os.path.join("/smtl", "dates.csv")
-            if not os.path.exists(p):
-                raise RuntimeError(
-                    f"If datefilter argument is provided, you additionally need to provide the SMTL specific {p}"
-                )
+        _check_smtl(args)
 
     # check what complib is used and report to logger
     creation_date = conop.GetDefaultLib().GetCreationDate()
