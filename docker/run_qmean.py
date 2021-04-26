@@ -19,12 +19,14 @@ from ost import seq
 from ost.bindings import hhblits3
 
 import qmean
+import qmean.conf as qmean_config
 from qmean.predicted_sequence_features import PSIPREDHandler
 from qmean.predicted_sequence_features import ACCPROHandler
 from qmean.predicted_sequence_features import AlignChainToSEQRES
 from qmean import DisCoContainer
 from qmean import ExtractTemplateDataDisCo
 from qmean import DisCoDataContainers
+from qmean import mqa_result_membrane
 
 
 class _Logger(ost.LogSink):
@@ -402,16 +404,43 @@ class ModelScorer:
         )
 
         local_scores = dict()
-        for chn, seq in zip(scorer.model.chains, self.seqres_list):
-            score_list = list([None] * len(seq))
-            per_chain_scores = scorer.local_scores[chn.GetName()]
-            for rnum, score in per_chain_scores.items():
-                if rnum < 1 or rnum > len(seq):
-                    raise RuntimeError(
-                        "Observed ResNum not matching provided SEQRES!"
-                    )
-                score_list[rnum - 1] = NaN_To_None(score)
-            local_scores[chn.GetName()] = score_list
+
+        if scoring_function in ["QMEANDisCo", "QMEAN"]:
+            for chn, seq in zip(scorer.model.chains, self.seqres_list):
+                score_list = list([None] * len(seq))
+                per_chain_scores = scorer.local_scores[chn.GetName()]
+                for rnum, score in per_chain_scores.items():
+                    if rnum < 1 or rnum > len(seq):
+                        raise RuntimeError(
+                            "Observed ResNum not matching provided SEQRES!"
+                        )
+                    score_list[rnum - 1] = NaN_To_None(score)
+                local_scores[chn.GetName()] = score_list
+        elif scoring_function == "QMEANBrane":
+            # the global scores are the same as QMEAN but the local ones change
+            settings = qmean_config.MembraneSettings()
+            peptide_sel = self.processed_model.Select("peptide=True")
+            res = mqa_result_membrane.LocalMembraneResult.Create(peptide_sel, 
+                                                                 settings,
+                                                                 False, 
+                                                                 psipred=psipred_handler_list, 
+                                                                 accpro=accpro_handler_list)
+
+            for ch, s in zip(peptide_sel.chains, self.seqres_list):
+                score_list = list([None] * len(s))
+                local_scores[ch.GetName()] = score_list
+
+            chain_name_idx = res.score_table.GetColIndex('chain')
+            rnum_idx = res.score_table.GetColIndex('rnum')
+            score_idx = res.score_table.GetColIndex('QMEAN')
+
+            for r in res.score_table.rows:
+                chain_name = r[chain_name_idx]
+                rnum = r[rnum_idx]
+                score = r[score_idx]
+                local_scores[chain_name][rnum-1] = NaN_To_None(score)
+        else:
+            raise RuntimeError(f"Unknown scoring function {scoring_function}")
 
         self.local_scores = local_scores
         self.global_scores = global_scores
