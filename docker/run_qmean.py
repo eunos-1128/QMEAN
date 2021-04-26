@@ -295,8 +295,6 @@ class ModelScorer:
         # - processed_model: model with Molck applied (see code) and potentially
         #                    added chain name.
         #                    Residues are renumbered according to SEQRES
-        # - chain_name_mapping: Dictionary mapping chain names in model to
-        #                       processed_model
         # - seqres_list: List of length
         #                len(self.processed_model.Select('peptide=true').chains)
         #                Contains for each chain the SEQRES sequence.
@@ -460,6 +458,8 @@ class ModelScorer:
         # perform processing on deep copy of input model
         self.processed_model = self.model.Copy()
 
+        self.preprocessing_log = dict()
+
         #########################################################
         # Add chain names if not set (happens with CASP models) #
         #########################################################
@@ -467,7 +467,7 @@ class ModelScorer:
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
         )
         ed = self.processed_model.handle.EditXCS()
-        self.chain_name_mapping = dict()
+        chain_name_mapping = dict()
         for ch in self.processed_model.chains:
             if len(ch.GetName().strip()) < 1:
                 # iterate over possible chain names and assign first unused name
@@ -475,13 +475,14 @@ class ModelScorer:
                     try:
                         old_cname = ch.GetName()
                         ed.RenameChain(ch, new_cname)
-                        self.chain_name_mapping[old_cname] = new_cname
+                        chain_name_mapping[old_cname] = new_cname
                         break
                     except:
                         continue
             else:
                 # chain name is valid, nothing to do for this chain
-                self.chain_name_mapping[ch.GetName()] = ch.GetName()
+                chain_name_mapping[ch.GetName()] = ch.GetName()
+        self.preprocessing_log["chain_name_mapping"] = chain_name_mapping
 
         ############################
         # Preprocessing with Molck #
@@ -509,7 +510,6 @@ class ModelScorer:
         )
         ost.PopLogSink()
         ost.PopVerbosityLevel()
-        self.preprocessing_log = dict()
         self.preprocessing_log["molck_log"] = molcklogger.full_message
         self.preprocessing_log["atomsRemoved"] = pre_atom_count - len(
             self.processed_model.atoms
