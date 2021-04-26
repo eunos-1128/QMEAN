@@ -530,7 +530,7 @@ class ModelScorer:
 
             # option 1: all chains align to this single SEQRES (monomer or homo-oligomer)
             if len(self.seqres) == 1:
-                for ch in self.peptide_processed_model:
+                for ch in self.peptide_processed_model.chains:
                     try:
                         aln = AlignChainToSEQRES(ch, self.seqres[0])
                         alignments.append(aln)
@@ -542,9 +542,9 @@ class ModelScorer:
             # option2: Map chains using names (whatever-mer, as long as
             #          as I find a SEQRES for each chain based on name matching)
             elif len(self.seqres) > 1:
-                for ch in self.peptide_processed_model:
+                for ch in self.peptide_processed_model.chains:
                     ch_seqres = None
-                    for s in seqres:
+                    for s in self.seqres:
                         if ch.GetName() == s.GetName():
                             ch_seqres = s
                             break
