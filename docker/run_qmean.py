@@ -367,53 +367,55 @@ class ModelScorer:
         )
 
         # QMEAN gives NaN if something is not defined. JSON prefers None
-        def NaN_To_None(val):
+        def format_float(val, digits=3):
             if math.isnan(val):
                 return None
-            return val
+            return round(val, digits)
 
         global_scores = dict()
-        global_scores["qmean4_norm_score"] = NaN_To_None(scorer.qmean4_score)
-        global_scores["qmean4_z_score"] = NaN_To_None(scorer.qmean4_z_score)
+        global_scores["qmean4_norm_score"] = format_float(scorer.qmean4_score)
+        global_scores["qmean4_z_score"] = format_float(scorer.qmean4_z_score)
         try:
-            global_scores["qmean6_norm_score"] = NaN_To_None(
+            global_scores["qmean6_norm_score"] = format_float(
                 scorer.qmean6_score
             )
-            global_scores["qmean6_z_score"] = NaN_To_None(scorer.qmean6_z_score)
+            global_scores["qmean6_z_score"] = format_float(
+                scorer.qmean6_z_score
+            )
         except Exception:  # pylint: disable=broad-except
             global_scores["qmean6_norm_score"] = None
             global_scores["qmean6_z_score"] = None
         scores = scorer.qmean6_components
-        global_scores["interaction_norm_score"] = NaN_To_None(
+        global_scores["interaction_norm_score"] = format_float(
             scores["interaction"]
         )
-        global_scores["interaction_z_score"] = NaN_To_None(
+        global_scores["interaction_z_score"] = format_float(
             scores["interaction_z_score"]
         )
-        global_scores["cbeta_norm_score"] = NaN_To_None(scores["cbeta"])
-        global_scores["cbeta_z_score"] = NaN_To_None(scores["cbeta_z_score"])
-        global_scores["packing_norm_score"] = NaN_To_None(scores["packing"])
-        global_scores["packing_z_score"] = NaN_To_None(
+        global_scores["cbeta_norm_score"] = format_float(scores["cbeta"])
+        global_scores["cbeta_z_score"] = format_float(scores["cbeta_z_score"])
+        global_scores["packing_norm_score"] = format_float(scores["packing"])
+        global_scores["packing_z_score"] = format_float(
             scores["packing_z_score"]
         )
-        global_scores["torsion_norm_score"] = NaN_To_None(scores["torsion"])
-        global_scores["torsion_z_score"] = NaN_To_None(
+        global_scores["torsion_norm_score"] = format_float(scores["torsion"])
+        global_scores["torsion_z_score"] = format_float(
             scores["torsion_z_score"]
         )
-        global_scores["ss_agreement_norm_score"] = NaN_To_None(
+        global_scores["ss_agreement_norm_score"] = format_float(
             scores["ss_agreement"]
         )
-        global_scores["ss_agreement_z_score"] = NaN_To_None(
+        global_scores["ss_agreement_z_score"] = format_float(
             scores["ss_agreement_z_score"]
         )
-        global_scores["acc_agreement_norm_score"] = NaN_To_None(
+        global_scores["acc_agreement_norm_score"] = format_float(
             scores["acc_agreement"]
         )
-        global_scores["acc_agreement_z_score"] = NaN_To_None(
+        global_scores["acc_agreement_z_score"] = format_float(
             scores["acc_agreement_z_score"]
         )
-        global_scores["avg_local_score"] = NaN_To_None(scorer.avg_local_score)
-        global_scores["avg_local_score_error"] = NaN_To_None(
+        global_scores["avg_local_score"] = format_float(scorer.avg_local_score)
+        global_scores["avg_local_score_error"] = format_float(
             scorer.avg_local_score_error
         )
 
@@ -428,7 +430,7 @@ class ModelScorer:
                         raise RuntimeError(
                             "Observed ResNum not matching provided SEQRES!"
                         )
-                    score_list[rnum - 1] = NaN_To_None(score)
+                    score_list[rnum - 1] = format_float(score)
                 local_scores[chn.GetName()] = score_list
         elif scoring_function == "QMEANBrane":
             # the global scores are the same as QMEAN but the local ones change
@@ -454,7 +456,7 @@ class ModelScorer:
                 chain_name = r[chain_name_idx]
                 rnum = r[rnum_idx]
                 score = r[score_idx]
-                local_scores[chain_name][rnum - 1] = NaN_To_None(score)
+                local_scores[chain_name][rnum - 1] = format_float(score)
         else:
             raise RuntimeError(f"Unknown scoring function {scoring_function}")
 
