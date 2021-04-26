@@ -849,6 +849,7 @@ def _parse_args():
             "seqres_data.dat",
             "atomseq_data.dat",
             "ca_pos_data.dat",
+            "VERSION"
         ]
 
         for f in expected_files:
@@ -884,7 +885,6 @@ def _main():
     args = _parse_args()
     out = dict()
     out["qmean_version"] = qmean.qmean_version
-    out["smtl_version"] = None
     out["created"] = datetime.datetime.now().isoformat(timespec="seconds")
     out["method"] = args.method
     out["seqres_uploaded"] = None
@@ -893,6 +893,10 @@ def _main():
         for s in args.seqres:
             out["seqres_uploaded"].append({"name": s.GetName(), 
                                            "sequence": str(s)})
+    out["smtl_version"] = None
+    if args.method == "QMEANDisCo":
+        with open('/smtl/VERSION', 'r') as fh:
+            out["smtl_version"] = fh.read().strip()
 
     ######################################
     # Load/process models and do scoring #
