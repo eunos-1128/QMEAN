@@ -241,19 +241,35 @@ def _get_dc(
 
 def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
 
-    seqanno_workdir = os.path.join(workdir, target_seq.GetName())
+    md5_hash = target_seq.GetName()
+    seqanno_workdir = os.path.join(workdir, md5_hash)
     hh = hhblits3.HHblits(target_seq, "/usr/local", working_dir=seqanno_workdir)
+
+    # in case of user specified profiles or when a workdir has been defined
+    # which was not cleaned up, there already is an a3m file
+    a3m = os.path.join(seqanno_workdir, hhblits3.HHblits.OUTPUT_PREFIX + ".a3m")
+    a3m_content = None
+    if os.path.exists(a3m):
+        ost.LogInfo(f"Use precomputed a3m file (SEQRES md5 hash: {md5_hash})")
+        with open(a3m) as fh:
+            a3m_content = hhblits3.ParseA3M(fh)
+    else:
+        # hhblits prints stuff in stderr, let's setup yet another logger and 
+        # swallow everything. Check later if something went wrong...
+        logger = _Logger()
+        ost.PushLogSink(logger)
+        a3m = hh.BuildQueryMSA(uniclust30)
+        with open(a3m_file) as fh:
+            a3m_content = hhblits3.ParseA3M(fh)
+        ost.PopLogSink()
 
     # hhblits prints stuff in stderr, let's setup yet another logger and swallow
     # everything. Check later if something went wrong...
     logger = _Logger()
     ost.PushLogSink(logger)
-    a3m_file = hh.BuildQueryMSA(uniclust30)
-    with open(a3m_file) as fh:
-        a3m_content = hhblits3.ParseA3M(fh)
-    hhm_file = hh.A3MToProfile(a3m_file)
-    ost.PopLogSink()
-    prof = hhblits3.ParseHHM(open(hhm_file))
+    hhm = hh.A3MToProfile(a3m)
+    ost.PopLogSink()    
+    prof = hhblits3.ParseHHM(open(hhm))
 
     # data for PSIPREDHandler can be fetched from a3m_content
     data = dict()
@@ -276,7 +292,7 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
 
     if do_disco:
         dc = _get_dc(
-            seqanno_workdir, target_seq, hh, a3m_file, smtldir, datefilter
+            seqanno_workdir, target_seq, hh, a3m, smtldir, datefilter
         )
     else:
         dc = None
@@ -725,6 +741,12 @@ def _parse_args():
         help="SEQRES for models in FASTA format - Single sequence for homomers/homo-oligomers - Multiple sequences for hetero-oligomers with name based matching",
     )
     parser.add_argument(
+        "--profiles",
+        nargs="+",
+        default=None,
+        help="Precomputed HHblits sequence profile(s) in a3m format that match target sequence(s) provided in seqres - must contain psipred annotation"
+    )
+    parser.add_argument(
         "--workdir",
         dest="workdir",
         default=None,
@@ -755,18 +777,6 @@ def _parse_args():
         if not os.path.exists(model_path):
             raise RuntimeError(f"specified path {model_path} does not exist")
 
-    if args.seqres:
-        if not os.path.exists(args.seqres):
-            raise RuntimeError(f"specified path {args.seqres} does not exist")
-
-    # SEQRES gets already loaded, models come later
-    seqres = None
-    if args.seqres:
-        try:
-            seqres = io.LoadSequenceList(args.seqres)
-        except:
-            raise RuntimeError(f"failed to load seqres file: {args.seqres}")
-    args.seqres = seqres
 
     if args.workdir:
         # user defined workdir
@@ -780,6 +790,40 @@ def _parse_args():
         args.workdir = tempfile.mkdtemp()
         args.cleanup_workdir = True
         ost.LogInfo(f"Tmp workdir: {args.workdir}")
+
+    if args.seqres:
+        if not os.path.exists(args.seqres):
+            raise RuntimeError(f"specified path {args.seqres} does not exist")
+
+    # SEQRES gets already loaded, models come later
+    seqres = None
+    if args.seqres:
+        try:
+            seqres = io.LoadSequenceList(args.seqres)
+        except:
+            raise RuntimeError(f"failed to load seqres file: {args.seqres}")
+    args.seqres = seqres
+
+    if args.profiles:
+        if not args.seqres:
+            raise RuntimeError("Must set seqres if providing profiles")
+        seqres_hashes = [_get_seq_name(str(s)) for s in args.seqres]
+        for p in args.profiles:
+            if not os.path.exists(p):
+                raise RuntimeError(f"specified path {p} does not exist")
+            a3m_content = hhblits3.ParseA3M(open(p))
+            if a3m_content['ss_pred'] is None or a3m_content['ss_conf'] is None:
+                raise RuntimeError(f"Sequence profile {p} must contain secondary structure annotation")
+            trg_seq = a3m_content['msa'].GetSequence(0).GetGaplessString()
+            trg_seq_hash = _get_seq_name(trg_seq) 
+            if trg_seq_hash not in seqres_hashes:
+                raise RuntimeError(f"Could not find matching SEQRES for {p}")
+            seqanno_workdir = os.path.join(args.workdir, trg_seq_hash)
+            os.makedirs(seqanno_workdir)
+            shutil.copy(p, os.path.join(seqanno_workdir, 
+                                        hhblits3.HHblits.OUTPUT_PREFIX + '.a3m'))
+
+
 
     # uniclust30 is expected to be mounted at /uniclust30
     # however, we don't know the prefix...
