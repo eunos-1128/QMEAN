@@ -455,34 +455,10 @@ class ModelScorer:
 
     def _process_model(self):
 
-        # perform processing on deep copy of input model
-        self.processed_model = self.model.Copy()
-
         self.preprocessing_log = dict()
 
-        #########################################################
-        # Add chain names if not set (happens with CASP models) #
-        #########################################################
-        stupid_names = (
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
-        )
-        ed = self.processed_model.handle.EditXCS()
-        chain_name_mapping = dict()
-        for ch in self.processed_model.chains:
-            if len(ch.GetName().strip()) < 1:
-                # iterate over possible chain names and assign first unused name
-                for new_cname in stupid_names:
-                    try:
-                        old_cname = ch.GetName()
-                        ed.RenameChain(ch, new_cname)
-                        chain_name_mapping[old_cname] = new_cname
-                        break
-                    except:
-                        continue
-            else:
-                # chain name is valid, nothing to do for this chain
-                chain_name_mapping[ch.GetName()] = ch.GetName()
-        self.preprocessing_log["chain_name_mapping"] = chain_name_mapping
+        # perform processing on deep copy of input model
+        self.processed_model = self.model.Copy()
 
         ############################
         # Preprocessing with Molck #
@@ -524,6 +500,30 @@ class ModelScorer:
         self.peptide_processed_model = self.processed_model.Select(
             "peptide=true"
         )
+
+        #########################################################
+        # Add chain names if not set (happens with CASP models) #
+        #########################################################
+        stupid_names = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
+        )
+        ed = self.processed_model.handle.EditXCS()
+        chain_name_mapping = dict()
+        for ch in self.processed_model.chains:
+            if len(ch.GetName().strip()) < 1:
+                # iterate over possible chain names and assign first unused name
+                for new_cname in stupid_names:
+                    try:
+                        old_cname = ch.GetName()
+                        ed.RenameChain(ch, new_cname)
+                        chain_name_mapping[old_cname] = new_cname
+                        break
+                    except:
+                        continue
+            else:
+                # chain name is valid, nothing to do for this chain
+                chain_name_mapping[ch.GetName()] = ch.GetName()
+        self.preprocessing_log["chain_name_mapping"] = chain_name_mapping
 
         #########################
         # Etract SEQRES/ATOMSEQ #
