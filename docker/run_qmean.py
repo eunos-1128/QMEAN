@@ -626,9 +626,9 @@ class ModelScorerContainer:
         out_dict = dict()
         out_dict["models"] = dict()
         for m_idx, m in enumerate(self.models):
-            identifier = str(m_idx)
+            identifier = str(m_idx+1)
             identifier = (3 - len(identifier)) * "0" + identifier
-            out_dict["models"][identifier] = m.to_json()
+            out_dict["models"]["model_" + identifier] = m.to_json()
         return out_dict
 
     @property
@@ -729,8 +729,8 @@ def _parse_args():
         print("OPENSTRUCTURE:", os.getenv("VERSION_OPENSTRUCTURE"))
         sys.exit(0)
 
-    if len(args.models) > 1000:
-        raise RuntimeError("Can only score a maximum of 1000 models at once")
+    if len(args.models) >= 1000:
+        raise RuntimeError("Can only score a maximum of 999 models at once")
 
     for model_path in args.models:
         if not os.path.exists(model_path):
