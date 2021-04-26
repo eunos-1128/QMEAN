@@ -254,7 +254,7 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
         with open(a3m) as fh:
             a3m_content = hhblits3.ParseA3M(fh)
     else:
-        # hhblits prints stuff in stderr, let's setup yet another logger and 
+        # hhblits prints stuff in stderr, let's setup yet another logger and
         # swallow everything. Check later if something went wrong...
         logger = _Logger()
         ost.PushLogSink(logger)
@@ -268,7 +268,7 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
     logger = _Logger()
     ost.PushLogSink(logger)
     hhm = hh.A3MToProfile(a3m)
-    ost.PopLogSink()    
+    ost.PopLogSink()
     prof = hhblits3.ParseHHM(open(hhm))
 
     # data for PSIPREDHandler can be fetched from a3m_content
@@ -291,9 +291,7 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
         accpro_handler = ACCPROHandler(data)
 
     if do_disco:
-        dc = _get_dc(
-            seqanno_workdir, target_seq, hh, a3m, smtldir, datefilter
-        )
+        dc = _get_dc(seqanno_workdir, target_seq, hh, a3m, smtldir, datefilter)
     else:
         dc = None
 
@@ -436,25 +434,27 @@ class ModelScorer:
             # the global scores are the same as QMEAN but the local ones change
             settings = qmean_config.MembraneSettings()
             peptide_sel = self.processed_model.Select("peptide=True")
-            res = mqa_result_membrane.LocalMembraneResult.Create(peptide_sel, 
-                                                                 settings,
-                                                                 False, 
-                                                                 psipred=psipred_handler_list, 
-                                                                 accpro=accpro_handler_list)
+            res = mqa_result_membrane.LocalMembraneResult.Create(
+                peptide_sel,
+                settings,
+                False,
+                psipred=psipred_handler_list,
+                accpro=accpro_handler_list,
+            )
 
             for ch, s in zip(peptide_sel.chains, self.seqres_list):
                 score_list = list([None] * len(s))
                 local_scores[ch.GetName()] = score_list
 
-            chain_name_idx = res.score_table.GetColIndex('chain')
-            rnum_idx = res.score_table.GetColIndex('rnum')
-            score_idx = res.score_table.GetColIndex('QMEAN')
+            chain_name_idx = res.score_table.GetColIndex("chain")
+            rnum_idx = res.score_table.GetColIndex("rnum")
+            score_idx = res.score_table.GetColIndex("QMEAN")
 
             for r in res.score_table.rows:
                 chain_name = r[chain_name_idx]
                 rnum = r[rnum_idx]
                 score = r[score_idx]
-                local_scores[chain_name][rnum-1] = NaN_To_None(score)
+                local_scores[chain_name][rnum - 1] = NaN_To_None(score)
         else:
             raise RuntimeError(f"Unknown scoring function {scoring_function}")
 
@@ -670,7 +670,7 @@ class ModelScorerContainer:
         out_dict = dict()
         out_dict["models"] = dict()
         for m_idx, m in enumerate(self.models):
-            identifier = str(m_idx+1)
+            identifier = str(m_idx + 1)
             identifier = (3 - len(identifier)) * "0" + identifier
             out_dict["models"]["model_" + identifier] = m.to_json()
         return out_dict
@@ -783,7 +783,7 @@ def _check_smtl(args):
         "seqres_data.dat",
         "atomseq_data.dat",
         "ca_pos_data.dat",
-        "VERSION"
+        "VERSION",
     ]
 
     for f in expected_files:
@@ -835,7 +835,7 @@ def _parse_args():
         "--profiles",
         nargs="+",
         default=None,
-        help="Precomputed HHblits sequence profile(s) in a3m format that match target sequence(s) provided in seqres - must contain psipred annotation"
+        help="Precomputed HHblits sequence profile(s) in a3m format that match target sequence(s) provided in seqres - must contain psipred annotation",
     )
     parser.add_argument(
         "--workdir",
@@ -907,16 +907,22 @@ def _parse_args():
             if not os.path.exists(p):
                 raise RuntimeError(f"specified path {p} does not exist")
             a3m_content = hhblits3.ParseA3M(open(p))
-            if a3m_content['ss_pred'] is None or a3m_content['ss_conf'] is None:
-                raise RuntimeError(f"Sequence profile {p} must contain secondary structure annotation")
-            trg_seq = a3m_content['msa'].GetSequence(0).GetGaplessString()
-            trg_seq_hash = _get_seq_name(trg_seq) 
+            if a3m_content["ss_pred"] is None or a3m_content["ss_conf"] is None:
+                raise RuntimeError(
+                    f"Sequence profile {p} must contain secondary structure annotation"
+                )
+            trg_seq = a3m_content["msa"].GetSequence(0).GetGaplessString()
+            trg_seq_hash = _get_seq_name(trg_seq)
             if trg_seq_hash not in seqres_hashes:
                 raise RuntimeError(f"Could not find matching SEQRES for {p}")
             seqanno_workdir = os.path.join(args.workdir, trg_seq_hash)
             os.makedirs(seqanno_workdir)
-            shutil.copy(p, os.path.join(seqanno_workdir, 
-                                        hhblits3.HHblits.OUTPUT_PREFIX + '.a3m'))
+            shutil.copy(
+                p,
+                os.path.join(
+                    seqanno_workdir, hhblits3.HHblits.OUTPUT_PREFIX + ".a3m"
+                ),
+            )
 
     # Check for valid uniclust30 and report to logger
     args.uniclust30 = _get_uniclust30()
@@ -952,11 +958,12 @@ def _main():
     if args.seqres:
         out["seqres_uploaded"] = list()
         for s in args.seqres:
-            out["seqres_uploaded"].append({"name": s.GetName(), 
-                                           "sequence": str(s)})
+            out["seqres_uploaded"].append(
+                {"name": s.GetName(), "sequence": str(s)}
+            )
     out["smtl_version"] = None
     if args.method == "QMEANDisCo":
-        with open('/smtl/VERSION', 'r') as fh:
+        with open("/smtl/VERSION", "r") as fh:
             out["smtl_version"] = fh.read().strip()
 
     ######################################
