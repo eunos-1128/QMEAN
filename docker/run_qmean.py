@@ -598,7 +598,7 @@ class ModelScorerContainer:
         self,
         method,
         model_paths,
-        seqres_path,
+        seqres,
         workdir,
         uniclust30,
         smtldir,
@@ -607,8 +607,7 @@ class ModelScorerContainer:
         self.method = method
         self._seqres_list = None
 
-        # load SEQRES and setup models
-        seqres = self._load_seqres(seqres_path)
+        # setup models
         self.models = list()
         for mp in model_paths:
             self.models.append(ModelScorer(mp, seqres))
@@ -642,15 +641,6 @@ class ModelScorerContainer:
                         self._seqres_list.append(s)
                         added_sequences.add(s.GetName())
         return self._seqres_list
-
-    def _load_seqres(self, seqres_path):
-        seqres = None
-        if seqres_path:
-            try:
-                seqres = io.LoadSequenceList(seqres_path)
-            except:
-                raise RuntimeError(f"failed to load seqres file: {seqres_path}")
-        return seqres
 
     def _do_seqres_features(self, workdir, uniclust30, smtldir, datefilter):
         self.psipred_handler = dict()
@@ -739,6 +729,15 @@ def _parse_args():
     if args.seqres:
         if not os.path.exists(args.seqres):
             raise RuntimeError(f"specified path {args.seqres} does not exist")
+
+    # SEQRES gets already loaded, models come later
+    seqres = None
+    if args.seqres:
+        try:
+            seqres = io.LoadSequenceList(args.seqres)
+        except:
+            raise RuntimeError(f"failed to load seqres file: {args.seqres}")
+    args.seqres = seqres
 
     if args.workdir:
         # user defined workdir
@@ -859,6 +858,12 @@ def _main():
     out["smtl_version"] = None
     out["created"] = datetime.datetime.now().isoformat(timespec="seconds")
     out["method"] = args.method
+    out["seqres_uploaded"] = None
+    if args.seqres:
+        out["seqres_uploaded"] = list()
+        for s in args.seqres:
+            out["seqres_uploaded"].append({"name": s.GetName(), 
+                                           "sequence": str(s)})
 
     ######################################
     # Load/process models and do scoring #
