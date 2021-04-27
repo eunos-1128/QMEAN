@@ -349,7 +349,7 @@ RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP; \
     /usr/bin/chown -R $QMEAN_USER /data
 
 # Copy script to run QMEANDisCo
-COPY run-qmeandisco.py /qmean/
+COPY run_qmean.py /qmean/
 COPY predict_ss_sa.pl /qmean/
 COPY homology_sa.pl /qmean/
 COPY getACCAligns.pl /qmean/
