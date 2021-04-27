@@ -340,12 +340,13 @@ ARG QMEAN_USER_ID=1000
 ARG QMEAN_GROUP_ID=1000
 ENV QMEAN_USER="qmean" \
     QMEAN_GROUP="qmean"
-RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP && \
+RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP; \
     useradd --no-log-init -u $QMEAN_USER_ID -r -ms /bin/bash -g $QMEAN_GROUP \
             $QMEAN_USER; \
     /usr/bin/mkdir /qmean; \
-    /usr/bin/chgrp -R $QMEAN_GROUP /qmean; \
-    /usr/bin/chown -R $QMEAN_USER /qmean
+    /usr/bin/mkdir /data; \
+    /usr/bin/chgrp -R $QMEAN_GROUP /data; \
+    /usr/bin/chown -R $QMEAN_USER /data
 
 # Copy script to run QMEANDisCo
 COPY run-qmeandisco.py /qmean/
@@ -356,7 +357,7 @@ COPY getACCAligns.pl /qmean/
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /qmean
+WORKDIR /data
 
 COPY docker-entrypoint.sh /qmean
 ENTRYPOINT ["/qmean/docker-entrypoint.sh"]
@@ -365,12 +366,8 @@ CMD ["qmeandisco"]
 USER $QMEAN_USER
 
 # TODO:
-# - check if SWIG is needed
-# - make QMEAN DisCo the default command, make it run at PID 0 (or is it 1?
-#   Check the docs!)
-# - create a dedicated user (restricts writing of output because of permissions)
-#   note in README how to rebuild with a dedicated user, also
-#   test that this works
+# - note in README how to rebuild with a dedicated user, also test that this
+#   works
 # - turn the run-qmeandisco.py into a proper QMEAN DisCo
 #   - requires HHBlits, ACCPro and maybe more software in this image
 # - in the README note how to switch to a recent compounds.chemlib
@@ -382,5 +379,11 @@ USER $QMEAN_USER
 #   system
 # - place docker-entrypoint.sh and qmeandisco script in a non-writable folder for
 #   security reasons, folder should also be not mountable
+# - From Docker best practices (not possible right now, maybe they revert that
+#   advice in the future):
+#   - run NTP client (https://docs.docker.com/develop/dev-best-practices/)
+# - debian slim:
+#   - QMEAN is a Python app, start with a debian-slim Python3 base image?
+#   - for base image, consider what is persistantly installed as base
 
 # LocalWords:  QMEAN arg
