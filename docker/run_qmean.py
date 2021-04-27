@@ -165,10 +165,10 @@ def _run_accpro(fasta_file, msa, workdir, seqlen):
 
 
 def _get_dc(
-    workdir, target_seq, hh, a3m_file, smtldir, datefilter=None, store_dc=True
+    workdir, target_seq, hh, a3m_file, qmtldir, datefilter=None, store_dc=True
 ):
 
-    db = os.path.join(smtldir, "smtl_uniq")
+    db = os.path.join(qmtldir, "smtl_uniq")
 
     # hhblits prints stuff in stderr, let's setup yet another logger and swallow
     # everything. Check later if something went wrong...
@@ -181,15 +181,15 @@ def _get_dc(
         LogError("HHblits search did not produce any results, aborting")
         sys.exit(-1)
 
-    index_file = os.path.join(smtldir, "CHAINCLUSTERINDEX")
-    dates_file = os.path.join(smtldir, "dates.csv")
+    index_file = os.path.join(qmtldir, "CHAINCLUSTERINDEX")
+    dates_file = os.path.join(qmtldir, "dates.csv")
     chain_cluster_index = _ChainClusterIndex(index_file, dates_file)
 
     binary_tpl = DisCoDataContainers(
-        os.path.join(smtldir, "indexer.dat"),
-        os.path.join(smtldir, "seqres_data.dat"),
-        os.path.join(smtldir, "atomseq_data.dat"),
-        os.path.join(smtldir, "ca_pos_data.dat"),
+        os.path.join(qmtldir, "indexer.dat"),
+        os.path.join(qmtldir, "seqres_data.dat"),
+        os.path.join(qmtldir, "atomseq_data.dat"),
+        os.path.join(qmtldir, "ca_pos_data.dat"),
     )
 
     dc = DisCoContainer(target_seq)
@@ -210,7 +210,7 @@ def _get_dc(
             pdb_id, assembly_id, chain_name = tpl.split(".")
 
             # use try except block, if certain template cannot be
-            # found in binary SMTL...
+            # found in binary TPL...
             try:
                 binary_tpl_assembly = ".".join([pdb_id, assembly_id])
                 tpl_data = ExtractTemplateDataDisCo(
@@ -239,7 +239,7 @@ def _get_dc(
     return dc
 
 
-def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
+def _seqanno(target_seq, workdir, uniclust30, do_disco, qmtldir, datefilter):
 
     md5_hash = target_seq.GetName()
     seqanno_workdir = os.path.join(workdir, md5_hash)
@@ -291,7 +291,7 @@ def _seqanno(target_seq, workdir, uniclust30, do_disco, smtldir, datefilter):
         accpro_handler = ACCPROHandler(data)
 
     if do_disco:
-        dc = _get_dc(seqanno_workdir, target_seq, hh, a3m, smtldir, datefilter)
+        dc = _get_dc(seqanno_workdir, target_seq, hh, a3m, qmtldir, datefilter)
     else:
         dc = None
 
@@ -648,7 +648,7 @@ class ModelScorerContainer:
         seqres,
         workdir,
         uniclust30,
-        smtldir,
+        qmtldir,
         datefilter,
     ):
         self.method = method
@@ -663,7 +663,7 @@ class ModelScorerContainer:
         # - self.psipred_handler
         # - self.accpro_handler
         # - self.disco_container
-        self._do_seqres_features(workdir, uniclust30, smtldir, datefilter)
+        self._do_seqres_features(workdir, uniclust30, qmtldir, datefilter)
 
         # perform scoring on all models
         self._score()
@@ -689,7 +689,7 @@ class ModelScorerContainer:
                         added_sequences.add(s.GetName())
         return self._seqres_list
 
-    def _do_seqres_features(self, workdir, uniclust30, smtldir, datefilter):
+    def _do_seqres_features(self, workdir, uniclust30, qmtldir, datefilter):
         self.psipred_handler = dict()
         self.accpro_handler = dict()
         self.disco_container = dict()
@@ -699,7 +699,7 @@ class ModelScorerContainer:
                 workdir,
                 uniclust30,
                 self.method == "QMEANDisCo",
-                smtldir,
+                qmtldir,
                 datefilter,
             )
             self.psipred_handler[s.GetName()] = p
@@ -768,11 +768,11 @@ def _get_uniclust30():
         raise RuntimeError(msg)
 
 
-def _check_smtl(args):
-    # expect smtl to be mounted at /smtl
-    if not os.path.exists("/smtl"):
+def _check_qmtl(args):
+    # expect qmtl to be mounted at /qmtl
+    if not os.path.exists("/qmtl"):
         raise RuntimeError(
-            "For running QMEANDisCo you need to mount the downloadable SMTL data to /smtl"
+            "For running QMEANDisCo you need to mount the downloadable QMTL data to /qmtl"
         )
 
     expected_files = [
@@ -789,16 +789,16 @@ def _check_smtl(args):
     ]
 
     for f in expected_files:
-        p = os.path.join("/smtl", f)
+        p = os.path.join("/qmtl", f)
         if not os.path.exists(p):
             raise RuntimeError(f"expect {p} to be present")
 
     # only if date-filter is specified, we additionally need dates.csv'
     if args.datefilter:
-        p = os.path.join("/smtl", "dates.csv")
+        p = os.path.join("/qmtl", "dates.csv")
         if not os.path.exists(p):
             raise RuntimeError(
-                f"If datefilter argument is provided, you additionally need to provide the SMTL specific {p}"
+                f"If datefilter argument is provided, you additionally need to provide the QMTL specific {p}"
             )
 
 
@@ -930,9 +930,9 @@ def _parse_args():
     args.uniclust30 = _get_uniclust30()
     ost.LogInfo(f"Use UniClust30: {args.uniclust30}")
 
-    # Check for valid SMTL in case of QMEANDisCo
+    # Check for valid QMTL in case of QMEANDisCo
     if args.method == "QMEANDisCo":
-        _check_smtl(args)
+        _check_qmtl(args)
 
     # check what complib is used and report to logger
     creation_date = conop.GetDefaultLib().GetCreationDate()
@@ -963,10 +963,10 @@ def _main():
             out["seqres_uploaded"].append(
                 {"name": s.GetName(), "sequence": str(s)}
             )
-    out["smtl_version"] = None
+    out["qmtl_version"] = None
     if args.method == "QMEANDisCo":
-        with open("/smtl/VERSION", "r") as fh:
-            out["smtl_version"] = fh.read().strip()
+        with open("/qmtl/VERSION", "r") as fh:
+            out["qmtl_version"] = fh.read().strip()
 
     ######################################
     # Load/process models and do scoring #
@@ -977,7 +977,7 @@ def _main():
         args.seqres,
         args.workdir,
         args.uniclust30,
-        "/smtl",
+        "/qmtl",
         args.datefilter,
     )
 

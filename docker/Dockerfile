@@ -249,10 +249,10 @@ RUN set -eo pipefail; \
     cd ${SRC_FLDR}; \
     /usr/bin/rm -rf ost; \
     # make the compounds.chemlib interchangeable: move to its own dir and link
-    /usr/bin/mkdir /compound_lib; \
+    /usr/bin/mkdir /qmtl; \
     /usr/bin/mv /usr/local/share/openstructure/compounds.chemlib \
-                /compound_lib/; \
-    ln -s /compound_lib/compounds.chemlib /usr/local/share/openstructure/; \
+                /qmtl/; \
+    ln -s /qmtl/compounds.chemlib /usr/local/share/openstructure/; \
     # \
     # Cleanup packages only needed to compile/ install things \
     # \
