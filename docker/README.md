@@ -63,12 +63,12 @@ We need the non-redundant
 [UniClust30 sequence database](https://uniclust.mmseqs.com/) to build sequence
 profiles with HHblits. The following_files are required:
 
-* <X>_a3m.ffdata
-* <X>_a3m.ffindex
-* <X>_hhm.ffdata
-* <X>_hhm.ffindex
-* <X>_cs219.ffdata
-* <X>_cs219.ffindex
+* X_a3m.ffdata
+* X_a3m.ffindex
+* X_hhm.ffdata
+* X_hhm.ffindex
+* X_cs219.ffdata
+* X_cs219.ffindex
 
 with X being your UniClust30 version of choice. The productive QMEAN server uses
 UniClust30 [August 2018](http://wwwuser.gwdg.de/~compbiol/uniclust/2018_08/).
