@@ -140,19 +140,19 @@ def _run_accpro(fasta_file, msa, workdir, seqlen):
     if "Segmentation fault" in sout:
         LogError(
             'Running ACCPro failed for command "%s" with a segmentation fault'
-            % command
+            % " ".join(cmd)
         )
         return None
     if "Segmentation fault" in serr:
         LogError(
             'Running ACCPro failed for command "%s" with a segmentation fault'
-            % command
+            % " ".join(cmd)
         )
         return None
     if job.returncode != 0:
         LogError(
             'Running ACCPro failed for command "%s":\n%s\n%s'
-            % (" ".join(command), sout, serr)
+            % (" ".join(cmd), sout, serr)
         )
         return None
 
