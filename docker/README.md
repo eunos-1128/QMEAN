@@ -61,7 +61,7 @@ Additional requirements
 
 We need the non-redundant 
 [UniClust30 sequence database](https://uniclust.mmseqs.com/) to build sequence
-profiles with HHblits. The following_files are required:
+profiles with HHblits. The following files are required:
 
 * X_a3m.ffdata
 * X_a3m.ffindex
@@ -106,7 +106,7 @@ Having everything setup, you can score model.pdb with SEQRES data stored in
 seqres.fasta using QMEANDisCo:
 
 ```terminal
-docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -v <PATH_TO_LOCAL_QMTL>:/qmtl registry.scicore.unibas.ch/schwede/qmean:4.2.0 qmeandisco model.pdb --seqres seqres.fasta
+docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -v <PATH_TO_LOCAL_QMTL>:/qmtl registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --seqres seqres.fasta
 ```
 
 Additionally to the mounts specified above, the current working directory 
@@ -116,7 +116,7 @@ as workdir.
 The following gives more details on additional command line arguments:
 
 ```terminal
-docker run registry.scicore.unibas.ch/schwede/qmean:4.2.0 qmeandisco --help
+docker run registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py --help
 ```
 
 Singularity
