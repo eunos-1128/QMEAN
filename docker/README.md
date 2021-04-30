@@ -50,11 +50,11 @@ one of the SEQRES sequences.
 <a name="qmeanpull"></a>Obtain the image (Docker `pull`)
 --------------------------------------------------------
 
-An already built copy of the image for the current Dockerfile is available in
-our [GitLab registry](
+An already built copy of the image for the current
+[Dockerfile](docker/Dockerfile) is available in our [GitLab registry](
 https://git.scicore.unibas.ch/schwede/QMEAN/container_registry). It can be
 downloaded by either pulling it yourself or let Docker pull it first time you
-run it. To actively pull use the following command:
+run it. To actively pull, use the following command:
 
 ```terminal
 $ docker pull registry.scicore.unibas.ch/schwede/qmean:4.2.0
