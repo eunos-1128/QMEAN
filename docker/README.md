@@ -25,23 +25,27 @@ Input Requirements
 ------------------
 
 The container can read protein structures in PDB (.pdb) or mmCIF (.cif/.mmcif) 
-format. Compressed files are accepted, too (.gz suffix, i.e. 1crn.pdb.gz).
+format. Compressed files are accepted, too (.gz suffix, e.g. 1crn.pdb.gz).
 
-Providing SEQRES sequences is recommended, this is the actual protein sequence
-which is not necessarily fully covered by the structural data. If not provided,
-sequences are extracted from the structural data. SEQRES must be provided as one
-or several sequences in a single FASTA file. 
+Providing SEQRES sequences (via the option `--seqres`) is recommended. SEQRES
+describes the actual protein sequence of consecutively connected amino acids.
+It is not necessarily completely covered by the structural data, think of
+missing terminii in a model or gaps. If not provided, sequences are extracted
+from the structural data. SEQRES must be provided as one or multiple sequences
+in a single FASTA file. 
 
 * One sequence: All chains of the input structure(s) must align to it, 
                 the structures are either monomers or homo-oligmers.  
-* Several sequences: Required for hetero-oligomers, uses name based 
+* Multiple sequences: Required for hetero-oligomers, uses name based 
                      chain/SEQRES matching
 
 The container calculates sequence profiles using 
-[HHblits](https://github.com/soedinglab/hh-suite) for each unique SEQRES 
-sequence. If you already have the respective profiles available in a3m format, 
-you can speed things up. This only works if you also provide SEQRES as an input
-and the master sequence for each profile must match one of the SEQRES sequences.
+HHblits ([DOI](https://doi.org/10.1186/s12859-019-3019-7),
+[Git](https://github.com/soedinglab/hh-suite)) for each unique SEQRES sequence.
+If you already have the respective profiles available in a3m format, you can
+speed things up (via the option `--profiles`). This only works if you also
+provide SEQRES as an input and the master sequence for each profile must match
+one of the SEQRES sequences.
 
 <a name="qmeanpull"></a>Obtain the image (Docker `pull`)
 --------------------------------------------------------
