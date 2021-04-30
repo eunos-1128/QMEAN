@@ -1,0 +1,57 @@
+--- getACCAligns.pl	2021-04-29 10:21:51.000000000 +0200
++++ getACCAligns.pl	2021-03-31 10:35:36.000000000 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl
++#!/usr/bin/env perl
+ ###################################################
+ # getACCAligns
+ #  - finds alignments to AA sequence and outputs
+@@ -17,25 +17,28 @@
+ 
+ $temp_file = shift @ARGV;
+ $install_dir = shift @ARGV;
++my $blast_file = shift @ARGV; #SB: blast output added
+ $dir = $install_dir . "script"; 
+ 
+ $threshold = .95;
+ #$threshold = .50;
+ 
+-$query_file = $temp_file;
+-$NCBI_PATH = "${install_dir}blast2.2.8";
++#SB: not needed with external blast; $query_file = $temp_file;
++#SB: not needed with external blast; $NCBI_PATH = "/scicore/soft/app/NCBI/blast/2.2.16/Linux/bin/";#"${install_dir}blast2.2.8";
+ $data_dir = "${install_dir}data/pdb_large";
+ #$data_dir = "${install_dir}data/pdb_small";
+-$query_header = <>;
+-$aa = <>;
+-open(TEMP_QUERY,">$query_file") or die "Couldn't open $temp_file for writing\n";
++#SB: not needed with external blast; $query_header = <>;
++#SB: not needed with external blast; $aa = <>;
++#SB: not needed with external blast; open(TEMP_QUERY,">$query_file") or die "Couldn't open $temp_file for writing\n";
+ #add > to convert to fasta format
+-print TEMP_QUERY ">$query_header$aa";
+-close(TEMP_QUERY);
++#SB: not needed with external blast; print TEMP_QUERY ">$query_header$aa";
++#SB: not needed with external blast; close(TEMP_QUERY);
+ 
+-`$NCBI_PATH/blastall -i $query_file -d $data_dir/dataset -p blastp -F F -g F -o ${temp_file}foob.txt`;
++#SB: we now get blast output from above `$NCBI_PATH/blastall -i $query_file -d $data_dir/dataset -p blastp -F F -g F -o ${temp_file}foob.txt`;
+ 
+-`$dir/blast2index.pl ${temp_file}foob.txt > ${temp_file}fooi.bai`;
++# SB: using blast output from outside
++#`$dir/blast2index.pl ${temp_file}foob.txt > ${temp_file}fooi.bai`;
++`$dir/blast2index.pl $blast_file > ${temp_file}fooi.bai`;
+ 
+ $aligns_file = "$data_dir/acc_data";
+ $index_file = "${temp_file}fooi.bai";
+@@ -119,8 +122,5 @@
+ }
+ 
+ print "\n";
+-`rm -f ${temp_file}foob.txt ${temp_file}fooi.bai $query_file`;
+-
+-
+-
+-
++#`rm -f ${temp_file}foob.txt ${temp_file}fooi.bai $query_file`;
++`rm -f ${temp_file}fooi.bai`;

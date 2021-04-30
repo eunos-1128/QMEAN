@@ -49,6 +49,12 @@ ENV VERSION_BLAST="2.2.26" \
     VERSION_HHBLITS="3.3.0" \
     VERSION_PSIPRED="3.5" \
     VERSION_SSPRO="4.03"
+#
+# Copy patch files for SSPro/ ACCPro
+#
+COPY getACCAligns.pl.patch /tmp/
+COPY homology_sa.pl.patch /tmp/
+COPY predict_ss_sa.pl.patch /tmp/
 RUN set -eo pipefail; \
     # \
     # Install dependencies for building software \
@@ -57,8 +63,9 @@ RUN set -eo pipefail; \
     /usr/bin/yum -y install epel-release; \
     /usr/bin/yum update --assumeyes; \
     /usr/bin/yum install --assumeyes bzip2 gcc-c++ compat-libstdc++-33.i686 \
-                                     glibc.i686 make openssl-devel pcre-devel \
-                                     perl python3 python3-devel zlib-static; \
+                                     glibc.i686 make openssl-devel patch \
+                                     pcre-devel perl python3 python3-devel \
+                                     zlib-static; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
     # \
@@ -156,8 +163,6 @@ RUN set -eo pipefail; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/data/\/usr\/local\/data/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/blast\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
-    #/usr/bin/sed -i 's/\/cluster\/databases\/pdb\/all/\/scicore\/data\/databases\/PDB/g' scripts/HHPaths.pm; \
-    #/usr/bin/sed -i 's/\/cluster\/databases\/dssp\/bin\/dsspcmbi//g' scripts/HHPaths.pm; \
     /usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local; \
     /usr/bin/make -j ${CPUS_FOR_MAKE} NO_PNG=1; \
     /usr/bin/make install INSTALL_DIR=/usr/local; \
@@ -183,13 +188,21 @@ RUN set -eo pipefail; \
                     /usr/local/sspro/test \
                     /usr/local/sspro/configure.pl~; \
     /usr/bin/chmod -R og+rx /usr/local/sspro/; \
+    # apply patch files \
+    /usr/bin/patch /usr/local/sspro/script/getACCAligns.pl < /tmp/getACCAligns.pl.patch; \
+    /usr/bin/rm -f /tmp/getACCAligns.pl.patch; \
+    /usr/bin/patch /usr/local/sspro/script/homology_sa.pl < /tmp/homology_sa.pl.patch; \
+    /usr/bin/rm -f /tmp/homology_sa.pl.patch; \
+    /usr/bin/patch /usr/local/sspro/script/predict_ss_sa.pl < /tmp/predict_ss_sa.pl.patch; \
+    /usr/bin/rm -f /tmp/predict_ss_sa.pl.patch; \
     # \
     # Cleanup packages only needed to compile/ install things to keep the \
     # image size low. \
     # \
     /usr/bin/yum --assumeyes remove bzip2 gcc gcc-c++ glibc-devel make \
-                                    pcre-devel openssl-devel python3-devel \
-                                    python3-pip zlib-devel zlib-static; \
+                                    patch pcre-devel openssl-devel \
+                                    python3-devel python3-pip zlib-devel \
+                                    zlib-static; \
     /usr/bin/yum --assumeyes autoremove; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
@@ -344,15 +357,15 @@ RUN groupadd --gid $QMEAN_GROUP_ID $QMEAN_GROUP; \
     useradd --no-log-init -u $QMEAN_USER_ID -r -ms /bin/bash -g $QMEAN_GROUP \
             $QMEAN_USER; \
     /usr/bin/mkdir /qmean; \
+    /usr/bin/cp /usr/local/sspro/script/getACCAligns.pl /qmean/; \
+    /usr/bin/cp /usr/local/sspro/script/homology_sa.pl /qmean/; \
+    /usr/bin/cp /usr/local/sspro/script/predict_ss_sa.pl /qmean/; \
     /usr/bin/mkdir /data; \
     /usr/bin/chgrp -R $QMEAN_GROUP /data; \
     /usr/bin/chown -R $QMEAN_USER /data
 
 # Copy script to run QMEANDisCo
 COPY run_qmean.py /qmean/
-COPY predict_ss_sa.pl /qmean/
-COPY homology_sa.pl /qmean/
-COPY getACCAligns.pl /qmean/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
