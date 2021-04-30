@@ -121,7 +121,19 @@ docker run registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py --help
 
 Singularity
 -----------
-TODO
+
+A Singularity Image can directly be pulled from our registry:
+
+```terminal
+singularity build qmean_container.sif docker://registry.scicore.unibas.ch/schwede/qmean:4.2.0
+```
+
+Singularity directly allows to access the current working directory from within the container
+so scoring simplifies to:
+
+```terminal
+singularity run -B <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -B <PATH_TO_LOCAL_QMTL>:/qmtl qmean_container.sif run_qmean.py model.pdb  --seqres seqres.fasta
+```
 
 
 [comment]: <> ( LocalWords:  QMEANDisCo mmCIF JSON GitLab DBeacons cd OST )
