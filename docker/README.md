@@ -4,22 +4,28 @@ A Container for QMEAN Protein Structure Model Evaluation
 This Dockerfile describes an image of the QMEAN software package ([service](
 https://swissmodel.expasy.org/qmean/),
 [Git](https://git.scicore.unibas.ch/schwede/QMEAN),
-[Docker](https://git.scicore.unibas.ch/schwede/QMEAN/container_registry))
+[Docker](https://git.scicore.unibas.ch/schwede/QMEAN/container_registry)).
 
 The following scoring functions are implemented:
 
-* [QMEANDisCo](https://doi.org/10.1093/bioinformatics/btz828)
-* [QMEAN](https://doi.org/10.1093/bioinformatics/btq662)
-* [QMEANBrane](https://doi.org/10.1093/bioinformatics/btu457)
+[QMEANDisCo](https://doi.org/10.1093/bioinformatics/btz828): 
+> Studer, G., Rempfer, C., Waterhouse, A.M., Gumienny, R., Haas, J., Schwede, T. QMEANDisCo-distance constraints applied on model quality estimation, Bioinformatics 36, 1765–1771 (2020).
+> 
+[QMEAN](https://doi.org/10.1093/bioinformatics/btq662)
+> Benkert, P., Biasini, M., Schwede, T. Toward the estimation of the absolute quality of individual protein structure models. Bioinformatics 27, 343-350 (2011).
+> 
+[QMEANBrane](https://doi.org/10.1093/bioinformatics/btu457)
+> Studer, G., Biasini, M., Schwede, T. Assessing the local structural quality of transmembrane protein models using statistical potentials (QMEANBrane), Bioinformatics 30, i505–i511 (2014).
+> 
 
-For a short description of the different scoring functions we refer to the QMEAN 
+For a short description of the different scoring functions refer to the QMEAN 
 server [help page](https://swissmodel.expasy.org/qmean/help).
 
 Input Requirements
 ------------------
 
 The container can read protein structures in PDB (.pdb) or mmCIF (.cif/.mmcif) 
-format. Compressed files are accepted too (.gz suffix, i.e. 1crn.pdb.gz).
+format. Compressed files are accepted, too (.gz suffix, i.e. 1crn.pdb.gz).
 
 Providing SEQRES sequences is recommended, this is the actual protein sequence
 which is not necessarily fully covered by the structural data. If not provided,
