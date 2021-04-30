@@ -88,9 +88,11 @@ The directory with the files must be mounted to the container:
 -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30
 ```
 
-The QMEANDisCo scoring function additionally requires a WEEKLY UPDATED template 
-library (QMEAN Template Library aka QMTL) available HERE. 
-The following files are required:
+The QMEANDisCo scoring function additionally requires a template library
+(QMEAN Template Library aka QMTL) available [here](
+https://swissmodel.expasy.org/repository/download/qmtl/qmtl.tar.bz2). The QMTL
+is updated weekly following the PDB update cycle. Checking for new versions on
+a Thursday is a good idea. The following files are required:
 
 * smtl_uniq_cs219.ffdata
 * smtl_uniq_cs219.ffindex
@@ -103,7 +105,7 @@ The following files are required:
 * ca_pos_data.dat
 * VERSION
 
-Again, the according directory must be mounted:
+Again, the corresponding directory must be mounted:
 
 ```terminal
 -v <PATH_TO_LOCAL_QMTL>:/qmtl
