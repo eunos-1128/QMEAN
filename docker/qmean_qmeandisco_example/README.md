@@ -16,7 +16,9 @@ sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/u
 The directory contains pre-computed profiles that match the 
 sequences in targets.fasta. To speed things up, you can provide them as argument:
 
+```terminal
 sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --method QMEAN --seqres targets.fasta --profiles query_hhblits_one.a3m query_hhblits_two.a3m
+```
 
 Normally, the container creates a temporary directory to store intermediate 
 results. If you want to investigate them, or access the sequence profiles,
