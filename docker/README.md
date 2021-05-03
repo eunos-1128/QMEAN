@@ -234,6 +234,8 @@ keys:
   as the corresponding SEQRES (ATOMSEQ if SEQRES is not given as an input). 
   The location of a residue in SEQRES determines the location of its local score 
   in the score list.
+* `qmeanbrane_membrane`: Only available in case of QMEANBrane. Defines
+  transmembrane residues with the same SEQRES mapping as the local scores.
 
 
 <a name="examples"></a>Examples

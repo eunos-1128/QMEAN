@@ -322,6 +322,7 @@ class ModelScorer:
         # the following members remain empty until you call score()
         self.local_scores = None
         self.global_scores = None
+        self.qmeanbrane_membrane = None # only set in case of QMEANBrane
 
     def to_json(self):
         out_dict = dict()
@@ -339,6 +340,8 @@ class ModelScorer:
             "local_scores": self.local_scores,
             "global_scores": self.global_scores,
         }
+        if self.qmeanbrane_membrane:
+            out_dict["qmeanbrane_membrane"] = self.qmeanbrane_membrane
         return out_dict
 
     def score(
@@ -420,6 +423,7 @@ class ModelScorer:
         )
 
         local_scores = dict()
+        qmeanbrane_membrane = None
 
         if scoring_function in ["QMEANDisCo", "QMEAN"]:
             for chn, seq in zip(scorer.model.chains, self.seqres_list):
@@ -434,6 +438,7 @@ class ModelScorer:
                 local_scores[chn.GetName()] = score_list
         elif scoring_function == "QMEANBrane":
             # the global scores are the same as QMEAN but the local ones change
+            qmeanbrane_membrane = dict() 
             settings = qmean_config.MembraneSettings()
             peptide_sel = self.processed_model.Select("peptide=True")
             res = mqa_result_membrane.LocalMembraneResult.Create(
@@ -445,23 +450,26 @@ class ModelScorer:
             )
 
             for ch, s in zip(peptide_sel.chains, self.seqres_list):
-                score_list = list([None] * len(s))
-                local_scores[ch.GetName()] = score_list
-
+                local_scores[ch.GetName()] = list([None] * len(s))
+                qmeanbrane_membrane[ch.GetName()] = list([None] * len(s))
             chain_name_idx = res.score_table.GetColIndex("chain")
             rnum_idx = res.score_table.GetColIndex("rnum")
+            membrane_idx = res.score_table.GetColIndex("membrane")
             score_idx = res.score_table.GetColIndex("QMEAN")
 
             for r in res.score_table.rows:
                 chain_name = r[chain_name_idx]
                 rnum = r[rnum_idx]
                 score = r[score_idx]
+                mem = r[membrane_idx]
                 local_scores[chain_name][rnum - 1] = format_float(score)
+                qmeanbrane_membrane[chain_name][rnum - 1] = mem
         else:
             raise RuntimeError(f"Unknown scoring function {scoring_function}")
 
         self.local_scores = local_scores
         self.global_scores = global_scores
+        self.qmeanbrane_membrane = qmeanbrane_membrane
 
     def _load_model(self):
         """Read OST entity either from mmCIF or PDB."""
