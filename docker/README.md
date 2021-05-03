@@ -47,6 +47,27 @@ speed things up (via the option `--profiles`). This only works if you also
 provide SEQRES as an input and the master sequence for each profile must match
 one of the SEQRES sequences.
 
+Structure Processing
+--------------------
+
+Structures are processed with the MOLecular ChecKer 
+([molck](https://openstructure.org/docs/dev/mol/alg/molalg/?highlight=molck#ost.mol.alg.Molck))
+before scoring. In detail:
+
+* Non-standard residues are mapped to their standard counterparts if possible
+  (e.g. Phospho-Tyrosine to Tyrosine or Seleno-Methionine to Methionine etc.).
+  Mapping information is derived from the 
+  [component dictionary](http://www.wwpdb.org/data/ccd)
+* Hydrogen atoms are stripped
+* Atoms with zero occupancy are stripped
+* Everything except the 20 standard proteinogenic amino acids is stripped
+  (after potential mapping of non-standard residues above)
+* Unknown atoms are stripped, i.e. atoms that are not expected based on the
+  [component dictionary](http://www.wwpdb.org/data/ccd).
+* Chains are potentially renamed, i.e. if a chain name is ' ', it gets
+  assigned a valid chain name.
+
+
 <a name="qmeanpull"></a>Obtain the image (Docker `pull`)
 --------------------------------------------------------
 
@@ -146,6 +167,56 @@ so scoring simplifies to:
 ```terminal
 singularity run -B <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -B <PATH_TO_LOCAL_QMTL>:/qmtl qmean_container.sif run_qmean.py model.pdb  --seqres seqres.fasta
 ```
+
+Results
+-------
+
+Results are json formatted. For each model there is an entry with following 
+keys:
+
+* chains: Contains the ATOMSEQ/SEQRES mapping for each chain. The ATOMSEQ is 
+  extracted from the structure, SEQRES is provided by the user. If SEQRES is not 
+  provided => SEQRES == ATOMSEQ
+* original_name: Filename of the input model
+* preprocessing: Summarizes the outcome of input structure processing described 
+  above
+* scores: Model specific scores. No matter what scoring method you're running 
+  (QMEAN [1] /QMEANDisCo [2] /QMEANBrane [3]), you have two keys: 
+  "local_scores" and "global_scores". While the data in "global_scores" 
+  calculates values according [1], the "local_scores" are method dependent. 
+  For "global_scores" you get another dictionary with keys:
+
+  * "acc_agreement_norm_score"
+  * "acc_agreement_z_score"
+  * "avg_local_score" (mode dependent)
+  * "avg_local_score_error" (only set for [2])
+  * "cbeta_norm_score"
+  * "cbeta_z_score"
+  * "interaction_norm_score"
+  * "interaction_z_score"
+  * "packing_norm_score"
+  * "packing_z_score"
+  * "qmean4_norm_score"
+  * "qmean4_z_score"
+  * "qmean6_norm_score"
+  * "qmean6_z_score"
+  * "ss_agreement_norm_score"
+  * "ss_agreement_z_score"
+  * "torsion_norm_score"
+  * "torsion_z_score"
+
+  For "local_scores" you get another dictionary with chain names as keys and 
+  lists with local scores as value. The local score lists have the same length 
+  as the according SEQRES (ATOMSEQ if SEQRES is not given as an input). 
+  The location of a residue in SEQRES determines the location of its local score 
+  in the score list.
+
+
+Examples
+--------
+
+Example data to run all available scoring functions are available in the
+qmean_qmeandisco_example and qmeanbrane_example directory.
 
 
 [comment]: <> ( LocalWords:  QMEANDisCo mmCIF JSON GitLab DBeacons cd OST )
