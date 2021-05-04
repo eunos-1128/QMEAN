@@ -59,7 +59,7 @@ from the structural data. SEQRES must be provided as one or multiple sequences
 in a single FASTA file. 
 
 * One sequence: All chains of the input structure(s) must align to it, 
-                the structures are either monomers or homo-oligmers.  
+                the structure(s) are either monomers or homo-oligmers.  
 * Multiple sequences: Required for hetero-oligomers, uses name based 
                      chain/SEQRES matching
 
@@ -195,7 +195,7 @@ singularity run -B <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -B <PATH_TO_LOCAL_QMTL>:
 <a name="results"></a>Results
 -----------------------------
 
-Results are json formatted. For each model there is an entry with following 
+Results are JSON formatted. For each model there is an entry with following 
 keys:
 
 * `chains`: Contains the ATOMSEQ/SEQRES mapping for each chain. The ATOMSEQ is 
