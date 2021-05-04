@@ -322,7 +322,7 @@ class ModelScorer:
         # the following members remain empty until you call score()
         self.local_scores = None
         self.global_scores = None
-        self.qmeanbrane_membrane = None # only set in case of QMEANBrane
+        self.qmeanbrane_membrane = None  # only set in case of QMEANBrane
 
     def to_json(self):
         out_dict = dict()
@@ -438,7 +438,7 @@ class ModelScorer:
                 local_scores[chn.GetName()] = score_list
         elif scoring_function == "QMEANBrane":
             # the global scores are the same as QMEAN but the local ones change
-            qmeanbrane_membrane = dict() 
+            qmeanbrane_membrane = dict()
             settings = qmean_config.MembraneSettings()
             peptide_sel = self.processed_model.Select("peptide=True")
             res = mqa_result_membrane.LocalMembraneResult.Create(
@@ -501,7 +501,8 @@ class ModelScorer:
                 )
         else:
             raise RuntimeError(
-                f"Unknown/ unsupported file extension found for file {self.model_path}."
+                "Unknown/ unsupported file extension found for file "
+                + f"{self.model_path}."
             )
 
         # restore old loglevel
@@ -586,8 +587,8 @@ class ModelScorer:
         alignments = list()
         if self.seqres:
             # SEQRES is provided by user, requires mapping to model chains
-
-            # option 1: all chains align to this single SEQRES (monomer or homo-oligomer)
+            # option 1: all chains align to this single SEQRES (monomer or
+            #           homo-oligomer)
             if len(self.seqres) == 1:
                 for ch in self.peptide_processed_model.chains:
                     try:
@@ -595,7 +596,8 @@ class ModelScorer:
                         alignments.append(aln)
                     except:
                         raise RuntimeError(
-                            f"Failed to align chain {ch.GetName()} of {self.model_path} to provided SEQRES."
+                            f"Failed to align chain {ch.GetName()} of "
+                            + f"{self.model_path} to provided SEQRES."
                         )
 
             # option2: Map chains using names (whatever-mer, as long as
@@ -609,14 +611,16 @@ class ModelScorer:
                             break
                     if ch_seqres is None:
                         raise RuntimeError(
-                            f"Failed to find SEQRES for chain of name {ch.GetName()} in provided SEQRES list."
+                            "Failed to find SEQRES for chain of name "
+                            + f"{ch.GetName()} in provided SEQRES list."
                         )
                     try:
                         aln = AlignChainToSEQRES(ch, ch_seqres)
                         alignments.append(aln)
                     except:
                         raise RuntimeError(
-                            f"Failed to align chain {ch.GetName()} of {self.model_path} to provided SEQRES."
+                            f"Failed to align chain {ch.GetName()} of "
+                            + f"{self.model_path} to provided SEQRES."
                         )
         else:
             # No SEQRES provided, extract SEQRES from protein => SEQRES==ATOMSEQ
@@ -780,7 +784,8 @@ def _check_qmtl(args):
     # expect qmtl to be mounted at /qmtl
     if not os.path.exists("/qmtl"):
         raise RuntimeError(
-            "For running QMEANDisCo you need to mount the downloadable QMTL data to /qmtl"
+            "For running QMEANDisCo you need to mount the downloadable QMTL "
+            + "data to /qmtl"
         )
 
     expected_files = [
@@ -806,7 +811,8 @@ def _check_qmtl(args):
         p = os.path.join("/qmtl", "dates.csv")
         if not os.path.exists(p):
             raise RuntimeError(
-                f"If datefilter argument is provided, you additionally need to provide the QMTL specific {p}"
+                "If datefilter argument is provided, you additionally need to "
+                + f"provide the QMTL specific {p}"
             )
 
 
@@ -839,19 +845,24 @@ def _parse_args():
         "--seqres",
         dest="seqres",
         default=None,
-        help="SEQRES for models in FASTA format - Single sequence for homomers/homo-oligomers - Multiple sequences for hetero-oligomers with name based matching",
+        help="SEQRES for models in FASTA format - Single sequence for "
+        + "homomers/homo-oligomers - Multiple sequences for hetero-oligomers "
+        + "with name based matching",
     )
     parser.add_argument(
         "--profiles",
         nargs="+",
         default=None,
-        help="Precomputed HHblits sequence profile(s) in a3m format that match target sequence(s) provided in seqres - must contain psipred annotation",
+        help="Precomputed HHblits sequence profile(s) in a3m format that match "
+        + "target sequence(s) provided in seqres - must contain psipred "
+        + "annotation",
     )
     parser.add_argument(
         "--workdir",
         dest="workdir",
         default=None,
-        help="Location for intermediate output, normally temporary. If given, output remains for debug purposes",
+        help="Location for intermediate output, normally temporary. If given, "
+        + "output remains for debug purposes",
     )
     parser.add_argument(
         "--datefilter", dest="datefilter", default=None, help="Debug purposes"
@@ -919,7 +930,8 @@ def _parse_args():
             a3m_content = hhblits3.ParseA3M(open(p))
             if a3m_content["ss_pred"] is None or a3m_content["ss_conf"] is None:
                 raise RuntimeError(
-                    f"Sequence profile {p} must contain secondary structure annotation"
+                    f"Sequence profile {p} must contain secondary structure "
+                    + "annotation"
                 )
             trg_seq = a3m_content["msa"].GetSequence(0).GetGaplessString()
             trg_seq_hash = _get_seq_name(trg_seq)
