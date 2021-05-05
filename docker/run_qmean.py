@@ -457,13 +457,26 @@ class ModelScorer:
             membrane_idx = res.score_table.GetColIndex("membrane")
             score_idx = res.score_table.GetColIndex("QMEAN")
 
+            summed_local_score = 0.0
+            n_scores = 0
             for r in res.score_table.rows:
                 chain_name = r[chain_name_idx]
                 rnum = r[rnum_idx]
                 score = r[score_idx]
+                formatted_score = format_float(score)
+                local_scores[chain_name][rnum - 1] = formatted_score
+                if formatted_score:
+                    summed_local_score += formatted_score
+                    n_scores += 1
                 mem = r[membrane_idx]
-                local_scores[chain_name][rnum - 1] = format_float(score)
                 qmeanbrane_membrane[chain_name][rnum - 1] = mem
+
+            # The avg_local_score in global scores has been estimated with 
+            # classical QMEAN. Let's overwrite
+            avg_local_score = summed_local_score
+            if n_scores > 0:
+                avg_local_score /= n_scores
+            global_scores["avg_local_score"] = format_float(avg_local_score)
         else:
             raise RuntimeError(f"Unknown scoring function {scoring_function}")
 
