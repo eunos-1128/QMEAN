@@ -875,7 +875,7 @@ def _parse_args():
         dest="workdir",
         default=None,
         help="Location for intermediate output, normally temporary. If given, "
-        + "output remains for debug purposes",
+        + "output remains for debug purposes. Path must be absolute.",
     )
     parser.add_argument(
         "--datefilter", dest="datefilter", default=None, help="Debug purposes"

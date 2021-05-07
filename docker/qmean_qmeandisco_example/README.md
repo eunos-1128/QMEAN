@@ -22,11 +22,12 @@ sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/u
 
 Normally, the container creates a temporary directory to store intermediate 
 results. If you want to investigate them, or access the sequence profiles,
-you can provide a working dir as argument. A directory gets created in the 
-working dir for each unique SEQRES named after the md5 hash of the SEQRES:
+you can provide a working dir as argument (must be absolute path). 
+A directory gets created in the working dir for each unique SEQRES named after 
+the md5 hash of the SEQRES:
 
 ```terminal
-sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --method QMEAN --seqres targets.fasta --profiles query_hhblits_one.a3m query_hhblits_two.a3m --workdir my_workdir
+sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --method QMEAN --seqres targets.fasta --profiles query_hhblits_one.a3m query_hhblits_two.a3m --workdir $(pwd)/my_workdir
 ```
 
 So far we only computed the QMEAN scoring function. QMEANDisCo includes 
