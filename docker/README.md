@@ -137,7 +137,8 @@ The QMEANDisCo scoring function additionally requires a template library
 (QMEAN Template Library aka QMTL) available [here](
 https://swissmodel.expasy.org/repository/download/qmtl/qmtl.tar.bz2). The QMTL
 is updated weekly following the PDB update cycle. Checking for new versions on
-a Thursday is a good idea. The following files are required:
+a Thursday is a good idea. **An up to date QMTL is crucial for optimal QMEANDisCo performance.** 
+The following files are required:
 
 * `smtl_uniq_cs219.ffdata`
 * `smtl_uniq_cs219.ffindex`
