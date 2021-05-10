@@ -38,6 +38,6 @@ the additonal requirement of the QMTL (QMEAN Template Library) which needs
 to be mounted.
 
 ```terminal
-sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -v <PATH_TO_LOCAL_QMTL>:/qmtl registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --method QMEANDisCo --seqres targets.fasta --profiles query_hhblits_one.a3m query_hhblits_two.a3m --workdir my_workdir
+sudo docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -v <PATH_TO_LOCAL_QMTL>:/qmtl registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --method QMEANDisCo --seqres targets.fasta --profiles query_hhblits_one.a3m query_hhblits_two.a3m --workdir $(pwd)/my_workdir
 ```
 
