@@ -229,5 +229,7 @@ class GMQE:
         if QMEANDisCo is not None:
             scores["QMEANDisCo"] = QMEANDisCo
 
-        return (self.nn_scorer.GetScore(scores), scores)
+        gmqe = self.nn_scorer.GetScore(scores)
+        gmqe = min(1.0, max(0.0, gmqe))
 
+        return (gmqe, scores)
