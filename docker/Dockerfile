@@ -235,7 +235,7 @@ RUN set -eo pipefail; \
     /usr/bin/rm -rf /var/cache/yum; \
     cd ${SRC_FLDR}; \
     /usr/bin/mkdir ost; \
-    /usr/bin/curl -o ost.tar.gz -L ${SCCRE_GTLB}/openstructure/repository/${OST_VERSION}/archive.tar.gz; \
+    /usr/bin/curl -o ost.tar.gz -L ${SCCRE_GTLB}/openstructure/-/archive/${OST_VERSION}/openstructure-${OST_VERSION}.tar.gz; \
     /usr/bin/tar --strip-components=1 -C ost -xf ost.tar.gz; \
     /usr/bin/rm -f ost.tar.gz; \
     /usr/bin/mkdir ost/build; \
@@ -293,7 +293,7 @@ RUN set -eo pipefail; \
     /usr/bin/yum install --assumeyes gcc-c++ make python3-devel; \
     /usr/bin/yum --assumeyes clean all; \
     /usr/bin/rm -rf /var/cache/yum; \
-    /usr/bin/curl -o qmean.tar.gz -L ${SCCRE_GTLB}/QMEAN/repository/${QMEAN_VERSION}/archive.tar.gz; \
+    /usr/bin/curl -o qmean.tar.gz -L ${SCCRE_GTLB}/QMEAN/-/archive/${QMEAN_VERSION}/qmean-${QMEAN_VERSION}.tar.gz; \
     /usr/bin/mkdir qmean; \
     /usr/bin/tar --strip-components=1 -C qmean -xf qmean.tar.gz; \
     /usr/bin/rm -f qmean.tar.gz; \
