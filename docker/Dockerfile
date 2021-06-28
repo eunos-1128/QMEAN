@@ -2,6 +2,7 @@ FROM centos:7.4.1708
 
 # Arguments, optional
 ARG CPUS_FOR_MAKE=1
+ARG OPT_FOR_CPU=0
 
 # Environment variables
 ENV CFLAGS="-march=x86-64 -mtune=generic -isystem /usr/local/include/boost/ -isystem /usr/local/openmm/include" \
@@ -163,7 +164,11 @@ RUN set -eo pipefail; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/data/\/usr\/local\/data/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/blast\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
-    /usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local -DHAVE_SSE2=1; \
+    _hhblts_cmke=""; \
+    if test ${OPT_FOR_CPU} -eq 0; then \
+       _hhblts_cmke="-DHAVE_SSE2=1"; \
+    fi; \
+    /usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local ${_hhblts_cmke}; \
     /usr/bin/make -j ${CPUS_FOR_MAKE} NO_PNG=1; \
     /usr/bin/make install INSTALL_DIR=/usr/local; \
     cd ${SRC_FLDR}; \

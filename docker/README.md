@@ -17,6 +17,8 @@ Table Of Contents
 
 * [Obtain the image (Docker `pull`)](#qmeanpull)
 
+* [Obtain an optimised image (Docker `build`)](#qmeanbuild)
+
 * [Additional requirements](#additionalrequirements)
 
 * [Score](#score)
@@ -97,7 +99,8 @@ before scoring. In detail:
 
 An already built copy of the image for the current
 [Dockerfile](docker/Dockerfile) is available in our [GitLab registry](
-https://git.scicore.unibas.ch/schwede/QMEAN/container_registry). It can be
+https://git.scicore.unibas.ch/schwede/QMEAN/container_registry). It comes
+without CPU optimisations, so it should run on most CPUs. The image can be
 downloaded by either pulling it yourself or let Docker pull it first time you
 run it. To actively pull, use the following command:
 
@@ -108,6 +111,28 @@ $ docker pull registry.scicore.unibas.ch/schwede/qmean:4.2.0
 Digest: sha256:db53a753d46b2525051478f9fa273df2b47a69100663eb70d538b461d52743d5
 Status: Downloaded newer image for registry.scicore.unibas.ch/schwede/qmean:4.2.0
 registry.scicore.unibas.ch/schwede/qmean:4.2.0
+$
+```
+
+<a name="qmeanbuild"></a>Obtain an optimised image (Docker `build`)
+--------------------------------------------------------
+
+The available [Docker image](
+https://git.scicore.unibas.ch/schwede/QMEAN/container_registry) only uses the
+most common CPU extensions to run HHblits ([DOI](
+https://doi.org/10.1186/s12859-019-3019-7), [Git](
+https://github.com/soedinglab/hh-suite)). Modern CPUs can do better (run
+HHblits faster), providing AVX2 extensions. To make use of them, the QMEAN
+image needs to be rebuild with the Docker build argument `OPT_FOR_CPU`
+activated, on the target host. Execute the following command inside the
+directory storing the Dockerfile
+for QMEAN:
+
+```terminal
+$ docker build --build-arg OPT_FOR_CPU=1 -t qmean:avx2 .
+...
+=> => writing image sha256:93da5aa6613847fb7f8b71ed635fe99f72e7dd58f32b40e1e73e3429547c9d25            0.0s
+ => => naming to qmean:avx2
 $
 ```
 
