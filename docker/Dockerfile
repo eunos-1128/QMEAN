@@ -163,7 +163,7 @@ RUN set -eo pipefail; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/data/\/usr\/local\/data/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/blast\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
-    /usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local; \
+    /usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local -DHAVE_SSE2=1; \
     /usr/bin/make -j ${CPUS_FOR_MAKE} NO_PNG=1; \
     /usr/bin/make install INSTALL_DIR=/usr/local; \
     cd ${SRC_FLDR}; \
@@ -374,7 +374,7 @@ WORKDIR /data
 
 COPY docker-entrypoint.sh /qmean
 ENTRYPOINT ["/qmean/docker-entrypoint.sh"]
-CMD ["qmeandisco"]
+CMD ["/qmean/run_qmean.py"]
 
 USER $QMEAN_USER
 
