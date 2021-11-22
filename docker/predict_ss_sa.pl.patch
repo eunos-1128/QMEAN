@@ -1,0 +1,207 @@
+--- predict_ss_sa.pl	2021-04-29 12:51:42.000000000 +0200
++++ predict_ss_sa.pl	2021-03-31 15:29:38.000000000 +0200
+@@ -1,90 +1,39 @@
+-#!/usr/bin/perl -w
++#!/usr/bin/env perl
++
++use File::Basename;
++use warnings;
+ 
+ #predict SS, SA for a single sequence, SS, SA is a combination of neural network and homology
+ 
+ #June 23, 2004, Jianlin Cheng
+ 
++####################################
++### MODIFIED to work along with QMEAN
++### MODIFIED to eat our own MSA
++####################################
++
+ #input 
+-	# 1: blast_dir
+-	# 2: big_db
+-	# 3: nr_db
+-	# 4: ss_predictor
+-	# 5: sa_predictor
+-	# 6: script_dir
+-	# 7: sequence file(seq_file): one sequence in fasta format, 
+-	# 8: output file
++	# 1: sequence file*
++	# 2: output file
++        # 3: msa file*
++
++# * Important: filenames with a '.' in them make the whole thing fail!
+ 
+ #Output: pxml, casp, eva format contact map for both 12 and 8 A. 
+ #Notice: the white space or . in seq_file are replaced by _. 
+ 
+-if (@ARGV != 8)
+-{
+-	die "Usage: blast_dir big_db nr_db ss_predictor sa_predictor script_dir seq_file(fasta) output_file\n";
+-}
+-
+-$blast_dir = shift @ARGV;
+-$big_db = shift @ARGV;
+-$nr_db = shift @ARGV;
+-$ss_predictor = shift @ARGV; 
+-$sa_predictor = shift @ARGV; 
+-$script_dir = shift @ARGV; 
+-
+-################verify if all the things are there#########################
+-if (! -d $blast_dir)
+-{
+-	die "can't find blast directory.\n";
+-}
+-if ( substr($blast_dir, length($blast_dir) - 1, 1) ne "/" )
+-{
+-	$blast_dir .= "/"; 
+-}
+-
+-if (! -d $script_dir)
+-{
+-	die "can't find perl script directory.\n";
+-}
+-
+-if ( substr($script_dir, length($script_dir) - 1, 1) ne "/" )
+-{
+-	$script_dir .= "/"; 
+-}
+-
+-if (! -f "${blast_dir}blastpgp")
+-{
+-	die "can't find blastpgp.\n"; 
+-}
+-
+-if (! -f "${big_db}.pal") {
+-if (! -f "${big_db}.phr" || ! -f "${big_db}.pin" || ! -f "${big_db}.psq")
+-{
+-	die "can't find the big coil database.\n"; 	
+-} 
+-}
+-
+-if (! -f "${nr_db}.pal") {
+-if (! -f "${nr_db}.phr" || ! -f "${nr_db}.pin" || ! -f "${nr_db}.psq" || ! -f "${nr_db}.pnd"
+-    || ! -f "${nr_db}.pni" || ! -f "${nr_db}.psd" || ! -f "${nr_db}.psi" )
+-{
+-	die "can't find the non-redundant database.\n"; 	
+-} 
+-}
+-
+-if (! -f $ss_predictor)
+-{
+-	die "can't find secondary structure predictor.\n"; 
+-}
++#Oct 28, 2013, SB
++# Modified to create query file for get[SS|ACC]Aligns.pl here
+ 
+-if (! -f $sa_predictor)
++if (@ARGV != 3)
+ {
+-	die "can't find solvent accessibility predictor.\n"; 
++	die "Usage: seq_file(fasta) output_file alignment_file\n";
+ }
+-#############################End of Verification#######################################
+-
+-
+ 
+ $seq_file = shift @ARGV;
+-$output_file = shift @ARGV; 
+-$output_dir = "./"; 
++$output_file = shift @ARGV;
++$alignment_file = shift @ARGV;
++$output_dir = "/tmp";
+ 
+ if (! -f $seq_file)
+ {
+@@ -121,10 +70,9 @@
+ $seq_filename =~ s/\./_/g;  
+ 
+ #output prefix is used as the prefix name of output files
+-$output_prefix = $output_dir . $seq_filename; 
++$output_prefix = $output_dir . $$ . $seq_filename; 
+ #set alignment file name
+ $seq_filename .= "alg";
+-$output_prefix_alg = $output_dir . $seq_filename; 
+ 
+ open(SEQ_FILE, "$seq_file") || die "can't open sequence file.\n";
+ @content = <SEQ_FILE>;
+@@ -150,52 +98,40 @@
+ }
+ if (length($sequence) < 1)
+ {
+-	die "seqeunce is empty. \n"; 
++	die "sequence is empty. \n"; 
+ }
+-$script_dir =~ /(.+)script\/$/;
+-$install_dir = $1;
++$install_dir = "/usr/local/sspro/";
+ 
+-#Generate Alignments for sequence
+-print "Generate alignment...\n";
+-#the output alignment file name is: $output_prefix
+-`${script_dir}generate_flatblast.pl $blast_dir $script_dir $big_db $nr_db $seq_file $output_prefix_alg >/dev/null`;  
+-print "done\n";
+-
+-#Predict Secondary Stx
+-print "Predict secondary structure...";
+-#create input file for sspro
+-open(TMP, ">$output_prefix.tmp") || die "can't create temporary file for sspro.\n"; 
+-#a little bit ugly here: for sspro: alignment_file = align_dir + seq_filename
+-print TMP "$seq_filename\n";
+-print TMP "$sequence\n"; 
+-close(TMP); 
+-`${script_dir}homology_ss.pl $install_dir $output_prefix.tmp $output_prefix_alg  $output_prefix.sspro`; 
+-print "done\n";
++# SB: create BLAST alignments here, hand down to follow up scripts
++# this should prevent calling BLAST twice
++$NCBI_PATH = "/usr/local/bin";
++# SB: create query file
++open(TEMP_QUERY,">$output_prefix.tmp.homo.$$")
++                or die "Couldn't open $output_prefix.tmp.homo.$$ for writing\n";
++#add > to convert to fasta format
++print TEMP_QUERY ">$seq_filename\n$sequence\n";
++close(TEMP_QUERY);
++# run BLAST
++my $blast_file = "${output_prefix}.tmp.homo.$$.foob.txt";
++`$NCBI_PATH/blastall -i $output_prefix.tmp.homo.$$ -d ${install_dir}data/pdb_large/dataset -p blastp -F F -g F -o ${blast_file}`;
+ 
+ #Predict Solvent Accessibility
++#create input file for accpro
++open(TMP, ">$output_prefix.tmp") || die "can't create temporary file for accpro.\n";
++#a little bit ugly here: for accpro: alignment_file = align_dir + seq_filename
++print TMP "$seq_filename\n";
++print TMP "$sequence\n";
++close(TMP);
++
++$pymod_dir = dirname(__FILE__);
++
+ print "Predict solvent accessibility...";
+-`${script_dir}homology_sa.pl $install_dir $output_prefix.tmp $output_prefix_alg  $output_prefix.accpro`;
++`${pymod_dir}/homology_sa.pl $install_dir $output_prefix.tmp $alignment_file  $output_prefix.accpro $blast_file`;
+ print "done\n"; 
+ 
+-open(TMP, ">$output_file") || die "can't create temporary file for conpro.\n"; 
+-open(SSPRO, "$output_prefix.sspro") || die "can't open the ss result file.\n";
+-open(ACCPRO, "$output_prefix.accpro") || die "can't open the sa result file.\n";
+-@sspro = <SSPRO>;
+-@accpro = <ACCPRO>;
+-$name = shift @sspro;
+-$seq = shift @sspro;
+-$sstx = shift @sspro;
+-shift @accpro;
+-shift @accpro;
+-$acc = shift @accpro;
+-$acc =~ s/-/b/g; 
+-print TMP "$seq_filename\n$seq$sstx$acc";
+-close TMP;
+-
+-#rename the alignment file
+-`mv $output_prefix_alg ${output_file}align`;
+-#remove pssm file
+-#`rm $output_prefix_alg.pssm`;
++`mv $output_prefix.accpro $output_file`;
++
+ #remove the intermediate files
+-`rm $output_prefix.accpro $output_prefix.sspro`; 
+ `rm $output_prefix.tmp`; 
++`rm $blast_file`;
++`rm $output_prefix.tmp.homo.$$`;

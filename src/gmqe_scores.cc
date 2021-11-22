@@ -150,13 +150,16 @@ GMQEScoreCalculator::GMQEScoreCalculator(PotentialContainerPtr potentials,
 
   disco_container_ = disco_container;
 
-  reduced_cutoff_ = reduced_coil_opts.upper_cutoff;
+  // subtract eps from reduced and disco cutoffs to make REALLY sure
+  // that there are no overflows when estimating bin indices
+  Real eps = 1e-4;  
+  reduced_cutoff_ = reduced_coil_opts.upper_cutoff - eps;
   reduced_squared_cutoff_ = reduced_cutoff_ * reduced_cutoff_;
   reduced_seq_sep_ = reduced_coil_opts.sequence_sep;
   cb_packing_squared_cutoff_ = cb_packing_coil_opts.cutoff * 
                                cb_packing_coil_opts.cutoff;
   cb_packing_max_count_ = cb_packing_coil_opts.max_counts;
-  disco_cutoff_ = disco_container_->GetDistCutoff();
+  disco_cutoff_ = disco_container_->GetDistCutoff() - eps;
   disco_squared_cutoff_ = disco_cutoff_ * disco_cutoff_;
   disco_bin_size_ = disco_container_->GetBinSize();
 
@@ -335,8 +338,9 @@ void GMQEScoreCalculator::Eval(const geom::Vec3List& n_positions,
 
           geom::Vec3 v_i_ij_cross = -geom::Cross(v_i, v_ij);
           geom::Vec3 v_ij_j_cross = geom::Cross(v_ij, v_j);
-          Real gamma = std::atan2(-geom::Dot(v_i, v_ij_j_cross),
-                                  geom::Dot(v_i_ij_cross,v_ij_j_cross));
+          Real gamma = std::min(std::atan2(-geom::Dot(v_i, v_ij_j_cross),
+                                geom::Dot(v_i_ij_cross,v_ij_j_cross)),
+                                Real(3.141));
 
           ost::conop::AminoAcid aa_i = amino_acids_[rnum_i - 1];
           ost::conop::AminoAcid aa_j = amino_acids_[rnum_j - 1];
@@ -393,8 +397,8 @@ void GMQEScoreCalculator::Eval(const geom::Vec3List& n_positions,
   for(int i = 1; i < num_positions; ++i) {
     if(residue_numbers[i-1]+1 == residue_numbers[i] &&
        geom::Length2(c_positions[i-1]-n_positions[i]) < Real(9.0)) {
-      phi_angles[i] = geom::DihedralAngle(c_positions[i-1], n_positions[i],
-                                          ca_positions[i], c_positions[i]);
+      phi_angles[i] = std::min(geom::DihedralAngle(c_positions[i-1], n_positions[i],
+                               ca_positions[i], c_positions[i]), Real(3.141));
     }
   }
 
@@ -402,8 +406,8 @@ void GMQEScoreCalculator::Eval(const geom::Vec3List& n_positions,
   for(int i = 0; i < num_positions-1; ++i) {
     if(residue_numbers[i]+1 == residue_numbers[i+1] &&
        geom::Length2(c_positions[i]-n_positions[i+1]) < Real(9.0)) {
-      psi_angles[i] = geom::DihedralAngle(n_positions[i], ca_positions[i],
-                                          c_positions[i], n_positions[i+1]);
+      psi_angles[i] = std::min(geom::DihedralAngle(n_positions[i], ca_positions[i],
+                               c_positions[i], n_positions[i+1]), Real(3.141));
     }
   }
 

@@ -1,0 +1,44 @@
+--- homology_sa.pl	2021-04-29 12:50:44.000000000 +0200
++++ homology_sa.pl	2021-03-31 15:31:42.000000000 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl -w
++#!/usr/bin/env perl
+ ###################################################
+ # homology_sa.pl
+ #  - makes a ACC prediction for a protein using
+@@ -15,16 +15,20 @@
+ # Modified by Mike Sweredoski: adapted from homology_ss
+ ###################################################
+ 
+-if (@ARGV != 4)
++use File::Basename;
++use warnings;
++
++#SB: extended from 4 to 5 to pass blast output in
++if (@ARGV != 5)
+ {
+-	die "need 4 params: install dir, seq file(name, sequence in compact format), alignment file, output file\n"; 
++	die "need 5 params: install dir, seq file(name, sequence in compact format), alignment file, output file, blast output\n"; 
+ }
+ 
+ $install_dir = shift @ARGV; 
+ $seq_file = shift @ARGV;
+ $align_file = shift @ARGV;
+ $output_file = shift @ARGV;
+-
++my $blast_file = shift @ARGV;
+ 
+ if (! -d $install_dir)
+ {
+@@ -53,7 +57,10 @@
+ open(OUTPUT,">$output_file");
+ 
+ $accpro_pred = `cat $seq_file | $dir/getACCproPred.pl $align_file $temp_file $install_dir`;
+-$acc_homology_pred = `cat $seq_file | $dir/getACCAligns.pl $temp_file $install_dir`;
++$pymod_dir = dirname(__FILE__);
++# SB: by passing BLAST output in, we do not need sequence data, anymore
++#$acc_homology_pred = `cat $seq_file | $pymod_dir/getACCAligns.pl $temp_file $install_dir $blast_file`;
++$acc_homology_pred = `$pymod_dir/getACCAligns.pl $temp_file $install_dir $blast_file`;
+ 
+ chomp($accpro_pred);
+ chomp($acc_homology_pred);
