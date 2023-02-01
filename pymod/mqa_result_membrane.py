@@ -185,12 +185,9 @@ def GenerateEnergyGapPlot(energy, path):
     ax.spines['top'].set_visible(False)
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
-    ax.set_xticks(xtick_positions, xtick_labels)
-
+    ax.set_xticks(xtick_positions)
+    ax.set_xticklabels(xtick_labels)
     fig.savefig(path)
-
-
-
 
 
 LSCORES_TABLE_HEADER='''\
