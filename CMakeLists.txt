@@ -12,7 +12,7 @@ cmake_policy(SET CMP0060 NEW)
 
 set (QMEAN_VERSION_MAJOR 4)
 set (QMEAN_VERSION_MINOR 3)
-set (QMEAN_VERSION_PATCH 0)
+set (QMEAN_VERSION_PATCH 1)
 set (QMEAN_VERSION_STRING ${QMEAN_VERSION_MAJOR}.${QMEAN_VERSION_MINOR}.${QMEAN_VERSION_PATCH} )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake_support)
@@ -74,7 +74,7 @@ set(PYTHON_MODULE_PATH "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/si
 
 setup_boost()
 
-find_package(OPENSTRUCTURE 2.3.0 REQUIRED
+find_package(OPENSTRUCTURE 2.4.0 REQUIRED
              COMPONENTS mol seq seq_alg mol_alg conop db)
 
 include_directories(${Boost_INCLUDE_DIRS}
