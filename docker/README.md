@@ -105,12 +105,12 @@ downloaded by either pulling it yourself or let Docker pull it first time you
 run it. To actively pull, use the following command:
 
 ```terminal
-$ docker pull registry.scicore.unibas.ch/schwede/qmean:4.2.0
-4.2.0: Pulling from schwede/qmean
+$ docker pull registry.scicore.unibas.ch/schwede/qmean:latest
+latest: Pulling from schwede/qmean
 ...
 Digest: sha256:db53a753d46b2525051478f9fa273df2b47a69100663eb70d538b461d52743d5
-Status: Downloaded newer image for registry.scicore.unibas.ch/schwede/qmean:4.2.0
-registry.scicore.unibas.ch/schwede/qmean:4.2.0
+Status: Downloaded newer image for registry.scicore.unibas.ch/schwede/qmean:latest
+registry.scicore.unibas.ch/schwede/qmean:latest
 $
 ```
 
@@ -189,7 +189,7 @@ Having everything setup, you can score `model.pdb` with SEQRES data stored in
 `seqres.fasta` using QMEANDisCo:
 
 ```terminal
-docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -v <PATH_TO_LOCAL_QMTL>:/qmtl registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py model.pdb --seqres seqres.fasta
+docker run --workdir $(pwd) -v $(pwd):$(pwd) -v <PATH_TO_LOCAL_UNICLUST>:/uniclust30 -v <PATH_TO_LOCAL_QMTL>:/qmtl registry.scicore.unibas.ch/schwede/qmean:latest run_qmean.py model.pdb --seqres seqres.fasta
 ```
 
 Additionally to the mounts specified above, the current working directory 
@@ -199,7 +199,7 @@ as workdir.
 The following gives more details on additional command line arguments:
 
 ```terminal
-docker run registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py --help
+docker run registry.scicore.unibas.ch/schwede/qmean:latest run_qmean.py --help
 ```
 
 <a name="singularity"></a>Singularity
@@ -208,7 +208,7 @@ docker run registry.scicore.unibas.ch/schwede/qmean:4.2.0 run_qmean.py --help
 A Singularity Image can directly be pulled & build from our registry:
 
 ```terminal
-singularity build qmean_container.sif docker://registry.scicore.unibas.ch/schwede/qmean:4.2.0
+singularity build qmean_container.sif docker://registry.scicore.unibas.ch/schwede/qmean:latest
 ```
 
 Singularity allows to directly access the current working directory from within the container,

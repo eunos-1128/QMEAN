@@ -164,6 +164,7 @@ RUN set -eo pipefail; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/psipred\/data/\/usr\/local\/data/g' scripts/HHPaths.pm; \
     /usr/bin/sed -i 's/\/cluster\/toolkit\/production\/bioprogs\/blast\/bin/\/usr\/local\/bin/g' scripts/HHPaths.pm; \
+    /usr/bin/sed -i 's/\/cluster\/databases\/dssp\/bin\/dsspcmbi//g' scripts/HHPaths.pm; \
     _hhblts_cmke=""; \
     if test ${OPT_FOR_CPU} -eq 0; then \
        _hhblts_cmke="-DHAVE_SSE2=1"; \
@@ -223,7 +224,7 @@ RUN set -eo pipefail; \
 # Install OpenStructure
 #
 # Version can be switched via --build-arg OST_VERSION="<TAG|BRANCH>"
-ARG OST_VERSION="2.2.0"
+ARG OST_VERSION="2.3.0"
 ENV VERSION_OPENSTRUCTURE=$OST_VERSION
 RUN set -eo pipefail; \
     # \
@@ -286,7 +287,7 @@ RUN set -eo pipefail; \
 # Install QMEAN
 #
 # Version can be switched via --build-arg QMEAN_VERSION="<TAG|BRANCH>"
-ARG QMEAN_VERSION="4.2.0"
+ARG QMEAN_VERSION="4.3.0"
 ENV VERSION_QMEAN=$QMEAN_VERSION
 RUN set -eo pipefail; \
     # \
