@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Membrane Location &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="DisCo" href="disco.html" />
+    <link rel="prev" title="Combining Scores" href="score_combination.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="disco.html" title="DisCo"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="score_combination.html" title="Combining Scores"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Membrane Location</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="membrane-location">
+<h1>Membrane Location<a class="headerlink" href="#membrane-location" title="Link to this heading">¶</a></h1>
+<p>An implicit solvation model can be used to detect the transmembrane region of
+a membrane protein. QMEANBrane uses an implementation described by the
+Orientation of Proteins in Membrane (OPM) database <a class="reference internal" href="#lomize2006" id="id1"><span>[lomize2006]</span></a>.
+The actual method is implemented in <a class="reference external" href="https://openstructure.org//docs/2.0/mol/alg/molalg/#ost.mol.alg.FindMembrane" title="(in OpenStructure v2.0.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ost.mol.alg.FindMembrane()</span></code></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">qmean</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">io</span><span class="p">,</span> <span class="n">mol</span><span class="p">,</span> <span class="n">geom</span>
+
+<span class="c1"># We use a GPCR example... </span>
+<span class="c1"># Directly after loading we strip of all hydrogens </span>
+<span class="c1"># and everything, that doesn&#39;t look like a peptide</span>
+<span class="n">gpcr_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;example_data&quot;</span><span class="p">,</span><span class="s2">&quot;3EML.pdb&quot;</span><span class="p">)</span>
+<span class="n">gpcr</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="n">gpcr_path</span><span class="p">)</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s2">&quot;peptide=true and ele!=H&quot;</span><span class="p">)</span>
+
+<span class="n">mem_param</span> <span class="o">=</span> <span class="n">mol</span><span class="o">.</span><span class="n">alg</span><span class="o">.</span><span class="n">FindMembrane</span><span class="p">(</span><span class="n">gpcr</span><span class="p">)</span>
+
+<span class="c1"># The goal of this example is to create a structure only consisting</span>
+<span class="c1"># of transmembrane residues. We take the CA position of every residue</span>
+<span class="c1"># as reference position and check, whether it&#39;s inside the membrane planes</span>
+<span class="n">membrane_center</span> <span class="o">=</span> <span class="n">mem_param</span><span class="o">.</span><span class="n">pos</span> <span class="o">*</span> <span class="n">mem_param</span><span class="o">.</span><span class="n">membrane_axis</span>
+<span class="n">membrane_plane</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">Plane</span><span class="p">(</span><span class="n">membrane_center</span><span class="p">,</span> <span class="n">mem_param</span><span class="o">.</span><span class="n">membrane_axis</span><span class="p">)</span>
+<span class="n">half_width</span> <span class="o">=</span> <span class="n">mem_param</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">gpcr</span><span class="o">.</span><span class="n">residues</span><span class="p">:</span>
+  <span class="n">ca</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">FindAtom</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">ca</span><span class="o">.</span><span class="n">IsValid</span><span class="p">():</span>
+    <span class="k">continue</span>
+  <span class="c1"># Whether a residue is in the membrane or not can be defined</span>
+  <span class="c1"># using generic properties of the ResidueHandle</span>
+  <span class="n">ca_pos</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">GetPos</span><span class="p">()</span>
+  <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">Distance</span><span class="p">(</span><span class="n">membrane_plane</span><span class="p">,</span> <span class="n">ca_pos</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">half_width</span><span class="p">:</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">SetIntProp</span><span class="p">(</span><span class="s2">&quot;in_membrane&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">SetIntProp</span><span class="p">(</span><span class="s2">&quot;in_membrane&quot;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># The generic properties can then be used to select the transmembrane part</span>
+<span class="n">transmembrane_part</span> <span class="o">=</span> <span class="n">gpcr</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s2">&quot;grin_membrane:0=1&quot;</span><span class="p">)</span>
+
+<span class="c1"># We can save down the transmembrane part!</span>
+<span class="n">io</span><span class="o">.</span><span class="n">SavePDB</span><span class="p">(</span><span class="n">gpcr</span><span class="p">,</span><span class="s2">&quot;gpcr.pdb&quot;</span><span class="p">)</span>
+<span class="n">io</span><span class="o">.</span><span class="n">SavePDB</span><span class="p">(</span><span class="n">transmembrane_part</span><span class="p">,</span> <span class="s2">&quot;gpcr_transmembrane_part.pdb&quot;</span><span class="p">)</span>
+
+<span class="c1"># Illustrate the pseudo energy returned by the membrane finding algorithm</span>
+<span class="c1"># and compare it to other membrane proteins, as well as soluble proteins</span>
+<span class="n">qmean</span><span class="o">.</span><span class="n">GenerateEnergyGapPlot</span><span class="p">(</span><span class="n">mem_param</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span> <span class="s2">&quot;energy_gap_plot.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div role="list" class="citation-list">
+<div class="citation" id="lomize2006" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">lomize2006</a><span class="fn-bracket">]</span></span>
+<p>Lomize AL, Pogozheva ID, Lomize MA, Mosberg HI (2006). Positioning of proteins in membranes: A computational approach. Protein Science 15, 1318-1333</p>
+</div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="score_combination.html"
+                          title="previous chapter">Combining Scores</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="disco.html"
+                          title="next chapter">DisCo</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/membrane.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="disco.html" title="DisCo"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="score_combination.html" title="Combining Scores"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Membrane Location</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

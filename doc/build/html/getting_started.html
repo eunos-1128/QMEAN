@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Getting Started &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Run the QMEAN Scoring Functions" href="run_qmean_scoring.html" />
+    <link rel="prev" title="QMEAN Documentation" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="run_qmean_scoring.html" title="Run the QMEAN Scoring Functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="QMEAN Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Getting Started</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
+<p>QMEAN is used as a Python 3 module either in an interactive OpenStructure shell or
+in scripts being executed with the ost OpenStructure executable. You can run all
+examples of the documentation by calling the according scripts in
+path_to_qmean/doc/source/example_scripts by typing:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ost<span class="w"> </span>script_name.py
+</pre></div>
+</div>
+</div></blockquote>
+<section id="build-this-documentation">
+<h2>Build this Documentation<a class="headerlink" href="#build-this-documentation" title="Link to this heading">¶</a></h2>
+<p>All information on how to build/run QMEAN can be found in the documentation.
+The documentation is based on Sphinx, so you need Python 3, Sphinx and Make
+installed on your system.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>change to the doc directory</p></li>
+<li><p>fire: “make html”</p></li>
+<li><p>the documentation is built in doc/build</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="build-qmean">
+<h2>Build QMEAN<a class="headerlink" href="#build-qmean" title="Link to this heading">¶</a></h2>
+<p>QMEAN requires the OpenStructure framework with Python 3 and all other depencies
+to be installed. Please follow the instructions on
+<a class="reference external" href="http://www.openstructure.org/">openstructure.org</a> to compile from source.
+Once you successfully compiled OpenStructure, you need following Python modules:</p>
+<ul class="simple">
+<li><p>numpy</p></li>
+<li><p>scipy</p></li>
+<li><p>matplotlib</p></li>
+</ul>
+<p>To compile QMEAN, change to the QMEAN directory, make a build directory and run
+CMake in there by giving it the path to your OpenStructure installation
+(you might want to activate optimizations with -DOPTIMIZE):</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>build
+<span class="nb">cd</span><span class="w"> </span>build
+cmake<span class="w"> </span>../<span class="w"> </span>-DOST_ROOT<span class="o">=</span>path_to_ost_build/stage<span class="w"> </span>-DOPTIMIZE<span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>build and run unit tests:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make
+make<span class="w"> </span>check
+</pre></div>
+</div>
+</div></blockquote>
+<p>For general use you might want the QMEAN modules to be directly
+accessible from within Python. Following command enables QMEAN
+in your current shell (properly set MAJOR/MINOR version of your
+Python installation):</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>path_to_qmean_build_dir/stage/lib64/python&lt;MAJOR&gt;.&lt;MINOR&gt;/site-packages:<span class="nv">$PYTHONPATH</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>You can add this command to <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>, so it is set permanently.
+If everything is setup correctly, you can test the setup in an
+interactive ost session by typing: from <code class="docutils literal notranslate"><span class="pre">qmean</span> <span class="pre">import</span> <span class="pre">*</span></code>
+or, even better, run the example scripts from the documentation.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#build-this-documentation">Build this Documentation</a></li>
+<li><a class="reference internal" href="#build-qmean">Build QMEAN</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">QMEAN Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="run_qmean_scoring.html"
+                          title="next chapter">Run the QMEAN Scoring Functions</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/getting_started.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="run_qmean_scoring.html" title="Run the QMEAN Scoring Functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="QMEAN Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Getting Started</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

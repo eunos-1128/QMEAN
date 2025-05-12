@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>QMEAN Documentation &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="getting_started.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="getting_started.html" title="Getting Started"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">QMEAN Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="qmean-documentation">
+<h1>QMEAN Documentation<a class="headerlink" href="#qmean-documentation" title="Link to this heading">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#build-this-documentation">Build this Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#build-qmean">Build QMEAN</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="run_qmean_scoring.html">The QMEAN scoring functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="run_qmean_scoring.html#assessing-the-quality-for-soluble-protein-models">Assessing the quality for soluble protein models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="run_qmean_scoring.html#assessing-the-quality-for-membrane-protein-models">Assessing the quality for membrane protein models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chemtype.html">Defining Heavy Atoms - The ChemType</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chemtype.html#GetAtomTypeByName"><code class="docutils literal notranslate"><span class="pre">GetAtomTypeByName()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="statistical_potentials.html">Statistical Potentials of Mean Force</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#interactionpotential">InteractionPotential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#cbetapotential">CBetaPotential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#reducedpotential">ReducedPotential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#torsionpotential">TorsionPotential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#packingpotential">PackingPotential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#cbpackingpotential">CBPackingPotential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistical_potentials.html#hbondpotential">HBondPotential</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="containers.html">The Container Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="containers.html#container-for-statistic-objects">Container for Statistic Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html#container-for-potential-objects">Container for Potential Objects</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="predicted_sequence_features.html">Predicted Sequence Features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="predicted_sequence_features.html#secondary-structure-agreement">Secondary Structure Agreement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="predicted_sequence_features.html#solvent-accessibility-agreement">Solvent Accessibility Agreement</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spherical_smoother.html">Spherical Smoothing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spherical_smoother.html#qmean.SphericalSmoother"><code class="docutils literal notranslate"><span class="pre">SphericalSmoother</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="score_combination.html">Combining Scores</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="score_combination.html#linear-score-combination">Linear Score combination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score_combination.html#multi-layer-perceptron-scoring">Multi-Layer Perceptron scoring</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="membrane.html">Membrane Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="disco.html">Distance Constraints (DisCo)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="disco.html#qmean.DisCoContainer"><code class="docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gmqe.html">Global Model Quality Estimate (GMQE)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gmqe.html#qmean.GMQE"><code class="docutils literal notranslate"><span class="pre">GMQE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="getting_started.html"
+                          title="next chapter">Getting Started</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="getting_started.html" title="Getting Started"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">QMEAN Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

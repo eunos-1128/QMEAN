@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Combining Scores &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Membrane Location" href="membrane.html" />
+    <link rel="prev" title="Spherical Smoother" href="spherical_smoother.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="membrane.html" title="Membrane Location"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="spherical_smoother.html" title="Spherical Smoother"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Combining Scores</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="combining-scores">
+<h1>Combining Scores<a class="headerlink" href="#combining-scores" title="Link to this heading">¶</a></h1>
+<p>QMEAN tries to give accurate quality estimates on global and local per
+residue scale by combining different aspects / scores.
+Either this happens with a simple linear combination or by more
+sophisticated multi-layer perceptrons.</p>
+<section id="linear-score-combination">
+<h2>Linear Score combination<a class="headerlink" href="#linear-score-combination" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalScorer</span>
+
+<span class="c1">#we need to have some training data</span>
+<span class="n">training_tab</span> <span class="o">=</span> <span class="n">Table</span><span class="p">()</span>
+
+<span class="c1">#The table must have a field called &quot;target&quot; =&gt; that&#39;s the target value</span>
+<span class="c1">#we&#39;re training for.</span>
+<span class="n">training_tab</span><span class="o">.</span><span class="n">AddCol</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+
+<span class="c1">#The table also must have a field called AA to train the AA specific linear</span>
+<span class="c1">#combinations</span>
+<span class="n">training_tab</span><span class="o">.</span><span class="n">AddCol</span><span class="p">(</span><span class="s1">&#39;AA&#39;</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+
+<span class="c1">#Let&#39;s add some amazing features, that should predict the target</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;feature_1&quot;</span><span class="p">,</span> <span class="s2">&quot;feature_2&quot;</span><span class="p">,</span> <span class="s2">&quot;feature_3&quot;</span><span class="p">]</span>
+<span class="n">training_tab</span><span class="o">.</span><span class="n">AddCol</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+<span class="n">training_tab</span><span class="o">.</span><span class="n">AddCol</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+<span class="n">training_tab</span><span class="o">.</span><span class="n">AddCol</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+
+<span class="n">one_letter_codes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> 
+                    <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;L&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">]</span>
+
+<span class="c1">#let&#39;s add some random training data for every amino acid</span>
+
+<span class="k">for</span> <span class="n">olc</span> <span class="ow">in</span> <span class="n">one_letter_codes</span><span class="p">:</span>
+  
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    
+    <span class="n">row</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">row</span><span class="p">[</span><span class="s2">&quot;AA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">olc</span>
+    <span class="n">row</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+    <span class="n">row</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+    <span class="n">row</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+    <span class="n">row</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+    <span class="n">training_tab</span><span class="o">.</span><span class="n">AddRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+<span class="c1">#Let&#39;s setup a LocalScorer</span>
+<span class="n">local_scorer</span> <span class="o">=</span> <span class="n">LocalScorer</span><span class="p">()</span>
+
+<span class="c1">#and train it with the random data</span>
+<span class="n">local_scorer</span><span class="o">.</span><span class="n">TrainNewType</span><span class="p">(</span><span class="n">features</span><span class="p">,</span><span class="n">training_tab</span><span class="p">,</span><span class="s2">&quot;random&quot;</span><span class="p">)</span>
+
+<span class="n">data_one</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">data_two</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+<span class="c1">#let&#39;s get some local score given the data dicts</span>
+<span class="n">data_one</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">data_one</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">data_one</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">data_two</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">data_two</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">data_two</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;NaN&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Local score for alanine when all features are defined:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">local_scorer</span><span class="o">.</span><span class="n">GetLocalScore</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">,</span><span class="s1">&#39;A&#39;</span><span class="p">,</span><span class="n">data_one</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Local score for alanine when one of the features is NaN:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">local_scorer</span><span class="o">.</span><span class="n">GetLocalScore</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">,</span><span class="s1">&#39;A&#39;</span><span class="p">,</span><span class="n">data_two</span><span class="p">))</span>
+
+<span class="c1">#save down the scorer...</span>
+<span class="n">local_scorer</span><span class="o">.</span><span class="n">Save</span><span class="p">(</span><span class="s2">&quot;local_scorer.dat&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Following classes allow to train and apply linear weights for arbitrary
+linear combinations of scores. The training procedure relies on the
+usage of the ost table class.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.LocalScorer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">LocalScorer</span></span><a class="headerlink" href="#qmean.LocalScorer" title="Link to this definition">¶</a></dt>
+<dd><p>QMEAN can combine local scores in a linear manner. Due to amino acid specific
+biases, such linear combinations are generated for all 20 standard amino
+acids. Another problem are single values that can be NaN. An example for that
+are the first and last two residues in a torsion potential due to invalid
+dihedral angles. To solve this second problem, linear combinations are
+calculated for all possible combinations of the features. If a score
+of a particular residue with certain NaN scores has to be estimated,
+only the subset of single scores not being NaN are considered.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.LocalScorer.Save">
+<span class="sig-name descname"><span class="pre">Save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.LocalScorer.Save" title="Link to this definition">¶</a></dt>
+<dd><p>Save down the scorer using the pickle functionality of Python</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The filename you want to dump the
+<a class="reference internal" href="#qmean.LocalScorer" title="qmean.LocalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScorer</span></code></a> to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.LocalScorer.Load">
+<span class="sig-name descname"><span class="pre">Load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.LocalScorer.Load" title="Link to this definition">¶</a></dt>
+<dd><p>Static loading function for a dumped <a class="reference internal" href="#qmean.LocalScorer" title="qmean.LocalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScorer</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file you want to load</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded scorer</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qmean.LocalScorer" title="qmean.LocalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScorer</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if filename does no exist
+or when the thing can’t be loaded</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.LocalScorer.TrainNewType">
+<span class="sig-name descname"><span class="pre">TrainNewType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residue_type</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">method=&quot;leastsqr&quot;</span></span></em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.LocalScorer.TrainNewType" title="Link to this definition">¶</a></dt>
+<dd><p>Trains Linear combinations for all possible amino acids and all possible
+combinations of the <strong>features</strong> based on the data given in <strong>tab</strong>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the features as they are stored in <strong>tab</strong></p></li>
+<li><p><strong>tab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.Table</span></code>) – <p>Table containing the training information. Several
+columns are mandatory:</p>
+<blockquote>
+<div><ul>
+<li><p>”AA”: one letter code for data points</p></li>
+<li><p>”target”: target value for data points</p></li>
+<li><p>Column for every element in <strong>features</strong></p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>residue_type</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Every scorer can train several score combinations
+you might want to distinct between secondary
+structure of whatever</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>Method to generate the linear combination.
+possible values are:</p>
+<blockquote>
+<div><ul>
+<li><p>”leastsqr”: uses lstsq functionality from the
+scipy.linalg module</p></li>
+<li><p>”robust”: uses the robustfit function
+from matlab. You need to have matlab installed
+and a running mlabwrap (google is your friend)</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if one of the mandatory fields
+is not present in <strong>tab</strong>, the method is invalid,
+or you choose “robust” as method and mlabwrap is
+not setup properly</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.LocalScorer.GetLocalScore">
+<span class="sig-name descname"><span class="pre">GetLocalScore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">residue_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.LocalScorer.GetLocalScore" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>residue_type</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Type of score combination, thats the one you called
+the TrainNewType function with</p></li>
+<li><p><strong>AA</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The identity of the amino acid in form of a
+one letter code</p></li>
+<li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Dictionary with the features as keys and the
+according data as values</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Linear combination for the requested features</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> If the scorer has not been
+trained for <strong>residue_type</strong> or <strong>AA</strong> is unknown</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.GlobalScorer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">GlobalScorer</span></span><a class="headerlink" href="#qmean.GlobalScorer" title="Link to this definition">¶</a></dt>
+<dd><p>QMEAN can combine global scores in a linear manner, exactly the same way as
+local scores. A problem are single
+values, that can be NaN. To solve this problem, linear combinations
+are calculated for all possible combinations of the features. If a score
+of a particular structure with certain NaN scores has to be estimated,
+only the subset of single scores not being NaN are considered.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.GlobalScorer.Save">
+<span class="sig-name descname"><span class="pre">Save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GlobalScorer.Save" title="Link to this definition">¶</a></dt>
+<dd><p>Save down the scorer using the pickle functionality of Python</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The filename you want to dump the
+<a class="reference internal" href="#qmean.GlobalScorer" title="qmean.GlobalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalScorer</span></code></a> into</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.GlobalScorer.Load">
+<span class="sig-name descname"><span class="pre">Load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GlobalScorer.Load" title="Link to this definition">¶</a></dt>
+<dd><p>Static loading function for a dumped <a class="reference internal" href="#qmean.GlobalScorer" title="qmean.GlobalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalScorer</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file you want to load</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded scorer</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qmean.GlobalScorer" title="qmean.GlobalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalScorer</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if filename does no exist
+or when the thing can’t be loaded</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.GlobalScorer.TrainNewType">
+<span class="sig-name descname"><span class="pre">TrainNewType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">structure_type</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">method=&quot;leastsqr&quot;</span></span></em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GlobalScorer.TrainNewType" title="Link to this definition">¶</a></dt>
+<dd><p>Trains Linear combinations for all possible amino acids and all possible
+combinations of the <strong>features</strong> based on the data given in <strong>tab</strong>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the features as they are stored in <strong>tab</strong></p></li>
+<li><p><strong>tab</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.Table</span></code>) – <p>Table containing the training information. Several
+columns are mandatory:</p>
+<blockquote>
+<div><ul>
+<li><p>”target”: target value for data points</p></li>
+<li><p>Column for every element in <strong>features</strong></p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>structure_type</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Every scorer can train several score combinations,
+this string is the according identifier</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>Method to generate the linear combination.
+possible values are:</p>
+<blockquote>
+<div><ul>
+<li><p>”leastsqr”: uses lstsq functionality from the
+scipy.linalg module</p></li>
+<li><p>”robust”: uses the robustfit function
+from matlab. You need to have matlab installed
+and a running mlabwrap (google is your friend)</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if one of the mandatory fields
+is not present in <strong>tab</strong>, the method is invalid,
+or you choose “robust” as method and mlabwrap is
+not setup properly</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.GlobalScorer.GetGlobalScore">
+<span class="sig-name descname"><span class="pre">GetGlobalScore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">structure_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GlobalScorer.GetGlobalScore" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>residue_type</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Type of score combination, thats the one you called
+the TrainNewType function with</p></li>
+<li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Dictionary with the features as keys and the
+according data as values</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Linear combination for the requested features</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> If the scorer has not been
+trained for <strong>structure_type</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="multi-layer-perceptron-scoring">
+<h2>Multi-Layer Perceptron scoring<a class="headerlink" href="#multi-layer-perceptron-scoring" title="Link to this heading">¶</a></h2>
+<p>To be independent from any machine learning library, QMEAN comes with a
+lightweight multi-layer perceptron implementation: the <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a>.
+The idea is to use whatever machine learning library to train such a network and
+transform it into a <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a>. For the simplest training cases
+<a class="reference internal" href="#qmean.TrainRegressor" title="qmean.TrainRegressor"><code class="xref py py-func docutils literal notranslate"><span class="pre">TrainRegressor()</span></code></a> should be sufficient.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.Regressor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">Regressor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_input_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.Regressor" title="Link to this definition">¶</a></dt>
+<dd><p>Lighweight implementation of a fully connected multi-layer perceptron with
+in-built data normalization. Before traversing the layers, data is normalized
+as (input-mean)/std.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_input_features</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The number of input features to expect</p></li>
+<li><p><strong>mean</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>) – Mean value for every input feature (<em>n_input_features</em> values)
+for data normalization. All values set to 0.0 if not provided.</p></li>
+<li><p><strong>std</strong> – Standard deviation for every input feature (<em>n_input_features</em>
+values) for data normalization. All values set to 1.0 if not
+provided.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.Regressor.AddLayer">
+<span class="sig-name descname"><span class="pre">AddLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.Regressor.AddLayer" title="Link to this definition">¶</a></dt>
+<dd><p>Adds another layer <em>i</em>. Given the weight matrix M, the new layer
+is derived from a simple matrix multiplication M*layer[<em>i</em>-1], where
+the input layer is considered to be layer 0. Postprocessing
+consists of adding bias values and perform a final activation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>) – Weight matrix with shape (m,n). n is the number of
+elements of the previous layer and m determines the
+number of elements in the added layer.</p></li>
+<li><p><strong>activation_function</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – 0: no activation, 1: ReLU (Rectified Linear
+Unit) activation</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>) – Bias that is applied to layer before executing the
+activation function. Size must be consistent with
+number of rows (m) in <em>weights</em>. All values set to 0.0 if
+not provided.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.Regressor.Save">
+<span class="sig-name descname"><span class="pre">Save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.Regressor.Save" title="Link to this definition">¶</a></dt>
+<dd><p>Dumps regressor in binary format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dump regressor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.Regressor.Load">
+<span class="sig-name descname"><span class="pre">Load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.Regressor.Load" title="Link to this definition">¶</a></dt>
+<dd><p>Static method to load previously dumped regressor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dumped regressor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.Regressor.Predict">
+<span class="sig-name descname"><span class="pre">Predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.Regressor.Predict" title="Link to this definition">¶</a></dt>
+<dd><p>Normalizes input, traverses all layers an returns first element of last
+layer: the prediction</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>) – Input of size <em>n_input_features</em> to feed into network</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.TrainRegressor">
+<span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">TrainRegressor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topology</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.TrainRegressor" title="Link to this definition">¶</a></dt>
+<dd><p>Trains a <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a> using keras given a pandas dataframe as input.
+This obviously adds pandas and keras as dependency. Check the example script!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_frame</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>) – Data with a column for each feature as well as the target</p></li>
+<li><p><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Describes input features, features must be present in
+<em>data_frame</em></p></li>
+<li><p><strong>target</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The target, must be present in <em>data_frame</em></p></li>
+<li><p><strong>loss_function</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Any function that keras understands. E.g.
+“mean_squared_error” or “mean_absolute_error”</p></li>
+<li><p><strong>optimizer</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Any optimizer that keras understands. E.g.
+“sgd”, “rmsprop”, “adagrad”, “adadelta”, “adam”</p></li>
+<li><p><strong>topology</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Every element describes number of nodes of a layer
+with first layer being the input layer that must have
+the same size as <em>features</em>. The last layer is the
+output layer that must be of size 1.</p></li>
+<li><p><strong>epochs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of training epochs</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Training batch size</p></li>
+<li><p><strong>randomize</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to randomize the order of training data prior to
+training</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean.mlp_regressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainRegressor</span>
+
+<span class="c1"># Example training of multi-layer perceptron on a toy data set.</span>
+<span class="c1"># The Boston House Price Dataset involves the prediction of a </span>
+<span class="c1"># house price in thousands of dollars given details of the house </span>
+<span class="c1"># and its neighborhood.</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;example_data/housing.csv&#39;</span><span class="p">)</span>
+
+<span class="n">df_train</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:</span><span class="mi">400</span><span class="p">]</span>
+<span class="n">df_test</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">400</span><span class="p">:]</span>
+
+<span class="c1"># search for boston housing data set in the net... I&#39;m sure </span>
+<span class="c1"># you&#39;ll find a description of the single features</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CRIM&#39;</span><span class="p">,</span> <span class="s1">&#39;ZN&#39;</span><span class="p">,</span> <span class="s1">&#39;INDUS&#39;</span><span class="p">,</span> <span class="s1">&#39;CHAS&#39;</span><span class="p">,</span> <span class="s1">&#39;NOX&#39;</span><span class="p">,</span> <span class="s1">&#39;RM&#39;</span><span class="p">,</span> <span class="s1">&#39;AGE&#39;</span><span class="p">,</span> 
+            <span class="s1">&#39;DIS&#39;</span><span class="p">,</span> <span class="s1">&#39;RAD&#39;</span><span class="p">,</span> <span class="s1">&#39;TAX&#39;</span><span class="p">,</span> <span class="s1">&#39;PTRATIO&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;LSTAT&#39;</span><span class="p">]</span>
+
+<span class="c1"># thats the median value of the houses we want to predict</span>
+<span class="n">target</span> <span class="o">=</span> <span class="s1">&#39;MEDV&#39;</span>
+
+<span class="c1"># define architecture and training parameters</span>
+<span class="n">topology</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">),</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">loss_function</span> <span class="o">=</span> <span class="s1">&#39;mean_squared_error&#39;</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="s1">&#39;adam&#39;</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="c1"># train and predict </span>
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">TrainRegressor</span><span class="p">(</span><span class="n">df_train</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span><span class="n">loss_function</span><span class="p">,</span> 
+                           <span class="n">optimizer</span><span class="p">,</span> <span class="n">topology</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+<span class="n">regressor_in</span> <span class="o">=</span> <span class="n">df_test</span><span class="p">[</span><span class="n">features</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">regressor_in</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">regressor_in</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">predictions</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">regressor</span><span class="o">.</span><span class="n">Predict</span><span class="p">(</span><span class="n">regressor_in</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+
+<span class="c1"># estimate root mean square error</span>
+<span class="n">ref</span> <span class="o">=</span> <span class="n">df_test</span><span class="p">[</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">predictions</span><span class="o">-</span><span class="n">df_test</span><span class="p">[</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;testing rmse:&quot;</span><span class="p">,</span> <span class="n">rmse</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a> requires a fixed set of input scores and cannot
+flexibly adapt if certain features are missing. Examples include scores for the
+first/last two residues in the <a class="reference internal" href="statistical_potentials.html#qmean.TorsionPotential" title="qmean.TorsionPotential"><code class="xref py py-class docutils literal notranslate"><span class="pre">qmean.TorsionPotential</span></code></a> due to missing
+dihedral angles. The <a class="reference internal" href="#qmean.NNScorer" title="qmean.NNScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNScorer</span></code></a> offers a naive solution and selects the
+appropriate <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a> in a set of alternatives that cover the possible
+combinations of input scores.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.NNScorer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">NNScorer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.NNScorer" title="Link to this definition">¶</a></dt>
+<dd><p>Organizes multiple <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a> which cover alternative combinations of
+input scores and selects the right one for scoring. The object must be
+constructed manually and is loaded from disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory containing a file ‘feature_groups.json’ and several
+stored <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a> with naming ‘nn_&lt;idx&gt;.dat’. The first
+is a json file containing a list of items. Each item at location
+idx is a list of score names that represent the input for the
+the <a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a> named ‘nn_&lt;idx&gt;.dat’.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.NNScorer.GetScore">
+<span class="sig-name descname"><span class="pre">GetScore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">olc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.NNScorer.GetScore" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts all valid scores from <em>score_dict</em>, selects the right internal
+<a class="reference internal" href="#qmean.NNScorer" title="qmean.NNScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNScorer</span></code></a> and returns a score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>score_dict</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Keys relate to the internal feature group list. All
+values !(None || NaN) are selected and the
+internal list of feature groups is iterated until
+a group can be identified for which all values are
+valid. Ordering of the internal feature groups therefore
+matters. The values are ordered as defined in the found
+feature group and passed to the according
+<a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a>. The function returns 0.0 if no
+feature group can be identified.</p></li>
+<li><p><strong>olc</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – A common use case for the <a class="reference internal" href="#qmean.NNScorer" title="qmean.NNScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNScorer</span></code></a> is to
+estimate residue specific scores. When defining <em>olc</em>,
+a one-hot array with 20 elements is added in front
+of the values that are passed to the selected
+<a class="reference internal" href="#qmean.Regressor" title="qmean.Regressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Regressor</span></code></a>. All elements are zero, the location
+of <em>olc</em> in the string “ACDEFGHIKLMNPQRSTVWY” is set
+to one. The function returns 0.0 if <em>olc</em> is not found in
+the specified string.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Combining Scores</a><ul>
+<li><a class="reference internal" href="#linear-score-combination">Linear Score combination</a><ul>
+<li><a class="reference internal" href="#qmean.LocalScorer"><code class="docutils literal notranslate"><span class="pre">LocalScorer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.LocalScorer.Save"><code class="docutils literal notranslate"><span class="pre">LocalScorer.Save()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.LocalScorer.Load"><code class="docutils literal notranslate"><span class="pre">LocalScorer.Load()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.LocalScorer.TrainNewType"><code class="docutils literal notranslate"><span class="pre">LocalScorer.TrainNewType()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.LocalScorer.GetLocalScore"><code class="docutils literal notranslate"><span class="pre">LocalScorer.GetLocalScore()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#qmean.GlobalScorer"><code class="docutils literal notranslate"><span class="pre">GlobalScorer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.GlobalScorer.Save"><code class="docutils literal notranslate"><span class="pre">GlobalScorer.Save()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.GlobalScorer.Load"><code class="docutils literal notranslate"><span class="pre">GlobalScorer.Load()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.GlobalScorer.TrainNewType"><code class="docutils literal notranslate"><span class="pre">GlobalScorer.TrainNewType()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.GlobalScorer.GetGlobalScore"><code class="docutils literal notranslate"><span class="pre">GlobalScorer.GetGlobalScore()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#multi-layer-perceptron-scoring">Multi-Layer Perceptron scoring</a><ul>
+<li><a class="reference internal" href="#qmean.Regressor"><code class="docutils literal notranslate"><span class="pre">Regressor</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.Regressor.AddLayer"><code class="docutils literal notranslate"><span class="pre">Regressor.AddLayer()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.Regressor.Save"><code class="docutils literal notranslate"><span class="pre">Regressor.Save()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.Regressor.Load"><code class="docutils literal notranslate"><span class="pre">Regressor.Load()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.Regressor.Predict"><code class="docutils literal notranslate"><span class="pre">Regressor.Predict()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#qmean.TrainRegressor"><code class="docutils literal notranslate"><span class="pre">TrainRegressor()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.NNScorer"><code class="docutils literal notranslate"><span class="pre">NNScorer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.NNScorer.GetScore"><code class="docutils literal notranslate"><span class="pre">NNScorer.GetScore()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="spherical_smoother.html"
+                          title="previous chapter">Spherical Smoother</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="membrane.html"
+                          title="next chapter">Membrane Location</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/score_combination.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="membrane.html" title="Membrane Location"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="spherical_smoother.html" title="Spherical Smoother"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Combining Scores</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

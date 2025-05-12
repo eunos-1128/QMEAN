@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The Atom ChemType &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Statistical Potentials of Mean Force" href="statistical_potentials.html" />
+    <link rel="prev" title="Run the QMEAN Scoring Functions" href="run_qmean_scoring.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="statistical_potentials.html" title="Statistical Potentials of Mean Force"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="run_qmean_scoring.html" title="Run the QMEAN Scoring Functions"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The Atom ChemType</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="the-atom-chemtype">
+<h1>The Atom ChemType<a class="headerlink" href="#the-atom-chemtype" title="Link to this heading">¶</a></h1>
+<p>Some functionality in QMEAN requires to have a definition of all chemically
+distinguishable heavy atoms in protein structures. This is achieved by defining
+the ChemType enum. You can either directly access them or generate them
+using following function:</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="GetAtomTypeByName">
+<span class="sig-name descname"><span class="pre">GetAtomTypeByName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#GetAtomTypeByName" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aa</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/conop/aminoacid/#ost.conop.AminoAcid" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.conop.AminoAcid</span></code></a>) – Amino Acid the atom belongs to</p></li>
+<li><p><strong>aname</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Default PDB name of the atom</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The enum type defining the according heavy atom,
+ChemType.UNKNOWN if not existing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#chemtype"><span class="std std-ref">ChemType</span></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">conop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">SSAgreement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">GetAtomTypeByName</span>
+
+<span class="c1">#Let&#39;s check out all ChemTypes for a Phenylalanine...</span>
+<span class="n">atom_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;N&quot;</span><span class="p">,</span><span class="s2">&quot;CA&quot;</span><span class="p">,</span><span class="s2">&quot;CB&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;CG&quot;</span><span class="p">,</span><span class="s2">&quot;CD1&quot;</span><span class="p">,</span><span class="s2">&quot;CD2&quot;</span><span class="p">,</span><span class="s2">&quot;CE1&quot;</span><span class="p">,</span><span class="s2">&quot;CE2&quot;</span><span class="p">,</span><span class="s2">&quot;CZ&quot;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">an</span> <span class="ow">in</span> <span class="n">atom_names</span><span class="p">:</span>
+    <span class="n">chem_type</span> <span class="o">=</span> <span class="n">GetAtomTypeByName</span><span class="p">(</span><span class="n">conop</span><span class="o">.</span><span class="n">PHE</span><span class="p">,</span><span class="n">an</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ChemType for&quot;</span><span class="p">,</span><span class="n">an</span><span class="p">,</span> <span class="s2">&quot;:</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">chem_type</span><span class="p">)</span>
+
+<span class="c1">#CD1 and CD2 have the same ChemType! The same is true for CE1 and CE2.</span>
+<span class="c1">#The reason for that is that they cannot be distinguished, so QMEAN</span>
+<span class="c1">#treats them equivalently.</span>
+</pre></div>
+</div>
+<ul class="simple" id="chemtype">
+<li><p>The ChemType Enum:</p>
+<ul>
+<li><p>ChemType.O_GLY</p></li>
+<li><p>ChemType.N_GLY</p></li>
+<li><p>ChemType.C_GLY</p></li>
+<li><p>ChemType.C_GLY_A</p></li>
+<li><p>ChemType.O_ALA</p></li>
+<li><p>ChemType.N_ALA</p></li>
+<li><p>ChemType.C_ALA</p></li>
+<li><p>ChemType.C_ALA_A</p></li>
+<li><p>ChemType.C_ALA_B</p></li>
+<li><p>ChemType.O_VAL</p></li>
+<li><p>ChemType.N_VAL</p></li>
+<li><p>ChemType.C_VAL</p></li>
+<li><p>ChemType.C_VAL_A</p></li>
+<li><p>ChemType.C_VAL_B</p></li>
+<li><p>ChemType.C_VAL_G</p></li>
+<li><p>ChemType.O_LEU</p></li>
+<li><p>ChemType.N_LEU</p></li>
+<li><p>ChemType.C_LEU</p></li>
+<li><p>ChemType.C_LEU_A</p></li>
+<li><p>ChemType.C_LEU_B</p></li>
+<li><p>ChemType.C_LEU_G</p></li>
+<li><p>ChemType.C_LEU_D</p></li>
+<li><p>ChemType.O_ILE</p></li>
+<li><p>ChemType.N_ILE</p></li>
+<li><p>ChemType.C_ILE</p></li>
+<li><p>ChemType.C_ILE_A</p></li>
+<li><p>ChemType.C_ILE_B</p></li>
+<li><p>ChemType.C_ILE_G1</p></li>
+<li><p>ChemType.C_ILE_G2</p></li>
+<li><p>ChemType.C_ILE_D1</p></li>
+<li><p>ChemType.O_THR</p></li>
+<li><p>ChemType.N_THR</p></li>
+<li><p>ChemType.C_THR</p></li>
+<li><p>ChemType.C_THR_A</p></li>
+<li><p>ChemType.C_THR_B</p></li>
+<li><p>ChemType.O_THR_G1</p></li>
+<li><p>ChemType.C_THR_G2</p></li>
+<li><p>ChemType.O_SER</p></li>
+<li><p>ChemType.N_SER</p></li>
+<li><p>ChemType.C_SER</p></li>
+<li><p>ChemType.C_SER_A</p></li>
+<li><p>ChemType.C_SER_B</p></li>
+<li><p>ChemType.O_SER_G</p></li>
+<li><p>ChemType.O_CYS</p></li>
+<li><p>ChemType.N_CYS</p></li>
+<li><p>ChemType.C_CYS</p></li>
+<li><p>ChemType.C_CYS_A</p></li>
+<li><p>ChemType.C_CYS_B</p></li>
+<li><p>ChemType.S_CYS_G</p></li>
+<li><p>ChemType.O_MET</p></li>
+<li><p>ChemType.N_MET</p></li>
+<li><p>ChemType.C_MET</p></li>
+<li><p>ChemType.C_MET_A</p></li>
+<li><p>ChemType.C_MET_B</p></li>
+<li><p>ChemType.C_MET_G</p></li>
+<li><p>ChemType.S_MET_D</p></li>
+<li><p>ChemType.C_MET_E</p></li>
+<li><p>ChemType.O_ASP</p></li>
+<li><p>ChemType.N_ASP</p></li>
+<li><p>ChemType.C_ASP</p></li>
+<li><p>ChemType.C_ASP_A</p></li>
+<li><p>ChemType.C_ASP_B</p></li>
+<li><p>ChemType.C_ASP_G</p></li>
+<li><p>ChemType.O_ASP_D</p></li>
+<li><p>ChemType.O_GLU</p></li>
+<li><p>ChemType.N_GLU</p></li>
+<li><p>ChemType.C_GLU</p></li>
+<li><p>ChemType.C_GLU_A</p></li>
+<li><p>ChemType.C_GLU_B</p></li>
+<li><p>ChemType.C_GLU_G</p></li>
+<li><p>ChemType.C_GLU_D</p></li>
+<li><p>ChemType.O_GLU_E</p></li>
+<li><p>ChemType.O_ASN</p></li>
+<li><p>ChemType.N_ASN</p></li>
+<li><p>ChemType.C_ASN</p></li>
+<li><p>ChemType.C_ASN_A</p></li>
+<li><p>ChemType.C_ASN_B</p></li>
+<li><p>ChemType.C_ASN_G</p></li>
+<li><p>ChemType.O_ASN_D</p></li>
+<li><p>ChemType.N_ASN_D</p></li>
+<li><p>ChemType.O_GLN</p></li>
+<li><p>ChemType.N_GLN</p></li>
+<li><p>ChemType.C_GLN</p></li>
+<li><p>ChemType.C_GLN_A</p></li>
+<li><p>ChemType.C_GLN_B</p></li>
+<li><p>ChemType.C_GLN_G</p></li>
+<li><p>ChemType.C_GLN_D</p></li>
+<li><p>ChemType.O_GLN_E</p></li>
+<li><p>ChemType.N_GLN_E</p></li>
+<li><p>ChemType.O_LYS</p></li>
+<li><p>ChemType.N_LYS</p></li>
+<li><p>ChemType.C_LYS</p></li>
+<li><p>ChemType.C_LYS_A</p></li>
+<li><p>ChemType.C_LYS_B</p></li>
+<li><p>ChemType.C_LYS_G</p></li>
+<li><p>ChemType.C_LYS_D</p></li>
+<li><p>ChemType.C_LYS_E</p></li>
+<li><p>ChemType.N_LYS_Z</p></li>
+<li><p>ChemType.O_ARG</p></li>
+<li><p>ChemType.N_ARG</p></li>
+<li><p>ChemType.C_ARG</p></li>
+<li><p>ChemType.C_ARG_A</p></li>
+<li><p>ChemType.C_ARG_B</p></li>
+<li><p>ChemType.C_ARG_G</p></li>
+<li><p>ChemType.C_ARG_D</p></li>
+<li><p>ChemType.N_ARG_E</p></li>
+<li><p>ChemType.C_ARG_Z</p></li>
+<li><p>ChemType.N_ARG_H</p></li>
+<li><p>ChemType.O_TYR</p></li>
+<li><p>ChemType.N_TYR</p></li>
+<li><p>ChemType.C_TYR</p></li>
+<li><p>ChemType.C_TYR_A</p></li>
+<li><p>ChemType.C_TYR_B</p></li>
+<li><p>ChemType.C_TYR_G</p></li>
+<li><p>ChemType.C_TYR_D</p></li>
+<li><p>ChemType.C_TYR_E</p></li>
+<li><p>ChemType.C_TYR_Z</p></li>
+<li><p>ChemType.O_TYR_H</p></li>
+<li><p>ChemType.O_PHE</p></li>
+<li><p>ChemType.N_PHE</p></li>
+<li><p>ChemType.C_PHE</p></li>
+<li><p>ChemType.C_PHE_A</p></li>
+<li><p>ChemType.C_PHE_B</p></li>
+<li><p>ChemType.C_PHE_G</p></li>
+<li><p>ChemType.C_PHE_D</p></li>
+<li><p>ChemType.C_PHE_E</p></li>
+<li><p>ChemType.C_PHE_Z</p></li>
+<li><p>ChemType.O_HIS</p></li>
+<li><p>ChemType.N_HIS</p></li>
+<li><p>ChemType.C_HIS</p></li>
+<li><p>ChemType.C_HIS_A</p></li>
+<li><p>ChemType.C_HIS_B</p></li>
+<li><p>ChemType.C_HIS_G</p></li>
+<li><p>ChemType.N_HIS_D1</p></li>
+<li><p>ChemType.C_HIS_D2</p></li>
+<li><p>ChemType.C_HIS_E1</p></li>
+<li><p>ChemType.N_HIS_E2</p></li>
+<li><p>ChemType.O_TRP</p></li>
+<li><p>ChemType.N_TRP</p></li>
+<li><p>ChemType.C_TRP</p></li>
+<li><p>ChemType.C_TRP_A</p></li>
+<li><p>ChemType.C_TRP_B</p></li>
+<li><p>ChemType.C_TRP_G</p></li>
+<li><p>ChemType.C_TRP_D1</p></li>
+<li><p>ChemType.C_TRP_D2</p></li>
+<li><p>ChemType.N_TRP_E1</p></li>
+<li><p>ChemType.C_TRP_E2</p></li>
+<li><p>ChemType.C_TRP_E3</p></li>
+<li><p>ChemType.C_TRP_Z2</p></li>
+<li><p>ChemType.C_TRP_Z3</p></li>
+<li><p>ChemType.C_TRP_H2</p></li>
+<li><p>ChemType.O_PRO</p></li>
+<li><p>ChemType.N_PRO</p></li>
+<li><p>ChemType.C_PRO</p></li>
+<li><p>ChemType.C_PRO_A</p></li>
+<li><p>ChemType.C_PRO_B</p></li>
+<li><p>ChemType.C_PRO_G</p></li>
+<li><p>ChemType.C_PRO_D</p></li>
+<li><p>ChemType.UNKNOWN</p></li>
+</ul>
+</li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">The Atom ChemType</a><ul>
+<li><a class="reference internal" href="#GetAtomTypeByName"><code class="docutils literal notranslate"><span class="pre">GetAtomTypeByName()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="run_qmean_scoring.html"
+                          title="previous chapter">Run the QMEAN Scoring Functions</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="statistical_potentials.html"
+                          title="next chapter">Statistical Potentials of Mean Force</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/chemtype.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="statistical_potentials.html" title="Statistical Potentials of Mean Force"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="run_qmean_scoring.html" title="Run the QMEAN Scoring Functions"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The Atom ChemType</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

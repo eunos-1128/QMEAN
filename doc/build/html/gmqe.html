@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GMQE &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="License" href="license.html" />
+    <link rel="prev" title="DisCo" href="disco.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="license.html" title="License"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="disco.html" title="DisCo"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GMQE</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="gmqe">
+<h1>GMQE<a class="headerlink" href="#gmqe" title="Link to this heading">¶</a></h1>
+<p>The Global Model Quality Estimate (GMQE) aims to predict the expected quality of
+a protein model before it is actually built. It bases the prediction on the
+input data used for a common comparative modelling approach. This can be
+features that are extracted from the target-template sequence alignment
+(e.g. sequence identity etc.) or features derived from structural data
+(e.g. statistical potentials/DisCo applied on a ‘raw-model’, i.e. a model where
+the coordinates of the template have been transferred to an initial model
+exhibiting the target sequence but without further processing such as loop
+modelling etc.).
+The features are combined with a <a class="reference internal" href="score_combination.html#qmean.NNScorer" title="qmean.NNScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNScorer</span></code></a> which is trained to predict
+the full-atomic lDDT score of the final model.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">seq</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">mol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSIPREDHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisCoContainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">GMQE</span>
+
+<span class="c1"># Let&#39;s model crambin! </span>
+<span class="n">trg_sequence</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">CreateSequence</span><span class="p">(</span><span class="s1">&#39;crambin&#39;</span><span class="p">,</span> <span class="s1">&#39;TTCCPSIVARSNFNVCRLPGTPEAICATYTGCIIIPGATCPGDYAN&#39;</span><span class="p">)</span>
+<span class="n">trg_profile</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadSequenceProfile</span><span class="p">(</span><span class="s1">&#39;example_data/1crn.1.A.hhm&#39;</span><span class="p">)</span>
+<span class="n">dc</span> <span class="o">=</span> <span class="n">DisCoContainer</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="s1">&#39;example_data/1crn_dc.dat&#39;</span><span class="p">)</span>
+
+<span class="c1"># Setup PSIPREDHandler</span>
+<span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;seq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">trg_sequence</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;ss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;CCCCCCHHHHHHHCCCCCCCCCHHHHHHCCCCEECCCCCCCCCCCC&#39;</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;conf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;9888980234220123269989453431158088299999999989&#39;</span>
+<span class="n">psipred_handler</span> <span class="o">=</span> <span class="n">PSIPREDHandler</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> 
+
+<span class="c1"># GMQE is calculated by using the structure with PDB ID 3szs as template</span>
+<span class="n">seqres_aln</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadAlignment</span><span class="p">(</span><span class="s1">&#39;example_data/1crn_3szs_aln.fasta&#39;</span><span class="p">)</span>
+<span class="n">tpl</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="s1">&#39;example_data/3szs.2.A.pdb&#39;</span><span class="p">)</span>
+<span class="n">tpl_profile</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadSequenceProfile</span><span class="p">(</span><span class="s1">&#39;example_data/3szs.2.A.hhm&#39;</span><span class="p">)</span>
+
+<span class="c1"># Assign secondary structure, the ss_agreement score is invalid otherwise</span>
+<span class="n">mol</span><span class="o">.</span><span class="n">alg</span><span class="o">.</span><span class="n">AssignSecStruct</span><span class="p">(</span><span class="n">tpl</span><span class="p">)</span>
+
+<span class="c1"># The template has no gaps, the atomseq alignment therefore matches the</span>
+<span class="c1"># seqres alignment. Be aware that the AttachView function doesn&#39;t check</span>
+<span class="c1"># whether sequence and attached view match. </span>
+<span class="n">aln</span> <span class="o">=</span> <span class="n">seqres_aln</span>
+<span class="n">aln</span><span class="o">.</span><span class="n">AttachView</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">tpl</span><span class="o">.</span><span class="n">CreateFullView</span><span class="p">())</span>
+
+<span class="c1"># Generate target specific GMQE object and estimate GMQE</span>
+<span class="c1"># For optimal performance you need to provide a context profile database</span>
+<span class="c1"># (see documentation)</span>
+<span class="n">scorer</span> <span class="o">=</span> <span class="n">GMQE</span><span class="p">(</span><span class="n">trg_sequence</span><span class="p">,</span> <span class="n">psipred_handler</span><span class="p">,</span> <span class="n">disco</span> <span class="o">=</span> <span class="n">dc</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">trg_profile</span><span class="p">)</span>
+<span class="n">gmqe_result</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">PredictGMQE</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="n">seqres_aln</span><span class="p">,</span> <span class="n">tpl_profile</span> <span class="o">=</span> <span class="n">tpl_profile</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Expected model quality when using 3szs as template: &#39;</span><span class="p">,</span> <span class="n">gmqe_result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Scores: &#39;</span><span class="p">,</span> <span class="n">gmqe_result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.GMQE">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">GMQE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqres</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psipred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disco</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crf_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GMQE" title="Link to this definition">¶</a></dt>
+<dd><p>Performs all preprocessing required to score any number of models for
+a certain target sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seqres</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.SequenceHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.SequenceHandle</span></code></a>) – Target sequence</p></li>
+<li><p><strong>psipred</strong> (<a class="reference internal" href="predicted_sequence_features.html#qmean.PSIPREDHandler" title="qmean.PSIPREDHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSIPREDHandler</span></code></a>) – PSIPRED prediction that must match <em>seqres</em></p></li>
+<li><p><strong>disco</strong> (<a class="reference internal" href="disco.html#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a>) – DisCo Container that must match <em>seqres</em>. This is
+optional but decreases accuracy of quality predictions
+if omitted.</p></li>
+<li><p><strong>profile</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.ProfileHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.ProfileHandle</span></code></a>) – Profile that must match <em>seqres</em>. This is optional
+but decreases accuracy of quality predictions if
+omitted. The profile is used to calculate an
+HMM-HMM alignment score which aims to reproduce
+the score which is optimized in alignments
+generated by HHblits.</p></li>
+<li><p><strong>crf_file</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – When calculating the HMM-HMM alignment score with
+the <em>profile</em>, pseudo counts are assigned.
+The <em>crf_file</em> contains a path to the file containing
+context profiles in the HH-suite. Given a default
+HH-suite installation at &lt;PATH_TO_HHSUITE&gt;, this file
+can typically be found at:
+&lt;PATH_TO_HHSUITE&gt;/data/context_data.crf
+The pseudo counts are assigned with
+<code class="xref py py-func docutils literal notranslate"><span class="pre">ost.seq.alg.AddAAPseudoCounts()</span></code>. If <em>crf_file</em>
+is given, pseudo counts are added using the context
+profiles. If not, they are added using a substitution
+matrix.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.GMQE.GetScores">
+<span class="sig-name descname"><span class="pre">GetScores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aln</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqres_aln</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residue_numbers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ca_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cb_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dssp_states</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile_aln_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpl_profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GMQE.GetScores" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates all scores it possibly can given the input of this function and
+the input given at initalization of <a class="reference internal" href="#qmean.GMQE" title="qmean.GMQE"><code class="xref py py-class docutils literal notranslate"><span class="pre">GMQE</span></code></a>. Alignment specific scores
+are directly extracted from the ATOMSEQ alignment (<em>aln</em>: alignment that has
+target sequence as first sequence and template sequence of amino acids that
+are actually covered by structural data as second sequence) and SEQRES
+alignment (<em>seqres_aln</em>: same as before, but second sequence is the SEQRES,
+i.e. the target sequence of the template which is not necessarily fully
+covered by structural data). The second sequence in <em>seqres_aln</em> must be
+consistent with <em>tpl_profile</em>.</p>
+<p>There are two ways to pass structural data for scoring:</p>
+<ul class="simple">
+<li><p>manually pass the information by providing <em>residue_numbers</em>,
+<em>n_positions</em>, <em>ca_positions</em>, <em>c_positions</em>, <em>cb_positions</em> and
+<em>dssp_states</em></p></li>
+<li><p><a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a> attached to second sequence (the template
+sequence) in aln (see: <a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.AlignmentHandle.AttachView" title="(in OpenStructure v2.0.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ost.seq.AlignmentHandle.AttachView()</span></code></a>).
+To get meaningful results for the ss_agreement score (described below),
+secondary structure must be assigned (e.g. by executing
+<a class="reference external" href="https://openstructure.org//docs/2.0/mol/alg/molalg/#ost.mol.alg.AssignSecStruct" title="(in OpenStructure v2.0.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ost.mol.alg.AssignSecStruct()</span></code></a>).</p></li>
+</ul>
+<p>If you pass the stuff manually (option one), any <a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a>
+attached to <em>aln</em> is ignored.</p>
+<p>Scores that are calculated:</p>
+<ul class="simple">
+<li><p>seq_id: Fraction of conserved amino acids in <em>aln</em></p></li>
+<li><p>seq_sim: Normalized substitution score in <em>aln</em> given BLOSUM62</p></li>
+<li><p>n_insertions: The number of insertions in <em>aln</em></p></li>
+<li><p>n_deletions: The number of deletions in <em>aln</em></p></li>
+<li><p>seqres_length: The length of the target seqres</p></li>
+<li><p>coverage: Fraction of amino acid in target sequence of <em>aln</em> that are covered by an amino acid in the template seq</p></li>
+<li><p>seqres_coverage: Fraction of amino acid in target sequence of <em>seqres_aln</em> that are covered by an amino acid in the template seq</p></li>
+<li><p>profile_aln_score: Only set if <em>profile_aln_score</em> is given or if you provide a target profile at <a class="reference internal" href="#qmean.GMQE" title="qmean.GMQE"><code class="xref py py-class docutils literal notranslate"><span class="pre">GMQE</span></code></a> initialization as well as <em>tpl_profile</em>. If you provided <em>profile_aln_score</em>, that’s directly set. Otherwise it executes <code class="xref py py-meth docutils literal notranslate"><span class="pre">ost.seq.alg.HMMScore()</span></code> using <em>seqres_aln</em>, <em>tpl_profile</em> and the target profile given at <a class="reference internal" href="#qmean.GMQE" title="qmean.GMQE"><code class="xref py py-class docutils literal notranslate"><span class="pre">GMQE</span></code></a> initialization</p></li>
+<li><p>avg_entropy: Only set if you provide a target profile at <a class="reference internal" href="#qmean.GMQE" title="qmean.GMQE"><code class="xref py py-class docutils literal notranslate"><span class="pre">GMQE</span></code></a> initialization. Average entropy of the columns in the target profile</p></li>
+<li><p>dist_const: Only set if you provide a <a class="reference internal" href="disco.html#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a> at <a class="reference internal" href="#qmean.GMQE" title="qmean.GMQE"><code class="xref py py-class docutils literal notranslate"><span class="pre">GMQE</span></code></a> initialization. Represents the DisCo score calculated on the raw-model</p></li>
+<li><p>reduced: Reduced score on raw-model (see: <a class="reference internal" href="statistical_potentials.html#qmean.ReducedPotential" title="qmean.ReducedPotential"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReducedPotential</span></code></a>)</p></li>
+<li><p>cb_packing: CBPacking score on raw-model (see: <a class="reference internal" href="statistical_potentials.html#qmean.CBPackingPotential" title="qmean.CBPackingPotential"><code class="xref py py-class docutils literal notranslate"><span class="pre">CBPackingPotential</span></code></a>)</p></li>
+<li><p>torsion: Torsion score on raw-model (see: <a class="reference internal" href="statistical_potentials.html#qmean.TorsionPotential" title="qmean.TorsionPotential"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorsionPotential</span></code></a>)</p></li>
+<li><p>ss_agreement: SSAgreementScore on raw model (see <a class="reference internal" href="predicted_sequence_features.html#qmean.SSAgreement" title="qmean.SSAgreement"><code class="xref py py-class docutils literal notranslate"><span class="pre">SSAgreement</span></code></a>)</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aln</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.AlignmentHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.AlignmentHandle</span></code></a>) – The ATOMSEQ alignment with target sequence as first
+sequence and the sequence of the template you want to
+use for modelling as second sequence. The template
+sequence must only contain the amino acid for which we
+have structural coverage. One way of passing structural
+data to the function is to attach a
+<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a> to the template sequence.</p></li>
+<li><p><strong>seqres_aln</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.AlignmentHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.AlignmentHandle</span></code></a>) – The SEQRES aligment with target sequence as first
+sequence and the sequence of the template you want to
+use for modelling as second sequence.</p></li>
+<li><p><strong>residue_numbers</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Required if you pass structural data using the
+<em>residue_numbers</em>, <em>n_positions</em>, <em>ca_positions</em>,
+<em>c_positions</em>, <em>cb_positions</em> and <em>dssp_states</em>
+parameters. Maps the elements of the passed lists
+to the target sequence with 1-based indexing scheme
+(first residue in target sequence has index 1).</p></li>
+<li><p><strong>n_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Contains the nitrogen positions of the template
+residues which are mapped to the target sequence
+using <em>residue_numbers</em>.</p></li>
+<li><p><strong>ca_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Contains the CA carbon positions of the template
+residues which are mapped to the target sequence
+using <em>residue_numbers</em>.</p></li>
+<li><p><strong>c_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Contains the backbone carbon positions of the template
+residues which are mapped to the target sequence
+using <em>residue_numbers</em>.</p></li>
+<li><p><strong>cb_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Contains the cb carbon positions of the template
+residues which are mapped to the target sequence
+using <em>residue_numbers</em>. In case of glycine,
+construct a fake CB position using
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">ost.mol.alg.CBetaPosition()</span></code></p></li>
+<li><p><strong>dssp_states</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – DSSP states of the template residues which are
+mapped to the target sequence using <em>residue_numbers</em>.
+Valid states: [‘H’, ‘E’, ‘C’, ‘G’, ‘B’, ‘S’, ‘T’, ‘I’].
+If you assigned the secondary structure to an
+<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityHandle</span></code></a>/<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a>,
+for example with <a class="reference external" href="https://openstructure.org//docs/2.0/mol/alg/molalg/#ost.mol.alg.AssignSecStruct" title="(in OpenStructure v2.0.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ost.mol.alg.AssignSecStruct()</span></code></a>, you
+can extract this state for every
+<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.ResidueHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.ResidueHandle</span></code></a>/<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.ResidueView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.ResidueView</span></code></a>
+r by simply using str(r.GetSecStructure())</p></li>
+<li><p><strong>profile_aln_score</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – If set, this value is directly set as profile_aln_score in
+the return dict without calculating anything.</p></li>
+<li><p><strong>tpl_profile</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.ProfileHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.ProfileHandle</span></code></a>) – Required to calculate profile_aln_score, must match second
+sequence in <em>seqres_aln</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with all scores it can calculate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.GMQE.PredictGMQE">
+<span class="sig-name descname"><span class="pre">PredictGMQE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aln</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqres_aln</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residue_numbers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ca_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cb_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dssp_states</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile_aln_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpl_profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QMEANDisCo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.GMQE.PredictGMQE" title="Link to this definition">¶</a></dt>
+<dd><p>Invokes <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a> and returns one final GMQE value using an internal
+<a class="reference internal" href="score_combination.html#qmean.NNScorer" title="qmean.NNScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNScorer</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aln</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.AlignmentHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.AlignmentHandle</span></code></a>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>seqres_aln</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.AlignmentHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.AlignmentHandle</span></code></a>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>residue_numbers</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>n_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>ca_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>c_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>cb_positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>dssp_states</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>profile_aln_score</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>tpl_profile</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.ProfileHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.ProfileHandle</span></code></a>) – Passed to <a class="reference internal" href="#qmean.GMQE.GetScores" title="qmean.GMQE.GetScores"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></p></li>
+<li><p><strong>QMEANDisCo</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – If you already built a model, you can further increase the
+accuracy of the lDDT prediction by passing its global
+QMEANDisCo score. Thats the avg_local_score property of
+the <a class="reference internal" href="run_qmean_scoring.html#qmean.QMEANScorer" title="qmean.QMEANScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">QMEANScorer</span></code></a> which must be setup with DisCo
+and all that stuff.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#tuple" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> with the predicted lDDT (GMQE)
+as first element and a <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> containing
+the underlying scores as second element.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">GMQE</a><ul>
+<li><a class="reference internal" href="#qmean.GMQE"><code class="docutils literal notranslate"><span class="pre">GMQE</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.GMQE.GetScores"><code class="docutils literal notranslate"><span class="pre">GMQE.GetScores()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.GMQE.PredictGMQE"><code class="docutils literal notranslate"><span class="pre">GMQE.PredictGMQE()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="disco.html"
+                          title="previous chapter">DisCo</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="license.html"
+                          title="next chapter">License</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gmqe.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="license.html" title="License"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="disco.html" title="DisCo"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GMQE</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

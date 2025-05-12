@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Run the QMEAN Scoring Functions &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Atom ChemType" href="chemtype.html" />
+    <link rel="prev" title="Getting Started" href="getting_started.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="chemtype.html" title="The Atom ChemType"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="getting_started.html" title="Getting Started"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Run the QMEAN Scoring Functions</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="run-the-qmean-scoring-functions">
+<h1>Run the QMEAN Scoring Functions<a class="headerlink" href="#run-the-qmean-scoring-functions" title="Link to this heading">¶</a></h1>
+<p>We distinguish between assessment of soluble protein models and a membrane
+specific version of QMEAN: QMEANBrane.</p>
+<section id="assessing-the-quality-for-soluble-protein-models">
+<h2>Assessing the quality for soluble protein models<a class="headerlink" href="#assessing-the-quality-for-soluble-protein-models" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoadPDB</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">QMEANScorer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSIPREDHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACCPROHandler</span>
+
+<span class="c1"># we use our favourite example, crambin to demonstrate the usage </span>
+<span class="c1"># of the AssessModelQuality function</span>
+<span class="n">crambin_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;example_data&quot;</span><span class="p">,</span><span class="s2">&quot;1CRN.pdb&quot;</span><span class="p">)</span>
+<span class="n">crambin</span> <span class="o">=</span> <span class="n">LoadPDB</span><span class="p">(</span><span class="n">crambin_path</span><span class="p">)</span>
+
+<span class="c1"># We define the psipred and accpro prediction in a data dict,</span>
+<span class="c1"># You can get them for example from:</span>
+<span class="c1"># PSIPRED: http://bioinf.cs.ucl.ac.uk/psipred/</span>
+<span class="c1"># ACCPRO: http://scratch.proteomics.ics.uci.edu/</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+<span class="c1"># the sequence</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;seq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;TTCCPSIVARSNFNVCRLPGTPEAICATYTGCIIIPGATCPGDYAN&quot;</span>
+
+<span class="c1"># the stuff from PSIPRED</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;ss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CCCCCCHHHHHHHCCCCCCCCCHHHHHHCCCCEECCCCCCCCCCCC&quot;</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;conf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;9888980234220123269989453431158088299999999989&quot;</span>
+
+<span class="c1"># the stuff from ACCPRO</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;acc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ebbbeeeebbeebeebeeeeeeeeebbeebebeebeeeeeeeeeee&quot;</span>
+
+<span class="c1"># create the handler</span>
+<span class="n">psipred_handler</span> <span class="o">=</span> <span class="n">PSIPREDHandler</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> 
+<span class="n">accpro_handler</span> <span class="o">=</span> <span class="n">ACCPROHandler</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># we now have everything we need and obtain a QMEANScorer </span>
+<span class="c1"># object to estimate the classic QMEAN4 score</span>
+<span class="c1"># DISCLAIMER: to use the full power of QMEAN, you should </span>
+<span class="c1"># additionally add distance constraints!</span>
+<span class="n">scorer</span> <span class="o">=</span> <span class="n">QMEANScorer</span><span class="p">(</span><span class="n">crambin</span><span class="p">,</span> <span class="n">psipred</span> <span class="o">=</span> <span class="n">psipred_handler</span><span class="p">,</span> 
+                     <span class="n">accpro</span><span class="o">=</span> <span class="n">accpro_handler</span><span class="p">)</span>
+
+<span class="c1"># we get the qmean4 and qmean6 score, as well as their </span>
+<span class="c1"># Z-score counterparts </span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;QMEAN4:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">qmean4_score</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;QMEAN6:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">qmean6_score</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;QMEAN4 Z-score:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">qmean4_z_score</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;QMEAN6 Z-score:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">qmean6_z_score</span><span class="p">)</span>
+
+<span class="c1"># local scores are available as a dictionary</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Local Scores:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">local_scores</span><span class="p">)</span>
+
+<span class="c1"># with the rise of QMEANDisCo, average local score has been </span>
+<span class="c1"># introduced as a global score predictor. This also comes with </span>
+<span class="c1"># an error. However, those errors make only sense when DisCo </span>
+<span class="c1"># is provided. We therefore get NaN here...</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Avg. Local Score:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">avg_local_score</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Avg. Local Score Error:&quot;</span><span class="p">,</span> <span class="n">scorer</span><span class="o">.</span><span class="n">avg_local_score_error</span><span class="p">)</span>
+
+<span class="c1"># the assessed model is a view of our input structure that we </span>
+<span class="c1"># can access as well. If we want to read out local scores from </span>
+<span class="c1"># there, we first need to map them.</span>
+<span class="n">scorer</span><span class="o">.</span><span class="n">AssignModelBFactors</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">model</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">residues</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">b_factor</span><span class="p">)</span>
+
+<span class="c1"># the results can also be visualized with various plots</span>
+<span class="n">scorer</span><span class="o">.</span><span class="n">LocalProfilePlot</span><span class="p">(</span><span class="s2">&quot;local_profile.png&quot;</span><span class="p">)</span>
+<span class="n">scorer</span><span class="o">.</span><span class="n">QMEAN4ReferencePlot</span><span class="p">(</span><span class="s2">&quot;qmean4_ref_plot.png&quot;</span><span class="p">)</span>
+<span class="n">scorer</span><span class="o">.</span><span class="n">QMEAN6ReferencePlot</span><span class="p">(</span><span class="s2">&quot;qmean6_ref_plot.png&quot;</span><span class="p">)</span>
+<span class="n">scorer</span><span class="o">.</span><span class="n">QMEAN4SliderPlot</span><span class="p">(</span><span class="s2">&quot;qmean4_sliders&quot;</span><span class="p">)</span>
+<span class="n">scorer</span><span class="o">.</span><span class="n">QMEAN6SliderPlot</span><span class="p">(</span><span class="s2">&quot;qmean6_sliders&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.QMEANScorer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">QMEANScorer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">psipred=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accpro=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings=conf.SwissmodelSettings()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_nn</span> <span class="pre">=</span> <span class="pre">True</span></span></em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer" title="Link to this definition">¶</a></dt>
+<dd><p>The QMEANScorer allows to calculate various scores from the QMEAN
+universe. They can be accessed through the class attributes that
+follow a lazy evaluation scheme, i.e. scores are only calculated
+if they’re actually requested.
+Plotting functions are also available to visualize the calculated scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityHandle</span></code></a> / <a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a>) – The model you want to assess. Only the selection
+returned when calling model.Select(“peptide=true”)
+will be used for evaluation. Residue numbers are used
+to refer to local per residue scores. To avoid
+confusion, we only allow the numeric component to be
+present. An error will be thrown if there’s an insertion
+code.</p></li>
+<li><p><strong>psipred</strong> (<a class="reference internal" href="predicted_sequence_features.html#qmean.PSIPREDHandler" title="qmean.PSIPREDHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSIPREDHandler</span></code></a> or a <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>
+thereof (one element per chain)) – Information from the PSIPRED prediction, QMEAN will run
+through without it being set but for optimal performance
+this variable must be set.</p></li>
+<li><p><strong>accpro</strong> (<a class="reference internal" href="predicted_sequence_features.html#qmean.ACCPROHandler" title="qmean.ACCPROHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ACCPROHandler</span></code></a> or a <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>
+thereof (one element per chain)) – Information from the ACCPRO prediction, QMEAN will run
+through without it being set but for optimal performance
+this variable must be set.</p></li>
+<li><p><strong>dc</strong> (<a class="reference internal" href="disco.html#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a> or a <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> thereof) – Thats what let QMEAN evolve to QMEANDisCo, QMEAN will
+run through without it being set but for optimal
+performance this variable must be set.</p></li>
+<li><p><strong>settings</strong> (<em>Custom object with specified member</em>) – <p>Contains paths to potentials etc.
+If set to None, an object with default paths is
+generated with: settings=conf.SwissmodelSettings().
+Must have following members:</p>
+<blockquote>
+<div><ul>
+<li><p>local_potentials: path to <a class="reference internal" href="containers.html#qmean.PotentialContainer" title="qmean.PotentialContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialContainer</span></code></a>
+applied for local scoring.</p></li>
+<li><p>global_potentials: path to <a class="reference internal" href="containers.html#qmean.PotentialContainer" title="qmean.PotentialContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialContainer</span></code></a>
+applied for global scoring (qmean4 / qmean6)</p></li>
+<li><p>local_scorer: path to <a class="reference internal" href="score_combination.html#qmean.NNScorer" title="qmean.NNScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNScorer</span></code></a> to estimate
+local scores. this is used if <em>use_nn</em> is set to
+True (default)</p></li>
+<li><p>linear_local_scorer: path to <a class="reference internal" href="score_combination.html#qmean.LocalScorer" title="qmean.LocalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScorer</span></code></a> to
+linearly combine per-residue scores. This is only
+used if <em>use_nn</em> is set to False.</p></li>
+<li><p>global_scorer: path to <a class="reference internal" href="score_combination.html#qmean.GlobalScorer" title="qmean.GlobalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalScorer</span></code></a> to
+linearly combine global scores (qmean4 / qmean6)</p></li>
+<li><p>reference_tab: path to <code class="xref py py-class docutils literal notranslate"><span class="pre">ost.Table</span></code> containing
+reference data. To calculate the global Z-scores.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>use_nn</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to use neural network to calculate local scores.
+This is the prefered way of doing things. Set this to False
+if you want to fallback to the good old times when linear
+combinations were sufficient.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.QMEAN4SliderPlot">
+<span class="sig-name descname"><span class="pre">QMEAN4SliderPlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer.QMEAN4SliderPlot" title="Link to this definition">¶</a></dt>
+<dd><p>Dumps the slider plot representing the QMEAN4 Z-Score and the Z-Scores of
+its components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dump the plot, must have image format file
+ending, e.g. awesome_plot.png</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.QMEAN6SliderPlot">
+<span class="sig-name descname"><span class="pre">QMEAN6SliderPlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer.QMEAN6SliderPlot" title="Link to this definition">¶</a></dt>
+<dd><p>Dumps the slider plot representing the QMEAN6 Z-Score and the Z-Scores of
+its components. If <em>psipred</em> or <em>accpro</em> are missing, the plot makes no
+sense as the Z-scores from the agreement terms and QMEAN6 are set to NaN.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dump the plot, must have image format file
+ending, e.g. awesome_plot.png</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.QMEAN4ReferencePlot">
+<span class="sig-name descname"><span class="pre">QMEAN4ReferencePlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer.QMEAN4ReferencePlot" title="Link to this definition">¶</a></dt>
+<dd><p>Dumps the reference plot with the QMEAN4 score of the <em>model</em> compared to
+the QMEAN4 scores of a large set of non-redundant X-ray structures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dump the plot, must have image format file
+ending, e.g. awesome_plot.png</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.QMEAN6ReferencePlot">
+<span class="sig-name descname"><span class="pre">QMEAN6ReferencePlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer.QMEAN6ReferencePlot" title="Link to this definition">¶</a></dt>
+<dd><p>Dumps the reference plot with the QMEAN6 score of the <em>model</em> compared to
+the QMEAN6 scores of a large set of non-redundant X-ray structures. If
+<em>psipred</em> or <em>accpro</em> are missing, the plot makes no sense as the QMEAN6
+score is set to NaN.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dump the plot, must have image format file
+ending, e.g. awesome_plot.png</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.LocalProfilePlot">
+<span class="sig-name descname"><span class="pre">LocalProfilePlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">chain=None</span></span></em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer.LocalProfilePlot" title="Link to this definition">¶</a></dt>
+<dd><p>Dumps a line plot representing local per residue scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to dump the plot, must have image format file
+ending, e.g. awesome_plot.png</p></li>
+<li><p><strong>chain</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – If None, the local score profiles of all chains end up
+in the same plot. You can specify a chain name to
+only plot the score profile of one chain.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.AssignModelBFactors">
+<span class="sig-name descname"><span class="pre">AssignModelBFactors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.QMEANScorer.AssignModelBFactors" title="Link to this definition">¶</a></dt>
+<dd><p>Assigns local scores to the bfactors of the internally scored model
+(the result of <em>model</em>.Select(“peptide=true”)). This operation happens in
+place, so <em>model</em> is directly modified.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#qmean.QMEANScorer.model" title="Link to this definition">¶</a></dt>
+<dd><p>The internally scored model (the result of
+<em>model</em>.Select(“peptide=true”))</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.qmean4_score">
+<span class="sig-name descname"><span class="pre">qmean4_score</span></span><a class="headerlink" href="#qmean.QMEANScorer.qmean4_score" title="Link to this definition">¶</a></dt>
+<dd><p>The QMEAN4 score of <em>model</em>, i.e. four statistical potentials linearly combined
+to get a global score.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.qmean4_z_score">
+<span class="sig-name descname"><span class="pre">qmean4_z_score</span></span><a class="headerlink" href="#qmean.QMEANScorer.qmean4_z_score" title="Link to this definition">¶</a></dt>
+<dd><p>The QMEAN4 Z-score of <em>model</em>, i.e. its QMEAN4 score compared to what one would
+expect from high resolution X-ray structures</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.qmean4_components">
+<span class="sig-name descname"><span class="pre">qmean4_components</span></span><a class="headerlink" href="#qmean.QMEANScorer.qmean4_components" title="Link to this definition">¶</a></dt>
+<dd><p>Dictionary containing scores that contribute to QMEAN4 in their normalized
+and Z-score version. Keys of the dictionary: [“interaction”, “cbeta”,
+“packing”, “torsion”, “interaction_z_score”, “cbeta_z_score”,
+“packing_z_score”, “torsion_z_score”]</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.qmean6_score">
+<span class="sig-name descname"><span class="pre">qmean6_score</span></span><a class="headerlink" href="#qmean.QMEANScorer.qmean6_score" title="Link to this definition">¶</a></dt>
+<dd><p>The QMEAN6 score of <em>model</em>, i.e. four statistical potentials and two agreement
+terms linearly combined to get a global score. Value is set to NaN if <em>psipred</em>
+or <em>accpro</em> are invalid.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.qmean6_z_score">
+<span class="sig-name descname"><span class="pre">qmean6_z_score</span></span><a class="headerlink" href="#qmean.QMEANScorer.qmean6_z_score" title="Link to this definition">¶</a></dt>
+<dd><p>The QMEAN6 Z-score of <em>model</em>, i.e. its QMEAN6 score compared to what one would
+expect from high resolution X-ray structures. Value is set to NaN if <em>psipred</em>
+or <em>accpro</em> are invalid.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.qmean6_components">
+<span class="sig-name descname"><span class="pre">qmean6_components</span></span><a class="headerlink" href="#qmean.QMEANScorer.qmean6_components" title="Link to this definition">¶</a></dt>
+<dd><p>Dictionary containing scores that contribute to QMEAN6 in their normalized
+and Z-score version. Keys of the dictionary: [“interaction”, “cbeta”,
+“packing”, “torsion”, “ss_agreement”, “acc_agreement”,
+“interaction_z_score”, “cbeta_z_score”, “packing_z_score”, “torsion_z_score”,
+“ss_agreement_z_score”, “acc_agreement_z_score”]. The values for the
+agreement terms is set to NaN if the required input is missing
+(<em>psired</em>, <em>accpro</em>)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.local_scores">
+<span class="sig-name descname"><span class="pre">local_scores</span></span><a class="headerlink" href="#qmean.QMEANScorer.local_scores" title="Link to this definition">¶</a></dt>
+<dd><p>Predicted local per residue scores of <em>model</em>. This attribute returns a
+dictionary with keys being the chain names in <em>model</em> and values another
+set of dictionaries. The key in those per chain dictionaries are the
+residue numbers as integers (please note, that insertion codes throw an
+error if present in <em>model</em>) and values the predicted local score.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.avg_local_score">
+<span class="sig-name descname"><span class="pre">avg_local_score</span></span><a class="headerlink" href="#qmean.QMEANScorer.avg_local_score" title="Link to this definition">¶</a></dt>
+<dd><p>The average of the the local scores</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qmean.QMEANScorer.avg_local_score_error">
+<span class="sig-name descname"><span class="pre">avg_local_score_error</span></span><a class="headerlink" href="#qmean.QMEANScorer.avg_local_score_error" title="Link to this definition">¶</a></dt>
+<dd><p>The expected error for <em>avg_local_score</em>. This attribute is only available
+if you provided distance constraints and enabled neural networks
+(<em>dc</em> and <em>use_nn</em> parameters at QMEANScorer construction). NaN is returned
+otherwise. The error is the root mean squared difference
+(i.e. standard deviation) between predicted lDDT and true lDDT on a large
+set of models with similar size.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="assessing-the-quality-for-membrane-protein-models">
+<h2>Assessing the quality for membrane protein models<a class="headerlink" href="#assessing-the-quality-for-membrane-protein-models" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoadPDB</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">AssessMembraneModelQuality</span>
+
+<span class="c1">#we load and assess some alternative models for the same target as they</span>
+<span class="c1">#are used as a modelling example in the QMEANBrane publication</span>
+<span class="n">model_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;original_hhblits_alignment&quot;</span><span class="p">,</span> 
+               <span class="s2">&quot;shift_in_front_helix_four&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;shift_into_middle&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;shift_towards_cter&quot;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">mn</span> <span class="ow">in</span> <span class="n">model_names</span><span class="p">:</span>
+  <span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;example_data&quot;</span><span class="p">,</span><span class="n">mn</span><span class="o">+</span><span class="s2">&quot;.pdb&quot;</span><span class="p">)</span>
+  <span class="n">model</span> <span class="o">=</span> <span class="n">LoadPDB</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+  <span class="n">AssessMembraneModelQuality</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="n">output_dir</span><span class="o">=</span><span class="n">mn</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.AssessMembraneModelQuality">
+<span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">AssessMembraneModelQuality</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">mem_param</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir='.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plots</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_format='ost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psipred=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accpro=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc=None</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">assign_bfactors=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings=None</span></span></em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.AssessMembraneModelQuality" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityHandle</span></code></a> / <a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a>) – The model you want to assess</p></li>
+<li><p><strong>mem_param</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/mol/alg/molalg/#ost.mol.alg.FindMemParam" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.alg.FindMemParam</span></code></a>) – Parameters defining the membrane planes, from which
+the core/interface membrane residues can be identified.
+When set to None, the ost.mol.alg.FindMembrane function
+will be called with <strong>model</strong> as input.</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The directory where to write the output</p></li>
+<li><p><strong>plots</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether you want to create plots of the output</p></li>
+<li><p><strong>table_format</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>The format you want to save the results in, can
+be one of</p>
+<ul>
+<li><p>”ost”     ost-specific format (human_readable)</p></li>
+<li><p>”csv”     comma separated values (human readable)</p></li>
+<li><p>”pickle”  pickled byte stream (binary)</p></li>
+<li><p>”html”    HTML table</p></li>
+</ul>
+</p></li>
+<li><p><strong>psipred</strong> (<a class="reference internal" href="predicted_sequence_features.html#qmean.PSIPREDHandler" title="qmean.PSIPREDHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSIPREDHandler</span></code></a>) – Information from the PSIPRED prediction, QMEAN will run
+through without it being set but for optimal performance
+this variable must be set. Please note, that the PSIPRED
+prediction won’t be used for assessing the quality in
+the transmembrane part, only in the soluble part.</p></li>
+<li><p><strong>accpro</strong> (<a class="reference internal" href="predicted_sequence_features.html#qmean.ACCPROHandler" title="qmean.ACCPROHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ACCPROHandler</span></code></a>) – Information from the ACCPRO prediction, QMEAN will run
+through without it being set but for optimal performance
+this variable must be set. Please note, that the ACCPRO
+prediction won’t be used for assessing the quality in
+the transmembrane part, only in the soluble part.</p></li>
+<li><p><strong>assign_bfactors</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If set to True, the local scores get assigned to the
+<strong>model</strong> as bfactors</p></li>
+<li><p><strong>settings</strong> – <p>Object that contains paths to potentials etc.
+If set to None, an object with default paths is
+generated with: settings=conf.MembraneSettings().
+Must have following members:</p>
+<blockquote>
+<div><ul>
+<li><p>local_potentials_soluble: path to <a class="reference internal" href="containers.html#qmean.PotentialContainer" title="qmean.PotentialContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialContainer</span></code></a>
+applied for soluble local scoring.</p></li>
+<li><p>local_potentials_membrane: path to <a class="reference internal" href="containers.html#qmean.PotentialContainer" title="qmean.PotentialContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialContainer</span></code></a>
+applied for local scoring in membrane and interface.</p></li>
+<li><p>local_scorer_soluble: path to <a class="reference internal" href="score_combination.html#qmean.LocalScorer" title="qmean.LocalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScorer</span></code></a> to
+linearly combine soluble per-residue scores</p></li>
+<li><p>local_scorer_membrane: path to <a class="reference internal" href="score_combination.html#qmean.LocalScorer" title="qmean.LocalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScorer</span></code></a> to
+linearly combine membrane and interface per-residue scores</p></li>
+<li><p>global_scorer: path to <a class="reference internal" href="score_combination.html#qmean.GlobalScorer" title="qmean.GlobalScorer"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalScorer</span></code></a> to
+linearly combine soluble global scores</p></li>
+<li><p>reference_tab: path to <code class="xref py py-class docutils literal notranslate"><span class="pre">ost.Table</span></code> containing
+soluble reference data.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>The following code is not necessarily related to the usage of
+QMEAN/QMEANBrane but rather reproduces a plot based on data produced
+in the last script (Fig. 4 in QMEANBrane publication).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<span class="c1">#Load the data produced by QMEANBrane</span>
+<span class="n">tab_no_shift</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;original_hhblits_alignment&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;local_scores.txt&#39;</span><span class="p">))</span>
+<span class="n">tab_correct_shift</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;shift_in_front_helix_four&#39;</span><span class="p">,</span>
+                                            <span class="s1">&#39;local_scores.txt&#39;</span><span class="p">))</span>
+<span class="n">tab_wrong_shift</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;shift_towards_cter&#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;local_scores.txt&#39;</span><span class="p">))</span>
+<span class="n">tab_shift_into_middle</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;shift_into_middle&#39;</span><span class="p">,</span>
+                                                <span class="s1">&#39;local_scores.txt&#39;</span><span class="p">))</span>
+
+<span class="n">score_idx</span> <span class="o">=</span> <span class="n">tab_no_shift</span><span class="o">.</span><span class="n">GetColIndex</span><span class="p">(</span><span class="s1">&#39;QMEAN&#39;</span><span class="p">)</span>
+<span class="n">rnum_idx</span> <span class="o">=</span> <span class="n">tab_no_shift</span><span class="o">.</span><span class="n">GetColIndex</span><span class="p">(</span><span class="s1">&#39;rnum&#39;</span><span class="p">)</span>
+
+<span class="n">rnums_no_shift</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">scores_no_shift</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tab_no_shift</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+  <span class="n">rnums_no_shift</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">rnum_idx</span><span class="p">])</span>
+  <span class="n">scores_no_shift</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">score_idx</span><span class="p">])</span>
+
+<span class="n">scores_correct_shift</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tab_correct_shift</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+  <span class="n">scores_correct_shift</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">rnum_idx</span><span class="p">]]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">score_idx</span><span class="p">]</span>
+
+<span class="n">scores_wrong_shift</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tab_wrong_shift</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+  <span class="n">scores_wrong_shift</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">rnum_idx</span><span class="p">]]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">score_idx</span><span class="p">]</span>
+
+<span class="n">scores_shift_into_middle</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tab_shift_into_middle</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+  <span class="n">scores_shift_into_middle</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">rnum_idx</span><span class="p">]]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">score_idx</span><span class="p">]</span>
+
+<span class="n">rnums</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+<span class="c1">#calculate the differences of the scores originating from models built</span>
+<span class="c1">#with modified alignments relative to the model built with the original </span>
+<span class="c1">#hhblits alignment.</span>
+
+<span class="n">differences_correct_shift</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">differences_wrong_shift</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">differences_shift_into_middle</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">n</span><span class="p">,</span><span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rnums_no_shift</span><span class="p">,</span><span class="n">scores_no_shift</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scores_correct_shift</span><span class="p">:</span>
+    <span class="k">continue</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scores_wrong_shift</span><span class="p">:</span>
+    <span class="k">continue</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scores_shift_into_middle</span><span class="p">:</span>
+    <span class="k">continue</span>
+  <span class="n">rnums</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="n">differences_correct_shift</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scores_correct_shift</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">-</span><span class="n">s</span><span class="p">)</span>
+  <span class="n">differences_wrong_shift</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scores_wrong_shift</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">-</span><span class="n">s</span><span class="p">)</span>
+  <span class="n">differences_shift_into_middle</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scores_shift_into_middle</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">-</span><span class="n">s</span><span class="p">)</span>
+
+<span class="c1">#do some slight smoothing</span>
+<span class="n">differences_correct_shift</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">differences_correct_shift</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">differences_wrong_shift</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">differences_wrong_shift</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">differences_shift_into_middle</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">differences_shift_into_middle</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">#membrane spanners define the transmembrane helices</span>
+<span class="n">membrane_spanners</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span><span class="mi">37</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">43</span><span class="p">,</span><span class="mi">74</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">86</span><span class="p">,</span><span class="mi">121</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">175</span><span class="p">,</span><span class="mi">193</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">198</span><span class="p">,</span><span class="mi">222</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">246</span><span class="p">,</span><span class="mi">271</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">279</span><span class="p">,</span><span class="mi">307</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">341</span><span class="p">,</span><span class="mi">374</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">382</span><span class="p">,</span><span class="mi">402</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">408</span><span class="p">,</span><span class="mi">434</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">456</span><span class="p">,</span><span class="mi">479</span><span class="p">])</span>
+<span class="n">membrane_spanners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">497</span><span class="p">,</span><span class="mi">526</span><span class="p">])</span>
+
+<span class="c1">#following lists contain information regarding insertions and deletions</span>
+<span class="c1">#in the four different alignments</span>
+
+<span class="c1">#initial alignment</span>
+<span class="n">insertions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">127</span><span class="p">,</span><span class="mi">127</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">132</span><span class="p">,</span><span class="mi">134</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">140</span><span class="p">,</span><span class="mi">144</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">162</span><span class="p">,</span><span class="mi">163</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">204</span><span class="p">,</span><span class="mi">206</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">308</span><span class="p">,</span><span class="mi">311</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">378</span><span class="p">,</span><span class="mi">380</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">406</span><span class="p">,</span><span class="mi">407</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">487</span><span class="p">,</span><span class="mi">492</span><span class="p">))</span>
+<span class="n">insertions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">529</span><span class="p">,</span><span class="mi">543</span><span class="p">))</span>
+
+<span class="n">deletions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">85</span><span class="p">,</span><span class="mi">86</span><span class="p">))</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">166</span><span class="p">,</span><span class="mi">167</span><span class="p">))</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">223</span><span class="p">,</span><span class="mi">224</span><span class="p">))</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">294</span><span class="p">,</span><span class="mi">295</span><span class="p">))</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">305</span><span class="p">,</span><span class="mi">306</span><span class="p">))</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">319</span><span class="p">,</span><span class="mi">320</span><span class="p">))</span>
+<span class="n">deletions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">321</span><span class="p">,</span><span class="mi">322</span><span class="p">))</span>
+
+<span class="n">matches</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span><span class="mi">84</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">87</span><span class="p">,</span><span class="mi">126</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">128</span><span class="p">,</span><span class="mi">131</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">135</span><span class="p">,</span><span class="mi">139</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">145</span><span class="p">,</span><span class="mi">161</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">164</span><span class="p">,</span><span class="mi">165</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">168</span><span class="p">,</span><span class="mi">203</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">207</span><span class="p">,</span><span class="mi">222</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">225</span><span class="p">,</span><span class="mi">293</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">296</span><span class="p">,</span><span class="mi">304</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">307</span><span class="p">,</span><span class="mi">307</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">312</span><span class="p">,</span><span class="mi">318</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">323</span><span class="p">,</span><span class="mi">377</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">381</span><span class="p">,</span><span class="mi">405</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">408</span><span class="p">,</span><span class="mi">486</span><span class="p">))</span>
+<span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">493</span><span class="p">,</span><span class="mi">528</span><span class="p">))</span>
+
+<span class="c1">#correct alignment</span>
+<span class="n">insertions_correct</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">127</span><span class="p">,</span><span class="mi">127</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">132</span><span class="p">,</span><span class="mi">134</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">140</span><span class="p">,</span><span class="mi">144</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">162</span><span class="p">,</span><span class="mi">163</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">171</span><span class="p">,</span><span class="mi">174</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">308</span><span class="p">,</span><span class="mi">311</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">378</span><span class="p">,</span><span class="mi">380</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">406</span><span class="p">,</span><span class="mi">407</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">487</span><span class="p">,</span><span class="mi">492</span><span class="p">))</span>
+<span class="n">insertions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">529</span><span class="p">,</span><span class="mi">543</span><span class="p">))</span>
+
+<span class="n">deletions_correct</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">85</span><span class="p">,</span><span class="mi">86</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">166</span><span class="p">,</span><span class="mi">167</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">197</span><span class="p">,</span><span class="mi">198</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">223</span><span class="p">,</span><span class="mi">224</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">294</span><span class="p">,</span><span class="mi">295</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">305</span><span class="p">,</span><span class="mi">306</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">319</span><span class="p">,</span><span class="mi">320</span><span class="p">))</span>
+<span class="n">deletions_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">321</span><span class="p">,</span><span class="mi">322</span><span class="p">))</span>
+
+<span class="n">matches_correct</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span><span class="mi">84</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">87</span><span class="p">,</span><span class="mi">126</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">128</span><span class="p">,</span><span class="mi">131</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">135</span><span class="p">,</span><span class="mi">139</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">145</span><span class="p">,</span><span class="mi">161</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">164</span><span class="p">,</span><span class="mi">165</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">168</span><span class="p">,</span><span class="mi">170</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">175</span><span class="p">,</span><span class="mi">196</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">199</span><span class="p">,</span><span class="mi">222</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">225</span><span class="p">,</span><span class="mi">293</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">296</span><span class="p">,</span><span class="mi">304</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">307</span><span class="p">,</span><span class="mi">307</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">312</span><span class="p">,</span><span class="mi">318</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">323</span><span class="p">,</span><span class="mi">377</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">381</span><span class="p">,</span><span class="mi">405</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">408</span><span class="p">,</span><span class="mi">486</span><span class="p">))</span>
+<span class="n">matches_correct</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">493</span><span class="p">,</span><span class="mi">528</span><span class="p">))</span>
+
+<span class="c1">#shifted into middle</span>
+<span class="n">insertions_middle</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">127</span><span class="p">,</span><span class="mi">127</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">132</span><span class="p">,</span><span class="mi">134</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">140</span><span class="p">,</span><span class="mi">144</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">162</span><span class="p">,</span><span class="mi">163</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">190</span><span class="p">,</span><span class="mi">190</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">191</span><span class="p">,</span><span class="mi">192</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">194</span><span class="p">,</span><span class="mi">195</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">308</span><span class="p">,</span><span class="mi">311</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">378</span><span class="p">,</span><span class="mi">380</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">406</span><span class="p">,</span><span class="mi">407</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">487</span><span class="p">,</span><span class="mi">492</span><span class="p">))</span>
+<span class="n">insertions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">529</span><span class="p">,</span><span class="mi">543</span><span class="p">))</span>
+
+<span class="n">deletions_middle</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">85</span><span class="p">,</span><span class="mi">86</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">166</span><span class="p">,</span><span class="mi">167</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">189</span><span class="p">,</span><span class="mi">190</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">190</span><span class="p">,</span><span class="mi">191</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">223</span><span class="p">,</span><span class="mi">224</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">294</span><span class="p">,</span><span class="mi">295</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">305</span><span class="p">,</span><span class="mi">306</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">319</span><span class="p">,</span><span class="mi">320</span><span class="p">))</span>
+<span class="n">deletions_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">321</span><span class="p">,</span><span class="mi">322</span><span class="p">))</span>
+
+<span class="n">matches_middle</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span><span class="mi">84</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">87</span><span class="p">,</span><span class="mi">126</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">128</span><span class="p">,</span><span class="mi">131</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">135</span><span class="p">,</span><span class="mi">139</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">145</span><span class="p">,</span><span class="mi">161</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">164</span><span class="p">,</span><span class="mi">165</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">168</span><span class="p">,</span><span class="mi">188</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">193</span><span class="p">,</span><span class="mi">193</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">196</span><span class="p">,</span><span class="mi">222</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">225</span><span class="p">,</span><span class="mi">293</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">296</span><span class="p">,</span><span class="mi">304</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">307</span><span class="p">,</span><span class="mi">307</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">312</span><span class="p">,</span><span class="mi">318</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">323</span><span class="p">,</span><span class="mi">377</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">381</span><span class="p">,</span><span class="mi">405</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">408</span><span class="p">,</span><span class="mi">486</span><span class="p">))</span>
+<span class="n">matches_middle</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">493</span><span class="p">,</span><span class="mi">528</span><span class="p">))</span>
+
+<span class="c1">#shifted towards C-Terminus</span>
+<span class="n">insertions_cter</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">127</span><span class="p">,</span><span class="mi">127</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">132</span><span class="p">,</span><span class="mi">134</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">140</span><span class="p">,</span><span class="mi">144</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">162</span><span class="p">,</span><span class="mi">163</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">308</span><span class="p">,</span><span class="mi">311</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">378</span><span class="p">,</span><span class="mi">380</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">406</span><span class="p">,</span><span class="mi">407</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">487</span><span class="p">,</span><span class="mi">492</span><span class="p">))</span>
+<span class="n">insertions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">529</span><span class="p">,</span><span class="mi">543</span><span class="p">))</span>
+
+<span class="n">deletions_cter</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">85</span><span class="p">,</span><span class="mi">86</span><span class="p">))</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">166</span><span class="p">,</span><span class="mi">167</span><span class="p">))</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">223</span><span class="p">,</span><span class="mi">224</span><span class="p">))</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">294</span><span class="p">,</span><span class="mi">295</span><span class="p">))</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">305</span><span class="p">,</span><span class="mi">306</span><span class="p">))</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">319</span><span class="p">,</span><span class="mi">320</span><span class="p">))</span>
+<span class="n">deletions_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">321</span><span class="p">,</span><span class="mi">322</span><span class="p">))</span>
+
+<span class="n">matches_cter</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span><span class="mi">84</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">87</span><span class="p">,</span><span class="mi">126</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">128</span><span class="p">,</span><span class="mi">131</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">135</span><span class="p">,</span><span class="mi">139</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">145</span><span class="p">,</span><span class="mi">161</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">164</span><span class="p">,</span><span class="mi">165</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">168</span><span class="p">,</span><span class="mi">222</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">225</span><span class="p">,</span><span class="mi">293</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">296</span><span class="p">,</span><span class="mi">304</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">307</span><span class="p">,</span><span class="mi">307</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">312</span><span class="p">,</span><span class="mi">318</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">323</span><span class="p">,</span><span class="mi">377</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">381</span><span class="p">,</span><span class="mi">405</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">408</span><span class="p">,</span><span class="mi">486</span><span class="p">))</span>
+<span class="n">matches_cter</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">493</span><span class="p">,</span><span class="mi">528</span><span class="p">))</span>
+
+<span class="c1">#define some colors and plot the differences in scores</span>
+<span class="n">red</span> <span class="o">=</span> <span class="p">(</span><span class="mf">204.0</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span><span class="mf">0.0</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span><span class="mf">0.0</span><span class="o">/</span><span class="mi">255</span><span class="p">)</span>
+<span class="n">blue</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span><span class="mf">147.0</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span><span class="mf">217.0</span><span class="o">/</span><span class="mi">255</span><span class="p">)</span>
+<span class="n">orange</span> <span class="o">=</span> <span class="p">(</span><span class="mf">255.0</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span><span class="mf">141.0</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rnums</span><span class="p">,</span><span class="n">differences_shift_into_middle</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">blue</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rnums</span><span class="p">,</span><span class="n">differences_wrong_shift</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">orange</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rnums</span><span class="p">,</span><span class="n">differences_correct_shift</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">red</span><span class="p">)</span>
+
+<span class="c1">#do spannners for initial alignment</span>
+<span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="n">insertions</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">ins</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.975</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deletions</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.975</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.975</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+
+<span class="c1">#do spanners for correct alignment</span>
+<span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="n">insertions_correct</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">ins</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.975</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deletions_correct</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.975</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches_correct</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.975</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="n">red</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+
+<span class="c1">#do spanners for shift into middle</span>
+<span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="n">insertions_middle</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">ins</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.925</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deletions_middle</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.925</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches_middle</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.925</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="n">blue</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+
+<span class="c1">#do spanners cter shift</span>
+<span class="k">for</span> <span class="n">ins</span> <span class="ow">in</span> <span class="n">insertions_cter</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">ins</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.925</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deletions_cter</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.925</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches_cter</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.925</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="n">orange</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+
+<span class="c1">#plot the transmembrane helix representation</span>
+<span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">membrane_spanners</span><span class="p">:</span>
+  <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">sp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">ymin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span><span class="n">ymax</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+
+<span class="c1">#zero line</span>
+<span class="n">dots_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">rnums</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">rnums</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">dots_y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">200</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dots_x</span><span class="p">,</span><span class="n">dots_y</span><span class="p">,</span><span class="s1">&#39;o&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span><span class="n">markersize</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">((</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span><span class="mf">0.3</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">((</span><span class="n">rnums</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">rnums</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Residue Number&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="s1">&#39;large&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\u0394</span><span class="s1">QMEANBrane Score&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s1">&#39;large&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;alignment_comparison.png&quot;</span><span class="p">,</span><span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Run the QMEAN Scoring Functions</a><ul>
+<li><a class="reference internal" href="#assessing-the-quality-for-soluble-protein-models">Assessing the quality for soluble protein models</a><ul>
+<li><a class="reference internal" href="#qmean.QMEANScorer"><code class="docutils literal notranslate"><span class="pre">QMEANScorer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.QMEANScorer.QMEAN4SliderPlot"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.QMEAN4SliderPlot()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.QMEAN6SliderPlot"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.QMEAN6SliderPlot()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.QMEAN4ReferencePlot"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.QMEAN4ReferencePlot()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.QMEAN6ReferencePlot"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.QMEAN6ReferencePlot()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.LocalProfilePlot"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.LocalProfilePlot()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.AssignModelBFactors"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.AssignModelBFactors()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.model"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.model</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.qmean4_score"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.qmean4_score</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.qmean4_z_score"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.qmean4_z_score</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.qmean4_components"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.qmean4_components</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.qmean6_score"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.qmean6_score</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.qmean6_z_score"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.qmean6_z_score</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.qmean6_components"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.qmean6_components</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.local_scores"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.local_scores</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.avg_local_score"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.avg_local_score</span></code></a></li>
+<li><a class="reference internal" href="#qmean.QMEANScorer.avg_local_score_error"><code class="docutils literal notranslate"><span class="pre">QMEANScorer.avg_local_score_error</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#assessing-the-quality-for-membrane-protein-models">Assessing the quality for membrane protein models</a><ul>
+<li><a class="reference internal" href="#qmean.AssessMembraneModelQuality"><code class="docutils literal notranslate"><span class="pre">AssessMembraneModelQuality()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="getting_started.html"
+                          title="previous chapter">Getting Started</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="chemtype.html"
+                          title="next chapter">The Atom ChemType</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/run_qmean_scoring.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="chemtype.html" title="The Atom ChemType"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="getting_started.html" title="Getting Started"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Run the QMEAN Scoring Functions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Spherical Smoother &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Combining Scores" href="score_combination.html" />
+    <link rel="prev" title="Predicted Sequence Features" href="predicted_sequence_features.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="score_combination.html" title="Combining Scores"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="predicted_sequence_features.html" title="Predicted Sequence Features"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Spherical Smoother</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="spherical-smoother">
+<h1>Spherical Smoother<a class="headerlink" href="#spherical-smoother" title="Link to this heading">¶</a></h1>
+<p>Internally, a structure specific graph like visitor pattern gets
+generated at the smoother objects initialization. Every position is
+represented by a node. These nodes are connected to their neighbouring
+nodes with edges that are directly associated with their distance
+dependent weights. It is now possible to insert residue specific values in
+the nodes and evaluate the whole graph. This representation gives a
+speed advantage, if several scores have to be smoothed for the same
+structure. QMEAN typically uses the CA position to perform smoothing.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">SphericalSmoother</span>
+
+<span class="c1">#Load crambin and extract CA positions</span>
+<span class="n">crambin_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;example_data&quot;</span><span class="p">,</span><span class="s2">&quot;1CRN.pdb&quot;</span><span class="p">)</span>
+<span class="n">crambin</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="n">crambin_path</span><span class="p">)</span>
+<span class="n">positions</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">FindAtom</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">GetPos</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">crambin</span><span class="o">.</span><span class="n">residues</span><span class="p">]</span>
+
+<span class="c1">#Generate smoother object with extracted positions</span>
+<span class="c1">#and a std of 5.0</span>
+<span class="n">smoother</span> <span class="o">=</span> <span class="n">SphericalSmoother</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+
+<span class="c1">#Generate a random value for every residue in the structure</span>
+<span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">crambin</span><span class="o">.</span><span class="n">residues</span><span class="p">))]</span>
+
+<span class="c1">#Smooth the random values</span>
+<span class="n">smoothed_values</span> <span class="o">=</span> <span class="n">smoother</span><span class="o">.</span><span class="n">Smooth</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;initial values: &quot;</span><span class="p">,</span><span class="n">values</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;smoothed values: &quot;</span><span class="p">,</span> <span class="n">smoothed_values</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.SphericalSmoother">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">SphericalSmoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.SphericalSmoother" title="Link to this definition">¶</a></dt>
+<dd><p>Sets up a smoother specific for the given <strong>positions</strong> all smoothing
+weights get precalculated for the given <strong>std</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://openstructure.org//docs/2.0/geom/vec/#ost.geom.Vec3" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3</span></code></a>) – The positions you want to smooth</p></li>
+<li><p><strong>std</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Controls the smoothing behaviour</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.SphericalSmoother.Smooth">
+<span class="sig-name descname"><span class="pre">Smooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.SphericalSmoother.Smooth" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> – The values you want to smooth. They’re assumed to
+be at the positions as defined at the smoother
+initialization.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The smoothed values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if size of values is inconsistent
+with size of positions given at initialization</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Spherical Smoother</a><ul>
+<li><a class="reference internal" href="#qmean.SphericalSmoother"><code class="docutils literal notranslate"><span class="pre">SphericalSmoother</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.SphericalSmoother.Smooth"><code class="docutils literal notranslate"><span class="pre">SphericalSmoother.Smooth()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="predicted_sequence_features.html"
+                          title="previous chapter">Predicted Sequence Features</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="score_combination.html"
+                          title="next chapter">Combining Scores</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/spherical_smoother.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="score_combination.html" title="Combining Scores"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="predicted_sequence_features.html" title="Predicted Sequence Features"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Spherical Smoother</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

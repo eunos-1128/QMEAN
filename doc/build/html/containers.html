@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Container Classes &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Predicted Sequence Features" href="predicted_sequence_features.html" />
+    <link rel="prev" title="Statistical Potentials of Mean Force" href="statistical_potentials.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="predicted_sequence_features.html" title="Predicted Sequence Features"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="statistical_potentials.html" title="Statistical Potentials of Mean Force"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Container Classes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="container-classes">
+<h1>Container Classes<a class="headerlink" href="#container-classes" title="Link to this heading">¶</a></h1>
+<p>The containers simplify the usage of the statistics/potentials.
+Especially when their numbers grow. They are implemented to show a python
+dictionary like behaviour and are capable of saving and loading their
+content from/to disk. Note that there is a clear separation of types.
+Only statistic objects can be added to a statistic container. The same
+is valid for potential container.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Example code to demonstrate the usage of the container classes</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">InteractionStatistic</span><span class="p">,</span> <span class="n">InteractionPotential</span><span class="p">,</span> \
+                  <span class="n">PackingStatistic</span><span class="p">,</span> <span class="n">PackingPotential</span><span class="p">,</span> \
+                  <span class="n">StatisticContainer</span><span class="p">,</span> <span class="n">PotentialContainer</span>
+
+<span class="c1">#define some training targets used later on</span>
+<span class="n">training_targets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;7ODC&quot;</span><span class="p">,</span><span class="s2">&quot;2QUD&quot;</span><span class="p">,</span><span class="s2">&quot;3T47&quot;</span><span class="p">,</span><span class="s2">&quot;4C1A&quot;</span><span class="p">,</span><span class="s2">&quot;3ZSJ&quot;</span><span class="p">,</span><span class="s2">&quot;4I4T&quot;</span><span class="p">,</span><span class="s2">&quot;3H6R&quot;</span><span class="p">,</span><span class="s2">&quot;3BSO&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;3M0Z&quot;</span><span class="p">,</span><span class="s2">&quot;2GPI&quot;</span><span class="p">,</span><span class="s2">&quot;3MHP&quot;</span><span class="p">,</span><span class="s2">&quot;3V19&quot;</span><span class="p">,</span><span class="s2">&quot;2IXS&quot;</span><span class="p">,</span><span class="s2">&quot;4G6T&quot;</span><span class="p">,</span><span class="s2">&quot;3ZG9&quot;</span><span class="p">,</span><span class="s2">&quot;3WSG&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;1JH6&quot;</span><span class="p">,</span><span class="s2">&quot;2XZE&quot;</span><span class="p">,</span><span class="s2">&quot;2OLR&quot;</span><span class="p">,</span><span class="s2">&quot;1TIF&quot;</span><span class="p">,</span><span class="s2">&quot;3C4S&quot;</span><span class="p">,</span><span class="s2">&quot;2CVI&quot;</span><span class="p">,</span><span class="s2">&quot;4EET&quot;</span><span class="p">,</span><span class="s2">&quot;1LM5&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;1MJ5&quot;</span><span class="p">,</span><span class="s2">&quot;2FJR&quot;</span><span class="p">,</span><span class="s2">&quot;2D3G&quot;</span><span class="p">,</span><span class="s2">&quot;3ZNV&quot;</span><span class="p">,</span><span class="s2">&quot;3WA2&quot;</span><span class="p">,</span><span class="s2">&quot;3WU2&quot;</span><span class="p">,</span><span class="s2">&quot;4M7R&quot;</span><span class="p">,</span><span class="s2">&quot;2PR7&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;3FTJ&quot;</span><span class="p">,</span><span class="s2">&quot;1KD8&quot;</span><span class="p">,</span><span class="s2">&quot;1HBN&quot;</span><span class="p">,</span><span class="s2">&quot;4TRK&quot;</span><span class="p">,</span><span class="s2">&quot;2GB4&quot;</span><span class="p">,</span><span class="s2">&quot;3HNY&quot;</span><span class="p">,</span><span class="s2">&quot;4R7Q&quot;</span><span class="p">,</span><span class="s2">&quot;1EAQ&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;2O1Q&quot;</span><span class="p">,</span><span class="s2">&quot;4DX5&quot;</span><span class="p">,</span><span class="s2">&quot;1XAK&quot;</span><span class="p">,</span><span class="s2">&quot;5CSM&quot;</span><span class="p">,</span><span class="s2">&quot;2XWP&quot;</span><span class="p">,</span><span class="s2">&quot;2UWA&quot;</span><span class="p">,</span><span class="s2">&quot;3SQZ&quot;</span><span class="p">,</span><span class="s2">&quot;4MT8&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;3HTU&quot;</span><span class="p">]</span>
+
+<span class="c1">#We define two different statistics in a container and fill them with </span>
+<span class="c1">#structural information</span>
+<span class="n">s_container</span> <span class="o">=</span> <span class="n">StatisticContainer</span><span class="p">()</span>
+<span class="n">s_container</span><span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">InteractionStatistic</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">10.0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">s_container</span><span class="p">[</span><span class="s2">&quot;pack&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">PackingStatistic</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span><span class="mi">32</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">training_targets</span><span class="p">:</span>
+    <span class="n">prot_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;example_data&quot;</span><span class="p">,</span><span class="n">t</span><span class="o">+</span><span class="s2">&quot;.pdb&quot;</span><span class="p">)</span>
+    <span class="n">prot</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="n">prot_path</span><span class="p">)</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s2">&quot;peptide=true&quot;</span><span class="p">)</span>
+    <span class="n">s_container</span><span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">Extract</span><span class="p">(</span><span class="n">prot</span><span class="p">,</span><span class="n">prot</span><span class="p">)</span>
+    <span class="n">s_container</span><span class="p">[</span><span class="s2">&quot;pack&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">Extract</span><span class="p">(</span><span class="n">prot</span><span class="p">,</span><span class="n">prot</span><span class="p">)</span>
+
+<span class="c1">#instead of creating single potentials, we also use the power</span>
+<span class="c1">#of the potential container</span>
+<span class="n">p_container</span> <span class="o">=</span> <span class="n">PotentialContainer</span><span class="p">()</span>
+<span class="n">p_container</span><span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">InteractionPotential</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s_container</span><span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">])</span>
+<span class="n">p_container</span><span class="p">[</span><span class="s2">&quot;pack&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">PackingPotential</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s_container</span><span class="p">[</span><span class="s2">&quot;pack&quot;</span><span class="p">])</span>
+
+<span class="c1">#let&#39;s get a crambin and print some global energies</span>
+<span class="n">crambin_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;example_data&quot;</span><span class="p">,</span><span class="s2">&quot;1CRN.pdb&quot;</span><span class="p">)</span>
+<span class="n">crambin</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="n">crambin_path</span><span class="p">)</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s2">&quot;peptide=true&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;interaction e: &quot;</span><span class="p">,</span> <span class="n">p_container</span><span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">GetTotalEnergy</span><span class="p">(</span><span class="n">crambin</span><span class="p">,</span><span class="n">crambin</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;packing e: &quot;</span><span class="p">,</span> <span class="n">p_container</span><span class="p">[</span><span class="s2">&quot;pack&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">GetTotalEnergy</span><span class="p">(</span><span class="n">crambin</span><span class="p">,</span><span class="n">crambin</span><span class="p">))</span>
+
+
+<span class="c1">#The awesome thing is, that we can dump the full container at once</span>
+<span class="n">p_container</span><span class="o">.</span><span class="n">Save</span><span class="p">(</span><span class="s2">&quot;potential_container.dat&quot;</span><span class="p">)</span>
+<span class="c1">#and load it again</span>
+<span class="n">new_p_container</span> <span class="o">=</span> <span class="n">PotentialContainer</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="s2">&quot;potential_container.dat&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Just loaded the same container again, let&#39;s see whether the &quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;energies are consistent&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;interaction e: &quot;</span><span class="p">,</span> <span class="n">new_p_container</span><span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">GetTotalEnergy</span><span class="p">(</span><span class="n">crambin</span><span class="p">,</span><span class="n">crambin</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;packing e: &quot;</span><span class="p">,</span> <span class="n">new_p_container</span><span class="p">[</span><span class="s2">&quot;pack&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">GetTotalEnergy</span><span class="p">(</span><span class="n">crambin</span><span class="p">,</span><span class="n">crambin</span><span class="p">))</span>
+</pre></div>
+</div>
+<section id="container-for-statistic-objects">
+<h2>Container for Statistic Objects<a class="headerlink" href="#container-for-statistic-objects" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.StatisticContainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">StatisticContainer</span></span><a class="headerlink" href="#qmean.StatisticContainer" title="Link to this definition">¶</a></dt>
+<dd><p>The statistic container holds as many statistic objects as you want and
+allows to save them to disk in one single file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.Load">
+<span class="sig-name descname"><span class="pre">Load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.Load" title="Link to this definition">¶</a></dt>
+<dd><p>Loads and returns a statistic container from disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded container</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qmean.StatisticContainer" title="qmean.StatisticContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">StatisticContainer</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if file does not exist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.Save">
+<span class="sig-name descname"><span class="pre">Save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.Save" title="Link to this definition">¶</a></dt>
+<dd><p>Saves a statistic container down to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.GetKeys">
+<span class="sig-name descname"><span class="pre">GetKeys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.GetKeys" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>All keys of the statistics present in the container</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the requested statistic</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The requested statistic object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Specific instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">StatisticBase</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if statistic object is not present</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.__setitem__">
+<span class="sig-name descname"><span class="pre">__setitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statistic</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.__setitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>statistic</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">StatisticBase</span></code>) – Statistic to be added</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name/key of the statistic to be added</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.__delitem__">
+<span class="sig-name descname"><span class="pre">__delitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.__delitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Statistic to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.__contains__">
+<span class="sig-name descname"><span class="pre">__contains__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.__contains__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of statistic to be checked for presence</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether requested statistic is present in container</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.StatisticContainer.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.StatisticContainer.__len__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of statistics in container</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="container-for-potential-objects">
+<h2>Container for Potential Objects<a class="headerlink" href="#container-for-potential-objects" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.PotentialContainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">PotentialContainer</span></span><a class="headerlink" href="#qmean.PotentialContainer" title="Link to this definition">¶</a></dt>
+<dd><p>The potential container holds as many potential objects as you want and
+allows to save them to disk in one single file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.Load">
+<span class="sig-name descname"><span class="pre">Load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.Load" title="Link to this definition">¶</a></dt>
+<dd><p>Loads and returns a potential container from disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded container</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qmean.PotentialContainer" title="qmean.PotentialContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialContainer</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if file does not exist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.Save">
+<span class="sig-name descname"><span class="pre">Save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.Save" title="Link to this definition">¶</a></dt>
+<dd><p>Saves a potential container down to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.GetKeys">
+<span class="sig-name descname"><span class="pre">GetKeys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.GetKeys" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>All keys of the potentials present in the container</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the requested potential</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The requested potential object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Specific instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialBase</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if potential object is not present</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.__setitem__">
+<span class="sig-name descname"><span class="pre">__setitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">potential</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.__setitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>potential</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">PotentialBase</span></code>) – Potential to be added</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name/key of the potential to be added</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.__delitem__">
+<span class="sig-name descname"><span class="pre">__delitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.__delitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Potential to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.__contains__">
+<span class="sig-name descname"><span class="pre">__contains__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.__contains__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of potential to be checked for presence</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether requested potential is present in container</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.PotentialContainer.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.PotentialContainer.__len__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of potentials in container</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Container Classes</a><ul>
+<li><a class="reference internal" href="#container-for-statistic-objects">Container for Statistic Objects</a><ul>
+<li><a class="reference internal" href="#qmean.StatisticContainer"><code class="docutils literal notranslate"><span class="pre">StatisticContainer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.StatisticContainer.Load"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.Load()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.Save"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.Save()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.GetKeys"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.GetKeys()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.__getitem__"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.__setitem__"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.__setitem__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.__delitem__"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.__delitem__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.__contains__"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.__contains__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.StatisticContainer.__len__"><code class="docutils literal notranslate"><span class="pre">StatisticContainer.__len__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#container-for-potential-objects">Container for Potential Objects</a><ul>
+<li><a class="reference internal" href="#qmean.PotentialContainer"><code class="docutils literal notranslate"><span class="pre">PotentialContainer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.PotentialContainer.Load"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.Load()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.Save"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.Save()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.GetKeys"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.GetKeys()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.__getitem__"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.__setitem__"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.__setitem__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.__delitem__"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.__delitem__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.__contains__"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.__contains__()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.PotentialContainer.__len__"><code class="docutils literal notranslate"><span class="pre">PotentialContainer.__len__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="statistical_potentials.html"
+                          title="previous chapter">Statistical Potentials of Mean Force</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="predicted_sequence_features.html"
+                          title="next chapter">Predicted Sequence Features</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/containers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="predicted_sequence_features.html" title="Predicted Sequence Features"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="statistical_potentials.html" title="Statistical Potentials of Mean Force"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Container Classes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

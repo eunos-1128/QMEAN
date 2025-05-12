@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>DisCo &#8212; QMEAN 4.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=0503a316"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="GMQE" href="gmqe.html" />
+    <link rel="prev" title="Membrane Location" href="membrane.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="gmqe.html" title="GMQE"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="membrane.html" title="Membrane Location"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">DisCo</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="disco">
+<h1>DisCo<a class="headerlink" href="#disco" title="Link to this heading">¶</a></h1>
+<p>DisCo evaluates the consistency of pairwise CA distances with an ensemble of
+constraints extracted from templates homologous to the target structure.
+The following script gives some idea how the underlying object, the
+<a class="reference internal" href="#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a>, works.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ost</span><span class="w"> </span><span class="kn">import</span> <span class="n">io</span><span class="p">,</span> <span class="n">geom</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qmean</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisCoContainer</span>
+
+<span class="n">aln_files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;example_data/1pvv.1.A.fasta&quot;</span><span class="p">,</span> 
+             <span class="s2">&quot;example_data/1v1v.1.A.fasta&quot;</span><span class="p">,</span> 
+             <span class="s2">&quot;example_data/2w37.1.A.fasta&quot;</span><span class="p">,</span> 
+             <span class="s2">&quot;example_data/3grf.1.A.fasta&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;example_data/4nf2.1.A.fasta&quot;</span><span class="p">]</span>
+
+<span class="n">tpl_files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;example_data/1pvv.1.A.pdb&quot;</span><span class="p">,</span> 
+             <span class="s2">&quot;example_data/1v1v.1.A.pdb&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;example_data/2w37.1.A.pdb&quot;</span><span class="p">,</span> 
+             <span class="s2">&quot;example_data/3grf.1.A.pdb&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;example_data/4nf2.1.A.pdb&quot;</span><span class="p">]</span>
+
+<span class="n">alns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">tpls</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">af</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aln_files</span><span class="p">,</span> <span class="n">tpl_files</span><span class="p">):</span>
+  <span class="n">alns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">LoadAlignment</span><span class="p">(</span><span class="n">af</span><span class="p">))</span>
+  <span class="n">tpls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="n">tf</span><span class="p">))</span>
+
+<span class="c1"># First sequence of all alns is the same: the SEQRES of the model</span>
+<span class="n">seqres</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadSequence</span><span class="p">(</span><span class="s2">&quot;example_data/target_seq.fasta&quot;</span><span class="p">)</span>
+
+<span class="n">dc</span> <span class="o">=</span> <span class="n">DisCoContainer</span><span class="p">(</span><span class="n">seqres</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">aln</span><span class="p">,</span> <span class="n">tpl</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">alns</span><span class="p">,</span> <span class="n">tpls</span><span class="p">):</span>
+
+  <span class="c1"># attach the template to the alignment</span>
+  <span class="c1"># there is NO CHECK whether the template sequence and the </span>
+  <span class="c1"># structure match, you have to make sure of that by yourself. </span>
+  <span class="c1"># The data for this example is preprocessed accordingly.</span>
+  <span class="n">aln</span><span class="o">.</span><span class="n">AttachView</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">tpl</span><span class="o">.</span><span class="n">CreateFullView</span><span class="p">())</span>
+
+  <span class="c1"># in here we store the positions</span>
+  <span class="n">positions</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">Vec3List</span><span class="p">()</span>
+
+  <span class="c1"># in here the mapping to the seqres</span>
+  <span class="n">mapping</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+  <span class="n">current_rnum</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">aln</span><span class="p">:</span>
+
+    <span class="k">if</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+      <span class="n">current_rnum</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># check for aligned col</span>
+    <span class="k">if</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span> <span class="ow">and</span> <span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+      <span class="n">res</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">GetResidue</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+      <span class="n">ca</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">FindAtom</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">ca</span><span class="o">.</span><span class="n">IsValid</span><span class="p">():</span>
+        <span class="n">positions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">GetPos</span><span class="p">())</span>
+        <span class="n">mapping</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_rnum</span><span class="p">)</span>
+
+  <span class="n">dc</span><span class="o">.</span><span class="n">AddData</span><span class="p">(</span><span class="n">aln</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+
+<span class="c1"># after calling that function, the dc object is ready to be used</span>
+<span class="n">dc</span><span class="o">.</span><span class="n">CalculateConstraints</span><span class="p">()</span>
+
+<span class="c1"># Let&#39;s first score a model. The residue numbers in the model</span>
+<span class="c1"># must match the position in the SEQRES (indexing starting at one)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">LoadPDB</span><span class="p">(</span><span class="s2">&quot;example_data/model_01.pdb&quot;</span><span class="p">)</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">GetScores</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">CreateFullView</span><span class="p">())</span>
+
+<span class="c1"># the length of the returned list corresponds to the number of</span>
+<span class="c1"># residues in the model...</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;n residues: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">residues</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;n scores:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">))</span>
+
+<span class="c1"># we assign the DisCo scores to the bfactors and dump the model</span>
+<span class="k">for</span> <span class="n">res</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">residues</span><span class="p">,</span> <span class="n">scores</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;DisCo score:&quot;</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">atoms</span><span class="p">:</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">b_factor</span> <span class="o">=</span> <span class="n">score</span>
+
+<span class="n">io</span><span class="o">.</span><span class="n">SavePDB</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;assigned_disco.pdb&quot;</span><span class="p">)</span>
+
+<span class="c1"># save the DisCoContainer for later use</span>
+<span class="n">dc</span><span class="o">.</span><span class="n">Save</span><span class="p">(</span><span class="s2">&quot;dc.dat&quot;</span><span class="p">)</span>
+
+<span class="c1"># we just plot one of the constraints:</span>
+<span class="n">rnum_i</span> <span class="o">=</span> <span class="mi">58</span>
+<span class="n">rnum_j</span> <span class="o">=</span> <span class="mi">261</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">GetConstraint</span><span class="p">(</span><span class="n">rnum_i</span><span class="p">,</span> <span class="n">rnum_j</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">dc</span><span class="o">.</span><span class="n">GetBinSize</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;dist 58-261&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;distance_constraint.png&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="qmean.DisCoContainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qmean.</span></span><span class="sig-name descname"><span class="pre">DisCoContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer" title="Link to this definition">¶</a></dt>
+<dd><p>The DisCoContainer gathers constraints from an arbitrary amount of templates.
+Once all templates are added, the actual constraint functions can be
+generated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seqres</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.SequenceHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.SequenceHandle</span></code></a>) – The SEQRES to which all templates relate</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.Save">
+<span class="sig-name descname"><span class="pre">Save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.Save" title="Link to this definition">¶</a></dt>
+<dd><p>Saves constraints to disk. So it will throw an error if you never called
+the CalculateConstraints function on this DisCoContainer instance.
+All added positions are lost in this process, only the actual constraints
+are saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of file to be generated</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if <em>filename</em> does not exist
+or when distance constraints have not been calculated
+yet</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.Load">
+<span class="sig-name descname"><span class="pre">Load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.Load" title="Link to this definition">¶</a></dt>
+<dd><p>Loads a <a class="reference internal" href="#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a> from disk and returns a readonly
+<a class="reference internal" href="#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a>. No positions can be added to this container
+anymore, it just contains the actual constraints</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – File to be loaded</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if <em>filename</em> cannot be opened</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.AddData">
+<span class="sig-name descname"><span class="pre">AddData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aln</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_seqres_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.AddData" title="Link to this definition">¶</a></dt>
+<dd><p>Adds template information. Call this function for every template you
+want to add.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aln</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.AlignmentHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.AlignmentHandle</span></code></a>) – The alignment that will be used for sequence based
+clustering when calculating the constraints. The first
+sequence must be the SEQRES given at initialization of
+the <a class="reference internal" href="#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a>. The second sequence can be
+the ATOMSEQ or the SEQRES of the added template. This
+only influences the sequence based clustering.</p></li>
+<li><p><strong>positions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ost.geom.Vec3List</span></code>) – The CA positions of that template</p></li>
+<li><p><strong>pos_seqres_mapping</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – A mapping to relate the <em>positions</em> to the internal
+SEQRES. For every element in <em>positions</em> you must
+provide its residue number, i.e. the indexing in
+the SEQRES starting from one.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if you already loaded this
+<a class="reference internal" href="#qmean.DisCoContainer" title="qmean.DisCoContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a> from disk (the thing is readonly)
+or when an element in <em>pos_seqres</em> contains an invalid
+residue number or when the first sequence in <em>aln</em> does
+not exactly match the internal SEQRES (gaps are removed
+for this check).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.CalculateConstraints">
+<span class="sig-name descname"><span class="pre">CalculateConstraints</span></span><span class="sig-paren">(</span><span class="optional">[</span><em class="sig-param"><span class="n"><span class="pre">dist_cutoff=15.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma=70.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqsim_clustering_cutoff=0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size=0.5</span></span></em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.CalculateConstraints" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates the constraints using all the template information you already
+added. The final constraints are lookup tables with equidistant bins as given
+by <em>bin_size</em>. They not only cover the range defined <em>dist_cutoff</em>, but add
+3 Angstroms to allow the constraint to fade out.</p>
+<p>In principle constraint generation follows following steps (check out the paper
+for detailled information):</p>
+<ul class="simple">
+<li><p>Generate one big multiple sequence alignment from all templates with the
+ost.seq.alg.MergePairwiseAlignments functionality using <em>seqres</em> as reference</p></li>
+<li><p>Calculate all pairwise sequence similarities using BLOSUM62 (normalized =&gt;
+(avg_seq_sim - min(BLOSUM62)) / (max(BLOSUM62) - min(BLOSUM62)))</p></li>
+<li><p>Hierarchical clustering based on sequence similarities</p></li>
+<li><p>Construct the distance constraints for every residue pair (<em>i</em>,*j*) as described
+in the paper, no constraint (<em>i</em>,*j*) will be generated if no pairwise distance
+between (<em>i</em>,*j*) &lt; <em>dist_cutoff</em> is observed in any template</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist_cutoff</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – All pairwise distance constraints up to this cutoff will be
+used.</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – This parameter influences the contribution of more remote
+homologues to the desired target sequence. The higher
+this value, the lower the contribution of more remote
+homologues (where evolutionary distance is measured by
+sequence similarity).</p></li>
+<li><p><strong>seqsim_clustering_cutoff</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – All template sequences are hierarchically
+clustered by pairwise normalized sequence similarity
+(as given by BLOSUM62). The distance criterion is the
+average pairwise sequence similarity
+and clusters are merged only of this distance is below <em>seqsim_clustering_cutoff</em></p></li>
+<li><p><strong>bin_size</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The constraints are evaluated for equidistant bins of
+of size <em>bin_size</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.HasConstraint">
+<span class="sig-name descname"><span class="pre">HasConstraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.HasConstraint" title="Link to this definition">¶</a></dt>
+<dd><p>Checks whether there is a constraint between the residues defined
+by <em>i</em> and <em>j</em>. There can only be a constraint if you already called
+the CalculateConstraints function on this DisCoContainer instance and
+there has been at least one distance below  <em>dist_cutoff</em> in any of
+the templates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Residue number of the first residue (position in SEQRES
+with indexing starting at 1)</p></li>
+<li><p><strong>j</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Same for second residue</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if <em>i</em> or <em>j</em> describe out of range
+positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetConstraint">
+<span class="sig-name descname"><span class="pre">GetConstraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetConstraint" title="Link to this definition">¶</a></dt>
+<dd><p>Getter for the internal lookup table that describes the distance constraint
+between residues i and j.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Residue number of the first residue (position in SEQRES
+with indexing starting at 1)</p></li>
+<li><p><strong>j</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Same for second residue</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if <em>i</em> or <em>j</em> describe out of range
+positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetScores">
+<span class="sig-name descname"><span class="pre">GetScores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetScores" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluates the DisCo scores for all residues in the entity view.
+The view must contain exactly one chain and all its residues must exactly
+match the internal SEQRES with respect to residue number / one letter code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>view</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a>) – View to evaluate</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list with one element per residue with the
+corresponding DisCo score</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if there is more than one chain or
+when any of the residues has a residue number / one
+letter that is inconsistent with the internal SEQRES.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetScoresWithData">
+<span class="sig-name descname"><span class="pre">GetScoresWithData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetScoresWithData" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluates the DisCo scores for all residues in the entity view.
+The view must contain exactly one chain and all its residues must exactly
+match the internal SEQRES with respect to residue number / one letter code.
+This is not everything… The final combination to QMEANDisCo requires more
+data from the DisCoContainer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>view</strong> (<a class="reference external" href="https://openstructure.org//docs/2.0/mol/base/entity/#ost.mol.EntityView" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.mol.EntityView</span></code></a>) – View to evaluate</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A dictionary of lists, that contains not only the DisCo
+scores but also other values. The lists can be accessed
+by following keys:</p>
+<ul class="simple">
+<li><p>scores: The DisCo scores</p></li>
+<li><p>counts: The number of other residues within 15 A in
+the <em>view</em> with a valid constraint.</p></li>
+<li><p>avg_num_clusters: Average number of clusters observed
+in all the constraints this residue is involved in.</p></li>
+<li><p>avg_max_seqsim: Average of highest per cluster
+sequence similarity observed in all the constraints
+this residue is involved in.</p></li>
+<li><p>avg_max_seqid: Average of highest per cluster
+sequence identity observed in all the constraints this
+residue is involved in.</p></li>
+<li><p>avg_variance: Average variance of the observed
+distances in all the constraints this residue is
+involved in.</p></li>
+<li><p>num_constraints: Total number of constraints that are
+present for this residue. Independent from the
+inclusion radius that affects <em>counts</em>.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> as keys and
+<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> as values</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a> if there is more than one chain or
+when any of the residues has a residue number / one
+letter that is inconsistent with the internal SEQRES.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetSeqres">
+<span class="sig-name descname"><span class="pre">GetSeqres</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetSeqres" title="Link to this definition">¶</a></dt>
+<dd><p>Getter for the SEQRES that has been set at initialization</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://openstructure.org//docs/2.0/seq/base/seq/#ost.seq.SequenceHandle" title="(in OpenStructure v2.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ost.seq.SequenceHandle</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetDistCutoff">
+<span class="sig-name descname"><span class="pre">GetDistCutoff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetDistCutoff" title="Link to this definition">¶</a></dt>
+<dd><p>Getter for the <em>dist_cutoff</em> parameter you passed at the CalculateConstraints
+function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetGamma">
+<span class="sig-name descname"><span class="pre">GetGamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetGamma" title="Link to this definition">¶</a></dt>
+<dd><p>Getter for the <em>gamma</em> parameter you passed at the CalculateConstraints
+function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetSeqSimClusteringCutoff">
+<span class="sig-name descname"><span class="pre">GetSeqSimClusteringCutoff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetSeqSimClusteringCutoff" title="Link to this definition">¶</a></dt>
+<dd><p>Getter for the <em>seqsim_clustering_cutoff</em> parameter you passed at the
+CalculateConstraints function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetBinSize">
+<span class="sig-name descname"><span class="pre">GetBinSize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetBinSize" title="Link to this definition">¶</a></dt>
+<dd><p>Getter for the <em>bin_size</em> parameter you passed at the CalculateConstraints
+function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qmean.DisCoContainer.GetNumBins">
+<span class="sig-name descname"><span class="pre">GetNumBins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qmean.DisCoContainer.GetNumBins" title="Link to this definition">¶</a></dt>
+<dd><p>The number of bins for the lookup table of each constraint. Its basically
+the result of ceil((GetDistCutoff() + 3.0) / GetBinSize())</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">DisCo</a><ul>
+<li><a class="reference internal" href="#qmean.DisCoContainer"><code class="docutils literal notranslate"><span class="pre">DisCoContainer</span></code></a><ul>
+<li><a class="reference internal" href="#qmean.DisCoContainer.Save"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.Save()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.Load"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.Load()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.AddData"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.AddData()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.CalculateConstraints"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.CalculateConstraints()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.HasConstraint"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.HasConstraint()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetConstraint"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetConstraint()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetScores"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetScores()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetScoresWithData"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetScoresWithData()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetSeqres"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetSeqres()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetDistCutoff"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetDistCutoff()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetGamma"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetGamma()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetSeqSimClusteringCutoff"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetSeqSimClusteringCutoff()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetBinSize"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetBinSize()</span></code></a></li>
+<li><a class="reference internal" href="#qmean.DisCoContainer.GetNumBins"><code class="docutils literal notranslate"><span class="pre">DisCoContainer.GetNumBins()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="membrane.html"
+                          title="previous chapter">Membrane Location</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="gmqe.html"
+                          title="next chapter">GMQE</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/disco.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="gmqe.html" title="GMQE"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="membrane.html" title="Membrane Location"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QMEAN 4.3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">DisCo</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2016-2020, Gabriel Studer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
