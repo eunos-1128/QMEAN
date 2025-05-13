@@ -1,0 +1,106 @@
+diff --git a/docker/run_qmean.py b/docker/run_qmean.py
+index b2bdaf4..e576864 100755
+--- a/docker/run_qmean.py
++++ b/docker/run_qmean.py
+@@ -471,7 +471,7 @@ class ModelScorer:
+                 mem = r[membrane_idx]
+                 qmeanbrane_membrane[chain_name][rnum - 1] = mem
+ 
+-            # The avg_local_score in global scores has been estimated with 
++            # The avg_local_score in global scores has been estimated with
+             # classical QMEAN. Let's overwrite
+             avg_local_score = summed_local_score
+             if n_scores > 0:
+@@ -882,19 +882,16 @@ def _parse_args():
+     )
+     parser.add_argument(
+         "--version",
+-        dest="version",
+-        action="store_true",
++        action="version",
++        version=(
++            "QMEAN container entry point running\n"
++            f"QMEAN: {os.getenv('VERSION_QMEAN')}\n"
++            f"OPENSTRUCTURE: {os.getenv('VERSION_OPENSTRUCTURE')}"
++        ),
+         help="Display version and exit",
+     )
+     args = parser.parse_args()
+ 
+-    # if version flag is set, we just print some stuff and abort
+-    if args.version:
+-        print("QMEAN container entry point running")
+-        print("QMEAN:", os.getenv("VERSION_QMEAN"))
+-        print("OPENSTRUCTURE:", os.getenv("VERSION_OPENSTRUCTURE"))
+-        sys.exit(0)
+-
+     ######################################
+     # Argument checks and postprocessing #
+     ######################################
+diff --git a/src/potential_base.hh b/src/potential_base.hh
+index 9591da5..ef36439 100644
+--- a/src/potential_base.hh
++++ b/src/potential_base.hh
+@@ -1,12 +1,12 @@
+ // Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
+ // Biozentrum - University of Basel
+-// 
++//
+ // Licensed under the Apache License, Version 2.0 (the "License");
+ // you may not use this file except in compliance with the License.
+ // You may obtain a copy of the License at
+-// 
++//
+ // http://www.apache.org/licenses/LICENSE-2.0
+-// 
++//
+ // Unless required by applicable law or agreed to in writing, software
+ // distributed under the License is distributed on an "AS IS" BASIS,
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@@ -24,7 +24,7 @@
+ #include <ost/io/binary_data_source.hh>
+ #include <ost/io/binary_data_sink.hh>
+ #include <ost/io/container_serialization.hh>
+-#include <boost/filesystem/convenience.hpp>
++#include <boost/filesystem.hpp>
+ #include <boost/pointer_cast.hpp>
+ #include <ost/io/io_exception.hh>
+ #include <limits>
+diff --git a/src/statistic_base.hh b/src/statistic_base.hh
+index e565cbb..706c860 100644
+--- a/src/statistic_base.hh
++++ b/src/statistic_base.hh
+@@ -1,12 +1,12 @@
+ // Copyright (c) 2013-2020, SIB - Swiss Institute of Bioinformatics and
+ // Biozentrum - University of Basel
+-// 
++//
+ // Licensed under the Apache License, Version 2.0 (the "License");
+ // you may not use this file except in compliance with the License.
+ // You may obtain a copy of the License at
+-// 
++//
+ // http://www.apache.org/licenses/LICENSE-2.0
+-// 
++//
+ // Unless required by applicable law or agreed to in writing, software
+ // distributed under the License is distributed on an "AS IS" BASIS,
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@@ -23,7 +23,7 @@
+ #include <ost/io/container_serialization.hh>
+ #include <boost/shared_ptr.hpp>
+ #include <ost/io/io_exception.hh>
+-#include <boost/filesystem/convenience.hpp>
++#include <boost/filesystem.hpp>
+ #include <ost/log.hh>
+ #include <qmean/float_histogram.hh>
+ #include <vector>
+@@ -63,7 +63,7 @@ public:
+ 
+   StatisticBasePtr& operator[] (const String& key) { return statistics_[key]; }
+ 
+-private: 
++private:
+ 
+   std::map<String,StatisticBasePtr> statistics_;
+ };
