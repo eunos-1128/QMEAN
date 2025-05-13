@@ -471,7 +471,7 @@ class ModelScorer:
                 mem = r[membrane_idx]
                 qmeanbrane_membrane[chain_name][rnum - 1] = mem
 
-            # The avg_local_score in global scores has been estimated with 
+            # The avg_local_score in global scores has been estimated with
             # classical QMEAN. Let's overwrite
             avg_local_score = summed_local_score
             if n_scores > 0:
@@ -882,18 +882,15 @@ def _parse_args():
     )
     parser.add_argument(
         "--version",
-        dest="version",
-        action="store_true",
+        action="version",
+        version=(
+            "QMEAN container entry point running\n"
+            f"QMEAN: {os.getenv('VERSION_QMEAN')}\n"
+            f"OPENSTRUCTURE: {os.getenv('VERSION_OPENSTRUCTURE')}"
+        ),
         help="Display version and exit",
     )
     args = parser.parse_args()
-
-    # if version flag is set, we just print some stuff and abort
-    if args.version:
-        print("QMEAN container entry point running")
-        print("QMEAN:", os.getenv("VERSION_QMEAN"))
-        print("OPENSTRUCTURE:", os.getenv("VERSION_OPENSTRUCTURE"))
-        sys.exit(0)
 
     ######################################
     # Argument checks and postprocessing #
